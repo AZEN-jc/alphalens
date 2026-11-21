@@ -1,163 +1,114 @@
-# AlphaLens — A股/指数/ETF/期货 数据门户
+# AlphaLens v3 — 个人稳健投资持仓体检与高股息分析终端
 
-毕业设计交付项目。零后端、单文件 `file://` 双击可运行；数据来自 AKShare 收盘快照 + 腾讯财经实时行情 + 富途 MCP 校准快照。
+> 零后端、单文件 HTML、`file://` 双击直开、零外部 CDN、手写 SVG、断网离线兜底。
+> 作者：Zen Ao（GitHub: [AZEN-jc](https://github.com/AZEN-jc)）
 
 ---
 
-## 1. 主入口（答辩只看这个）
+## 1. 项目简介与核心痛点
 
-| 文件 | 角色 |
+AlphaLens v3 不是行情看板，而是**有输入、有算法计算、有诊断结论**的垂直工具，解决普通人真实存在却难以一站式查清的两大痛点：
+
+- **痛点 A｜ETF 假分散**：同时买沪深300、上证50、银行ETF，看似分散，穿透底层前十大重仓后发现都重仓同一批股票（招行、茅台、平安…）。本工具把被隐藏的重合揪出来。
+- **痛点 B｜高股息吃息真相**：高股息不等于真收益。连续分红是否稳定？除权后多少交易日才填权？按持股周期扣红利税后实际到手多少？本工具用真实分红与不复权日线算清这笔账。
+
+---
+
+## 2. 核心功能与算法亮点
+
+**模块 A｜组合持仓穿透体检**
+- 输入 2–6 只 ETF/股票及金额，穿透底层前十大重仓并加权合并
+- 重合重仓股预警（来源拆解：`招商银行 6.92% ← 沪深300ETF 0.81% + 上证50ETF 1.6% + 银行ETF 4.5%`）
+- 前十大覆盖率透明提示（只穿透前十大，不等于全仓）
+- 日收益率**皮尔逊相关性矩阵**热力图 + 合成净值曲线 + **最大回撤（MDD）阴影区间** + 年化波动率，全部手写 SVG，零图表库
+
+**模块 B｜高股息吃息真相**
+- 15 只高股息 A 股：连续分红年数、税前股息率、填权胜率、平均填权天数
+- **基于不复权日线（`adjust=""`）**核验除权后填权天数——前复权会抹平除权缺口导致填权天数失真
+- A 股差别化红利税测算：≤1个月 20% / 1月–1年 10% / >1年免税，税后年化、到手现金、跑赢定存差额实时计算
+
+**工程特性**
+- 腾讯财经实时行情轮询 + **6 秒超时自动降级 SNAPSHOT** 离线兜底
+- `localStorage` 本地持仓持久化（隐私模式自动降级内存态）
+- 一键导出 Markdown 体检报告 / 复制 / 打印
+- 30 标的真实快照内置，断网 100% 可演示
+
+---
+
+## 3. 快速开始（3 种方式）
+
+```bash
+# 方式一：零配置体验 —— 浏览器双击根目录 index.html
+#         （或 index_alphalens_v3_live.html，两者内容一致）
+
+# 方式二：刷新离线数据并重建单文件
+python fetch_holdings_dividend.py   # 抓 ETF 持仓 + 分红填权 + 200日线
+python build_v3.py                   # 注入 window.ALPHALENS_DATA，输出单文件
+
+# 方式三：自动化验收
+node verify_v3.mjs                   # 7 项端到端断言
+```
+
+网络受限时无需重新抓取，直接用仓库内置的 `analysis_data.json` 构建即可。
+
+---
+
+## 4. 30 支精选标的池与 3 套演示组合
+
+| 类别 | 数量 | 示例 |
+|---|---:|---|
+| 宽基/成长 ETF | 5 | 沪深300ETF(510300)、上证50ETF(510050)、创业板ETF(159915) |
+| 红利 ETF | 3 | 红利ETF(510880)、红利低波ETF(512890)、中证红利ETF(515180) |
+| 行业/商品 ETF | 7 | 银行ETF(512800)、证券ETF(512880)、黄金ETF(518880) |
+| 高股息 A 股 | 15 | 长江电力(600900)、中国神华(601088)、工商银行(601398)、贵州茅台(600519) |
+
+**3 套内置演示组合**：
+
+| 组合 | 构成 | 效果（真实数据实测） |
+|---|---|---|
+| 典型「假分散」踩坑 | 沪深300 + 上证50 + 银行ETF | 重合重仓股 **8** 只、平均相关性 **0.59** |
+| 稳健吃息防回撤 | 红利ETF + 长江电力 + 中国神华 | 侧重低回撤与稳定现金流 |
+| 红利+黄金+成长对照 | 红利ETF + 黄金ETF + 创业板ETF | 重合 **0** 只、平均相关性 **0.15** |
+
+---
+
+## 5. 数据口径与透明度说明
+
+| 数据 | 来源 |
 |---|---|
-| **`index_fiapp_live.html`** | **当前交付主界面**（总览 + A股/指数/ETF/期货专页 + 四榜单 + 个股下钻） |
-| `index_okx_live.html` | 并行交付物：OKX 式交易终端（三栏 + 五档周期），保留不动 |
-| `index_live.html` | 冻结答辩原版的可运行页（工业粗野四面板 + 回放） |
-| `index.html` / `core.js` / `verify.js` | **冻结基线**，sha 不可变（`0d166fe7…` / `cf60cc74…` / `a593329b…`） |
+| ETF 前十大持仓 | AKShare `fund_portfolio_hold_em`（最新季报） |
+| 基金概况/费率 | AKShare `fund_overview_em`（按代码查不到时为 `null`，界面显示 `--`） |
+| 个股现金分红 | AKShare `stock_history_dividend_detail`（近 10 年，仅「实施」且派息>0） |
+| 填权天数核验 | AKShare 新浪**不复权**日线（`adjust=""`），口径 `close ≥ 除权前收盘` |
+| 日线历史 | AKShare 新浪接口（ETF 用基金日线、个股用前复权），近 200 交易日 |
+| 实时行情 | 腾讯财经 `qt.gtimg.cn` JSONP，6 秒超时降级 |
 
-打开方式：双击 `index_fiapp_live.html`（`file://` 原生可用），或起本地服务：
-```bash
-cd alphalens && python3 -m http.server 8931 --bind 127.0.0.1
-# http://127.0.0.1:8931/index_fiapp_live.html
-```
+**诚实标识**（缺失绝不估算）：
+- `NO_EQUITY_HOLDINGS` — 商品 ETF 无股票持仓（如黄金ETF），穿透时识别为独立大类资产
+- `FETCH_ERROR` — 单只标的接口暂时失败，不中断整批构建
+- `SNAPSHOT` — 断网/超时，全部功能使用内置离线数据
+- `--` — 字段缺失（如费率查不到），不显示 0.00% 误导
 
----
-
-## 2. 数据口径（答辩防追问）
-
-页面顶栏 `[ DATA PROVENANCE / 数据口径 ]` 披露条永久保留。`snapshot.json` 的 `meta.proxies` 声明哪些字段是代理/估算（量价代理资金、已实现波动率代替隐波、期权权利金比、炸板数估算等）。
-
-| 状态徽标 | 含义 |
-|---|---|
-| `LIVE` | 腾讯财经 `qt.gtimg.cn` JSONP 实时行情（5 秒轮询，无 Referer 也能用） |
-| `FUTU_CALIBRATED` | 富途 MCP 快照校准的真值（36 标的：现价/涨跌/PE/PB/市值），存于 `futu_enrichment.json` |
-| `SNAPSHOT_BASE` | 期货快照基准：来自 `snapshot.deriv` 的真基差/涨跌（富途 MCP 无 A股期货权限） |
-| `NO_FUTU_FEED` | 该标的无真值源（如 IH），显示 `--`，**绝不编造** |
-| `SNAPSHOT` | 断网降级：6 秒内未连上即落定，顶栏明示"实时连接失败" |
-
-**数据深度（45 只全部可点进详情）**：
-- `depth.json`：36 只有真实日线（20 A股 + 8 指数 + 8 ETF，各 40 根 OHLCV，来源 AKShare 新浪接口）+ 富途估值（PE/PB/市值）；9 个期货无 K 线源，标 `DERIV_SNAPSHOT`，显示真基差/涨跌快照，**不编造历史**。
-- 3 只深度标的（600519/300750/002027）额外有四档资金流与财报评分；其余标的详情里明确说明"暂无资金/财报深度数据"。
-- 点击榜单行、热力图格子（板块→代表股）、事件条、全部标的表行，都会进入该标的详情。
-
-**动效与视觉（Vibe Design Tips 五大类）**：
-- 交互：拟物按压反馈（active 下沉 1px + 内阴影）
-- 动效：缓动 token 按角色分类 + FLIP 重排 + stagger 淡入
-- 组件：Status Toast（顶部居中、`role=status`、500ms 入场带模糊、悬停暂停计时）
-- 排版布局：`text-wrap: balance/pretty`、中文 `text-autospace`、数字 `tabular-nums`
-- 视觉效果：浅色液态玻璃（session 条/披露条 `backdrop-filter` + 内边框高光）
-
-**超现实风格（双平面策略）**：氛围层大胆（hero 超大衬线错位标题「市场是一片天气」+ 太阳/圆环/波浪/眼睛 SVG + mesh 渐变 + 噪点 + 漂浮轨道符号），**数据层钢铁可读**（所有数字等宽右对齐、红涨绿跌、不被艺术效果干扰）。顶部「今日速览」用真数据生成一句话回答"今天怎么样"。
-
-**诚实性口径**：事件只在同源连续两轮 LIVE 间比对（数据源切换不算异动）；时间戳 `HH:MM:SS`；顶栏单一「深度指标截至」时间；披露条默认一行摘要，点开才见技术细节；「今日涨跌」而非 24H。
-
-**铁律**：断网自动降级、涨跌色红涨绿跌、全站浅色、不造假值。
+> ETF 穿透仅基于公开季报前十大重仓，覆盖率不等于全仓；报告仅供个人持仓诊断参考，不构成投资建议。
 
 ---
 
-## 3. 构建链（顺序固定，不可乱）
+## 6. 项目目录结构与作者
 
 ```
-fetch_snapshot.py → fetch_timeline.py → fetch_decade.py → [富途 MCP 预抓取] → fetch_depth.py → build_fiapp.py
-```
-`fetch_snapshot.py` 重建会覆盖 `timelines`，所以时间线必须在它之后跑。
-
-一键重建 + 验收（推荐）：
-```bash
-cd ..
-python3 alphalens/scripts/rebuild.py        # 只重建 live 页（用现有 snapshot）
-python3 alphalens/scripts/rebuild.py --check # 重建 + 字段契约闸门 + verify.js + UI 9项验收
-```
-
-手动分步：
-```bash
-cd alphalens
-.venv/bin/python fetch_snapshot.py --offline   # 断网从 cache 重建主快照
-.venv/bin/python fetch_timeline.py --offline   # 恢复 1m/5m/15m/周线
-.venv/bin/python fetch_decade.py               # 5 指数 × 120 月线（需联网）
-.venv/bin/python fetch_depth.py                # 45 只真日线（新浪源，36 只有 K 线 + 9 期货基准）
-.venv/bin/python build_fiapp.py                # 三锚点注入 → index_fiapp_live.html
+alphalens/                      # v3 正式工程根目录
+├── index.html                  # 主入口（双击直开，与 live 版一致）
+├── index_alphalens_v3.html     # 前端模板（含锚点）
+├── index_alphalens_v3_live.html# 构建产物（注入数据后单文件）
+├── analytics.js                # 4 个纯计算函数 + 手写 SVG 渲染器
+├── live.js                     # 腾讯实时行情 + 断网降级
+├── universe.py                 # 30 标的池 + 3 预设组合
+├── fetch_holdings_dividend.py  # 持仓/分红/填权抓取管道
+├── analysis_data.json          # 内置离线数据（构建时注入）
+├── build_v3.py                 # 锚点注入构建脚本
+├── verify_v3.mjs               # 端到端验收
+├── assets/fonts/               # 本地字体（无 CDN）
+└── archive/v2/                 # v2 行情终端归档（含旧皮肤/脚本/文档）
 ```
 
-`build_fiapp.py` 用唯一锚点注入（`/*__ALPHALENS_SNAPSHOT_PAYLOAD__*/` 等），锚点出现次数 ≠ 1 即非零退出；构建后自动 `node --check` 校验内联 JS。
-
----
-
-## 4. 验收
-
-```bash
-cd ..                                   # 项目根
-node alphalens/verify.js                # 数据契约 59 断言，期望 59/0
-node alphalens/verify_ui_fiapp.mjs      # UI 硬核验收 9 项（零依赖，需本机 Chrome）
-node alphalens/verify_ui_fiapp.mjs --shots  # 额外生成桌面1440/移动390截图
-pstack verify all                       # pstack 四门禁
-```
-
-`verify_ui_fiapp.mjs` 11 项包括：冻结 sha、verify 59/0、零 JS 异常/零 CDN、45/45 唯一标的徽章 + 富途涨跌真值、四榜单各 20 行 + 分段切换、状态引擎自动重排（注入榜尾→首行真变化）、期货真点位、多图十字光标、**stub live.js 实测断网 7 秒降级 SNAPSHOT**、榜单/热力/事件/标的均可点进详情、非深度标的有真日线 + 动效 token 生效。
-
-设计背景与决策记录见 `.agents/decision.tsv`、` .agents/handoffs/verifier-refactor-v2.md`（独立验证器 REJECT→PASS 全程）。
-
----
-
-## 5. 依赖与环境
-
-- Python 3.13 + `requirements.txt`（AKShare 等）；已备 `.venv`。
-- 抓取脚本在 `HTTPS_PROXY` 未设置时默认走 `http://127.0.0.1:7890`（Clash Verge 混合端口）。换环境时 export 自己的代理，或用 `--offline` 从 `cache/` 重建。
-- 前端零 npm 依赖；验收脚本只用 Node 内置模块 + 本机 Chrome headless（`CHROME_BIN` 可覆盖路径）。
-
----
-
-## 6. 常见坑（踩过，别再踩）
-
-1. **`num(undefined)=0` 会把字段缺失变成假 0**——取富途/期货字段前必须先确认字段存在，缺失就显式 `--` 或 null，不要默认 0。
-2. **测试钩子不能当验收**——生产代码里的 `window.AlphaLens.__injectQuote` 会人为设 LIVE，验收必须用 stub 掉 live.js 走真实断网路径。
-3. **大改 JS 一律整段重写 + `node --check`**——用脚本逐块 `replace` 曾误删 6 个渲染函数，导致"功能全没了"。
-4. **`fetch_snapshot.py` 会覆盖 `timelines`**——重建后必须再跑 `fetch_timeline.py`，否则 OKX 版失去多周期。
-5. **指数 `000001` 与平安银行 `000001` 同码**——前端内部统一用交易所前缀主键 `SH.000001` / `SZ.000001`，展示层才显示 6 位码。
-
----
-
-## GitHub 仓库说明
-
-本仓库是 **2026-11-21 的干净交付版**：只含源码、构建脚本、数据 JSON、本地字体、文档与验收脚本。
-不含 Python 虚拟环境（`.venv`）、缓存副本、备份文件与临时探针。
-
-### 快速运行
-```bash
-# 方式一：直接双击（file:// 可用，零依赖）
-open index_fiapp_live.html
-
-# 方式二：本地服务
-python3 -m http.server 8931
-# 打开 http://127.0.0.1:8931/index_fiapp_live.html
-```
-
-### 验证
-```bash
-pip install -r requirements.txt        # 如需重新抓数据
-python3 build_fiapp.py                 # 锚点注入重建
-node verify_ui_fiapp.mjs               # 13 项 UI 硬核验收
-```
-
-### 冻结基线（不可改动）
-`core.js` / `verify.js` / `index.html` 的 SHA256 前 16 位：
-`cf60cc74ab901271` / `a593329b2ef3c216` / `0d166fe7db0b5cec`
-
-### 最近变更（2026-11-21）
-- 移除侧栏顶部 AlphaLens 图标与底部色温图（cover），保留 10 个编号导航入口
-- 全面排查并修复 4 个 bug：主题切换在部分浏览器不生效、深色热力图硬编码黑墨不可见、`&nbsp;` 二次转义、雷达图/Toast 硬编码色
-- 按 `executor_spec.md` 复刻 vibedesign.tips 五大类：物理按键墨键、Odometer、Focus 聚焦、图表斜纹生长、单色排版、深浅主题
-- 实测：13/13 UI 验收、verify.js 59/0、pstack 四门禁、零 JS 错误、零 CDN
-
----
-
-## AlphaLens v3（2026-11-21 新增）
-
-产品重塑：从行情看板改为**有输入、有算法、有诊断结论**的垂直工具。
-
-- 主入口：`index_alphalens_v3_live.html`（双击即开，零依赖）
-- 模块 A：组合持仓穿透 —— 输入 2–6 只 ETF/股票与金额，穿透底层前十大重仓，揪出「假分散」，计算相关性矩阵与最大回撤
-- 模块 B：高股息吃息真相 —— 15 只高股息 A 股的真实连续分红年数、除权后填权天数与胜率、A 股分段红利税税后收益测算
-- 数据：`analysis_data.json`（30 标的、ETF 真实持仓、近 10 年分红与不复权填权核验）
-- 计算：`analytics.js`（4 个纯函数 + 手写 SVG 渲染器）
-- 验收：`node verify_v3.mjs` → 7/7
-
-v3 与 v2 并存：v2 门户仍是 `index_fiapp_live.html`，v3 是独立新入口，互不破坏。
+**作者**：Zen Ao（AZEN-jc） · GitHub：https://github.com/AZEN-jc/alphalens

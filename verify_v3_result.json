@@ -1,0 +1,76 @@
+{
+  "errs": [],
+  "reqs": [],
+  "hasData": true,
+  "hasAnalytics": true,
+  "assets": 30,
+  "divs": 15,
+  "presets": 3,
+  "summaries": [
+    {
+      "id": "fake_diversification",
+      "total": 100000,
+      "covered": 0.4162,
+      "overlaps": 8,
+      "risk": "HIGH",
+      "mdd": -0.3726529187197847,
+      "vol": 0.1864579992421376,
+      "avgCorr": 0.5891196094868691,
+      "sample": 1667,
+      "hasNaN": false,
+      "curveLen": 1668
+    },
+    {
+      "id": "dividend_income",
+      "total": 100000,
+      "covered": 0.7301599999999999,
+      "overlaps": 0,
+      "risk": "HIGH",
+      "mdd": -0.13180315751174904,
+      "vol": 0.1759179437828847,
+      "avgCorr": 0.5162733530390022,
+      "sample": 197,
+      "hasNaN": false,
+      "curveLen": 198
+    },
+    {
+      "id": "balanced_contrast",
+      "total": 100000,
+      "covered": 0.59138,
+      "overlaps": 0,
+      "risk": "HIGH",
+      "mdd": -0.27115611615652346,
+      "vol": 0.15650698130197468,
+      "avgCorr": 0.15160266557684646,
+      "sample": 1666,
+      "hasNaN": false,
+      "curveLen": 1667
+    }
+  ],
+  "hasV3Api": true,
+  "md": {
+    "len": 1176,
+    "total": true,
+    "mdd": true,
+    "top": true,
+    "disclaimer": true,
+    "bad": false
+  },
+  "persist": {
+    "saved": true,
+    "hasTab": true,
+    "reset": true,
+    "cleared": true
+  },
+  "brand": true,
+  "exportBtns": 3,
+  "divRows": 15,
+  "divBadges": 15,
+  "taxChanges": true,
+  "taxHasNaN": false,
+  "benchChanges": true,
+  "corrSvg": 1,
+  "navSvg": 1,
+  "exposureRows": 15,
+  "divViewOn": true
+}

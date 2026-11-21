@@ -39,7 +39,11 @@ def main():
             raise SystemExit("FATAL inline JS syntax:\n" + r.stderr[:1000])
     finally:
         chk.unlink(missing_ok=True)
+    # 主入口：同步复制为根目录 index.html，静态托管/双击即进 v3
+    ROOT_INDEX = BASE / "index.html"
+    ROOT_INDEX.write_text(html, encoding="utf-8")
     print("wrote %s (%d bytes)" % (OUT.name, OUT.stat().st_size))
+    print("wrote index.html (main entry, %d bytes)" % ROOT_INDEX.stat().st_size)
     print("  assets=%d dividends=%d presets=%d payload=%dB" %
           (len(payload.get("assets", {})), len(payload.get("dividends", {})),
            len(payload.get("presets", [])), len(blob)))

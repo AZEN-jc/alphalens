@@ -18,6 +18,24 @@ const rec = (n, name, pass, detail) => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  [${n}] ${name}${detail ? ' — ' + detail : ''}`);
 };
 
+// ---- 阶段1：目录与入口（Node 层文件检查）----
+const ROOT_INDEX = path.join(HERE, 'index.html');
+const ARCHIVE = path.join(HERE, 'archive', 'v2');
+const README = path.join(HERE, 'README.md');
+const rootOk = fs.existsSync(ROOT_INDEX) && fs.existsSync(LIVE) &&
+  fs.readFileSync(ROOT_INDEX, 'utf8') === fs.readFileSync(LIVE, 'utf8');
+rec(11, '主入口index.html存在且与live版一致', rootOk,
+  `index.html=${fs.existsSync(ROOT_INDEX)} live=${fs.existsSync(LIVE)} identical=${rootOk}`);
+const archived = ['core.js', 'index_fiapp.html', 'build_fiapp.py', 'verify.js', 'snapshot.json'];
+const archiveOk = fs.existsSync(ARCHIVE) && archived.every(f => fs.existsSync(path.join(ARCHIVE, f)));
+const rootClean = !['core.js', 'index_fiapp.html', 'build_fiapp.py', 'verify.js', 'snapshot.json']
+  .some(f => fs.existsSync(path.join(HERE, f)));
+rec(12, 'v2旧文件已归档且根目录清爽', archiveOk && rootClean,
+  `archive=${archiveOk} rootClean=${rootClean}`);
+const readme = fs.existsSync(README) ? fs.readFileSync(README, 'utf8') : '';
+rec(13, 'README已更新为v3文档', /AlphaLens v3/.test(readme) && /持仓穿透/.test(readme) && /红利税/.test(readme) && /archive\/v2/.test(readme),
+  `len=${readme.length} v3=${/AlphaLens v3/.test(readme)} 六章要点齐全=${/红利税/.test(readme) && /archive\/v2/.test(readme)}`);
+
 const PROBE = String.raw`
 <script>
 window.__errs=[];window.__reqs=[];
@@ -44,6 +62,29 @@ presets.forEach(function(p){
     hasNaN:/NaN|Infinity/.test(flat),curveLen:curve?curve.curve.length:0});
 });
 R.summaries=summaries;
+
+// ---- 阶段2：报告导出 / localStorage 持久化 / 个人标识 ----
+var V=window.ALPHALENS_V3;
+R.hasV3Api=!!V&&typeof V.buildCheckupMarkdown==='function';
+if(V){
+  var pen0=A.penetratePortfolio(V.state.positions,D.assets);
+  var corr0=A.computeCorrelationMatrix(V.state.positions.map(function(p){return p.code}),D.assets);
+  var curve0=A.computePortfolioCurveAndDrawdown(V.state.positions,D.assets);
+  var md=V.buildCheckupMarkdown(V.state.positions,D.assets,pen0,corr0,curve0);
+  R.md={len:md.length,total:md.indexOf('组合总金额')>=0,mdd:md.indexOf('历史最大回撤')>=0,
+    top:md.indexOf('底层重仓股穿透 Top 10')>=0, disclaimer:md.indexOf('不构成投资建议')>=0,
+    bad:/undefined|NaN/.test(md)};
+  var orig=V.state.positions[0].amount;
+  V.state.positions[0].amount=99999;V.saveUserState();
+  var stored=JSON.parse(localStorage.getItem('alphalens_v3_state')||'{}');
+  R.persist={saved:stored.positions&&stored.positions[0].amount===99999, hasTab:!!stored.activeTab};
+  document.getElementById('reset-btn').click();
+  R.persist.reset=V.state.positions[0].amount===orig;
+  R.persist.cleared=!localStorage.getItem('alphalens_v3_state');
+}
+R.brand=document.body.textContent.indexOf('Zen Ao')>=0;
+R.exportBtns=document.querySelectorAll('.report-btn').length;
+
 // Tab2 15 股状态与排序表（先切到 div tab，表格在该视图首次显示时渲染）
 var divTab0=document.querySelector('.main-tabs button[data-main=div]');if(divTab0)divTab0.click();
 R.divRows=document.querySelectorAll('#div-body tr').length;
@@ -117,6 +158,15 @@ let O = {};
 try { O = JSON.parse((om ? om[1] : '{}').replace(/&quot;/g, '"')); } catch (e) {}
 rec(7, '断网6秒降级SNAPSHOT且图表测算可用', /SNAPSHOT/.test(O.label || '') && (O.svg || 0) >= 1 && (O.rows || 0) === 15 && (O.tax || 0) > 10,
   `label=${O.label} svg=${O.svg} rows=${O.rows} taxLen=${O.tax}`);
+
+// ---- 阶段2 浏览器断言 ----
+const md = R.md || {}, ps = R.persist || {};
+rec(14, '报告导出内容完整无NaN', R.hasV3Api === true && md.len > 500 && md.total && md.mdd && md.top && md.disclaimer && !md.bad,
+  `len=${md.len} 总金额=${md.total} MDD=${md.mdd} Top10=${md.top} 免责=${md.disclaimer} bad=${md.bad}`);
+rec(15, 'localStorage持久化与重置', ps.saved === true && ps.hasTab === true && ps.reset === true && ps.cleared === true,
+  `saved=${ps.saved} tab=${ps.hasTab} reset=${ps.reset} cleared=${ps.cleared}`);
+rec(16, '个人标识与导出按钮', R.brand === true && (R.exportBtns || 0) >= 3,
+  `brand=${R.brand} exportBtns=${R.exportBtns}`);
 
 const passed = results.filter(r => r.pass).length;
 console.log(`\n=== VERIFY_V3: ${passed}/${results.length} PASS ===`);

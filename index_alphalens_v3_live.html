@@ -128,6 +128,16 @@ tbody tr:hover,tbody tr.sel{background:var(--surface)}
 .result .r:last-child{border:none}
 .result .r b{font-family:var(--mono)}
 footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;font-size:10px;color:var(--ink-faint);max-width:1500px;margin-left:auto;margin-right:auto;line-height:1.7}
+.report-btn{border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:5px 9px;font-size:10px;color:var(--ink-soft)}
+.report-btn:hover{border-color:var(--ink);color:var(--ink)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:8px 16px;border-radius:6px;font-size:11px;z-index:99;box-shadow:0 8px 24px #0003}
+@media print{
+  header,.report-btn,#reset-btn,.add-row,.pos-list,.preset-list{display:none!important}
+  .pen-layout{grid-template-columns:1fr}
+  body{background:#fff;color:#000}
+  main{padding:0;max-width:none}
+}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -142,7 +152,7 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;f
   <div class="top-right">
     <span class="st" id="live-state"><i></i><span id="live-label">连接实时行情…</span></span>
     <button class="theme-btn" id="theme-btn" aria-label="切换主题">◐ 主题</button>
-    <span>Zen Ao / AZEN-jc</span>
+    <span>AlphaLens v3 · Zen Ao (GitHub: AZEN-jc)</span>
   </div>
 </header>
 
@@ -152,7 +162,7 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;f
   <div class="pen-layout">
     <div>
       <div class="card mb">
-        <h2>预设组合 <small>PRESETS</small></h2>
+        <h2>预设组合 <small><button id="reset-btn" style="border:none;background:none;color:var(--ink-faint);font-size:10px;cursor:pointer;text-decoration:underline">重置默认</button></small></h2>
         <div class="preset-list" id="preset-list"></div>
       </div>
       <div class="card mb">
@@ -167,6 +177,11 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;f
       </div>
     </div>
     <div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px">
+        <button class="report-btn" id="copy-report">复制 Markdown 报告</button>
+        <button class="report-btn" id="download-report">下载 .md 报告</button>
+        <button class="report-btn" id="print-report">打印 / 存 PDF</button>
+      </div>
       <div class="kpis" id="kpis"></div>
       <div class="card mb"><h2>底层持仓穿透 Top 15 <small>LOOK-THROUGH EXPOSURE</small></h2><div id="exposure-list"></div></div>
       <div class="chart-grid">
@@ -216,7 +231,98 @@ function fmt(v,d){if(v==null||!isFinite(v))return '--';return Number(v).toFixed(
 function pct(v,d){if(v==null||!isFinite(v))return '--';return (v>0?'+':'')+Number(v).toFixed(d==null?2:d)+'%';}
 
 var S={main:'pen',positions:[],preset:null,asset:null,sortKey:'ttmYieldPct',sortDir:-1,
-       period:'gt_1y',principal:100000,benchmark:2.0};
+       period:'gt_1y',principal:100000,benchmark:2.0,theme:'light'};
+
+/* ---------- 体检报告导出（复用 Analytics 计算结果，零依赖） ---------- */
+function buildCheckupMarkdown(positions, assetsMap, pen, corr, curve){
+  var now=new Date().toLocaleString('zh-CN',{hour12:false});
+  var pc=function(v){return (v==null||!isFinite(v))?'--':(v*100).toFixed(2)+'%';};
+  var lines=[
+    '# AlphaLens 个人投资组合体检报告','',
+    '- 生成时间：'+now,
+    '- 组合总金额：¥'+pen.totalAmount.toLocaleString('zh-CN'),
+    '- 分散度风险评级：'+pen.riskLevel+'（重合重仓股 '+pen.overlaps.length+' 只）',
+    '- 已穿透前十大重仓覆盖率：'+pc(pen.coveredRatio),
+    '- 组合加权年化费率：'+(isFinite(pen.weightedFee)?pen.weightedFee.toFixed(2)+'%':'--'),
+    '- 区间平均相关性：'+(corr&&corr.avgOffDiagonal!=null?corr.avgOffDiagonal.toFixed(2):'--'),
+    '- 历史最大回撤：'+(curve?pc(curve.maxDrawdown):'--')+'（'+(curve&&curve.mddRange?curve.mddRange.join(' ~ '):'--')+'）',
+    '- 区间年化波动率：'+(curve?pc(curve.annualizedVol):'--'),'',
+    '## 一、当前持仓明细',
+    '| 代码 | 名称 | 类型 | 金额(元) | 权重 |','| :--- | :--- | :--- | ---: | ---: |'
+  ];
+  positions.filter(function(p){return Number(p.amount)>0&&assetsMap[p.code];}).forEach(function(p){
+    var a=assetsMap[p.code],w=((Number(p.amount)/pen.totalAmount)*100).toFixed(2)+'%';
+    lines.push('| '+a.code+' | '+a.name+' | '+a.type+' | '+Number(p.amount).toLocaleString('zh-CN')+' | '+w+' |');
+  });
+  lines.push('','## 二、底层重仓股穿透 Top 10（标注重合项）',
+    '| 代码 | 名称 | 真实占比 | 是否重合 | 来源拆解 |','| :--- | :--- | ---: | :--- | :--- |');
+  pen.exposures.slice(0,10).forEach(function(e){
+    var dup=e.contributors.length>=2?'⚠️ 重合':'单一';
+    var src=e.contributors.map(function(c){return c.sourceName+' '+(c.contribution*100).toFixed(2)+'%';}).join(' + ');
+    lines.push('| '+e.code+' | '+e.name+' | '+(e.totalWeight*100).toFixed(2)+'% | '+dup+' | '+src+' |');
+  });
+  lines.push('','> 数据声明：ETF 穿透基于公开季报前十大重仓股，仅供个人持仓诊断参考，不构成投资建议。');
+  return lines.join('\n');
+}
+function downloadMarkdown(filename,content){
+  try{
+    var blob=new Blob([content],{type:'text/markdown;charset=utf-8'});
+    var url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }catch(e){toast('下载失败，请用复制功能');}
+}
+function fallbackCopy(text){
+  try{
+    var ta=document.createElement('textarea');ta.value=text;
+    ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');ta.remove();toast('报告已复制到剪贴板');
+  }catch(e){toast('复制失败，请手动选择文本');}
+}
+var TOAST_TIMER=null;
+function toast(msg){
+  var el=document.querySelector('.toast');if(el)el.remove();
+  el=document.createElement('div');el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);
+  if(TOAST_TIMER)clearTimeout(TOAST_TIMER);
+  TOAST_TIMER=setTimeout(function(){if(el.parentNode)el.remove();},2400);
+}
+function currentCheckup(){
+  var A=DATA.assets||{},pen=AZ.penetratePortfolio(S.positions,A);
+  var codes=S.positions.map(function(p){return p.code;});
+  var corr=AZ.computeCorrelationMatrix(codes,A);
+  var curve=AZ.computePortfolioCurveAndDrawdown(S.positions,A);
+  return {pen:pen,corr:corr,curve:curve,md:buildCheckupMarkdown(S.positions,A,pen,corr,curve)};
+}
+
+/* ---------- localStorage 持久化（file:// 隐私模式自动降级内存态） ---------- */
+var STORAGE_KEY='alphalens_v3_state';
+function saveUserState(){
+  var payload={positions:S.positions,activeTab:S.main,theme:S.theme,
+               divPrincipal:S.principal,divPeriod:S.period,divBenchmark:S.benchmark};
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));}catch(_){}
+}
+function loadUserState(){
+  try{
+    var raw=localStorage.getItem(STORAGE_KEY);if(!raw)return null;
+    var p=JSON.parse(raw);
+    if(!p||!Array.isArray(p.positions)||!p.positions.length)return null;
+    // 过滤掉目录里不存在的代码，防止存档损坏导致渲染崩
+    p.positions=p.positions.filter(function(x){return x&&DATA.assets&&DATA.assets[x.code]&&Number(x.amount)>0;});
+    return p.positions.length?p:null;
+  }catch(_){return null;}
+}
+function clearUserState(){try{localStorage.removeItem(STORAGE_KEY);}catch(_){}}
+function applyLoadedState(p){
+  if(!p)return false;
+  S.positions=p.positions.map(function(x){return {code:x.code,amount:Number(x.amount)};});
+  if(p.activeTab==='div'||p.activeTab==='pen')S.main=p.activeTab;
+  if(p.theme==='dark'||p.theme==='light')S.theme=p.theme;
+  if(Number(p.divPrincipal)>0)S.principal=Number(p.divPrincipal);
+  if(['lt_1m','1m_to_1y','gt_1y'].indexOf(p.divPeriod)>=0)S.period=p.divPeriod;
+  if(Number(p.divBenchmark)>=0)S.benchmark=Number(p.divBenchmark);
+  return true;
+}
 
 /* ---------- 启动数据 ---------- */
 function boot(){
@@ -248,7 +354,7 @@ function boot(){
     if(ex)ex.amount+=amt;else S.positions.push({code:c,amount:amt});
     S.preset=null;renderPositions();renderPen();
   };
-  $('amount-input').oninput=function(){S.principal=Number(this.value)||0;renderTax();};
+  $('amount-input').oninput=function(){renderPositions();renderPen();};
   // 主 Tab
   Array.prototype.forEach.call(document.querySelectorAll('.main-tabs button'),function(b){
     b.onclick=function(){
@@ -258,6 +364,7 @@ function boot(){
       });
       $('view-pen').className='view'+(S.main==='pen'?' on':'');
       $('view-div').className='view'+(S.main==='div'?' on':'');
+      saveUserState();
       if(S.main==='div')renderDivTable();else renderPen();
     };
   });
@@ -271,42 +378,106 @@ function boot(){
   Array.prototype.forEach.call($('period-seg').children,function(b){
     b.onclick=function(){S.period=b.getAttribute('data-period');
       Array.prototype.forEach.call($('period-seg').children,function(x){x.className=x===b?'on':'';});
-      renderTax();};
+      saveUserState();renderTax();};
   });
-  $('benchmark').oninput=function(){S.benchmark=Number(this.value);$('bench-val').textContent=fmt(S.benchmark,1)+'%';renderTax();};
+  $('principal').oninput=function(){S.principal=Number(this.value)||0;saveUserState();renderTax();};
+  $('benchmark').oninput=function(){S.benchmark=Number(this.value);$('bench-val').textContent=fmt(S.benchmark,1)+'%';saveUserState();renderTax();};
   // 主题
   $('theme-btn').onclick=function(){
-    var cur=document.documentElement.getAttribute('data-theme');
-    var next=cur==='dark'?'light':'dark';
-    document.documentElement.setAttribute('data-theme',next);
-    try{localStorage.setItem('al.theme',next);}catch(e){}
-    renderPen();renderDivDetail();
+    S.theme=S.theme==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',S.theme);
+    saveUserState();renderPen();renderDivDetail();
   };
-  try{var t=localStorage.getItem('al.theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
-  // 实时状态（live.js 可选增强，失败不影响分析）
-  if(window.AlphaLive){
-    window.AlphaLive.status&&window.AlphaLive.status();
-    window.AlphaLive.subscribe&&window.AlphaLive.subscribe(function(st){
-      $('live-label').textContent=(st&&st.state)||'SNAPSHOT';
-      $('live-state').className='st '+((st&&st.state==='LIVE')?'live':'warn');
+  // 恢复持久化状态（无存档则用第 1 套预设）
+  var restored=applyLoadedState(loadUserState());
+  document.documentElement.setAttribute('data-theme',S.theme);
+  $('principal').value=S.principal;
+  $('benchmark').value=S.benchmark;$('bench-val').textContent=fmt(S.benchmark,1)+'%';
+  Array.prototype.forEach.call($('period-seg').children,function(b){
+    b.className=b.getAttribute('data-period')===S.period?'on':'';
+  });
+  // 报告导出
+  $('copy-report').onclick=function(){
+    var md=currentCheckup().md;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(md).then(function(){toast('报告已复制到剪贴板');},function(){fallbackCopy(md);});
+    }else fallbackCopy(md);
+  };
+  $('download-report').onclick=function(){
+    var md=currentCheckup().md;
+    downloadMarkdown('AlphaLens-组合体检报告-'+new Date().toISOString().slice(0,10)+'.md',md);
+    toast('报告已下载');
+  };
+  $('print-report').onclick=function(){window.print();};
+  // 重置默认按钮
+  $('reset-btn').onclick=function(){
+    clearUserState();S.principal=100000;S.benchmark=2.0;S.period='gt_1y';S.theme='light';
+    $('principal').value=S.principal;$('benchmark').value=S.benchmark;$('bench-val').textContent='2.0%';
+    Array.prototype.forEach.call($('period-seg').children,function(b){
+      b.className=b.getAttribute('data-period')==='gt_1y'?'on':'';
     });
-    var liveCodes=Object.keys(assets).filter(function(c){return assets[c].market;});
-    window.AlphaLive.start(liveCodes,6000,function(){});
-    setTimeout(function(){
-      var st=window.AlphaLive.status?window.AlphaLive.status():{state:'SNAPSHOT'};
-      $('live-label').textContent=st.state==='LIVE'?'LIVE · 实时价':'SNAPSHOT · 离线快照';
-      $('live-state').className='st '+(st.state==='LIVE'?'live':'warn');
-    },6500);
+    document.documentElement.setAttribute('data-theme','light');
+    applyPreset((DATA.presets&&DATA.presets[0]&&DATA.presets[0].id)||null,true);
+    toast('已恢复默认组合与设置');
+  };
+  // 实时价联动（live.js 腾讯 JSONP + 6 秒降级）
+  initLive();
+  if(restored){
+    renderPositions();renderPen();renderDivTable();
+  }else{
+    applyPreset((DATA.presets&&DATA.presets[0]&&DATA.presets[0].id)||null);
   }
-  applyPreset((DATA.presets&&DATA.presets[0]&&DATA.presets[0].id)||null);
 }
 
-function applyPreset(id){
+/* ---------- 实时价联动 + 6 秒降级 SNAPSHOT ---------- */
+var LIVE_READY=false;
+function setLiveBadge(state,stamp){
+  var lab=$('live-label'),box=$('live-state');
+  if(state==='LIVE'){
+    lab.textContent='LIVE · 实时价'+(stamp?' '+stamp:'');
+    box.className='st live';
+  }else if(state==='CONNECTING'){
+    lab.textContent='CONNECTING…';box.className='st warn';
+  }else{
+    lab.textContent='SNAPSHOT · 离线快照';box.className='st warn';
+  }
+}
+function initLive(){
+  if(!window.AlphaLive){setLiveBadge('SNAPSHOT');return;}
+  setLiveBadge('CONNECTING');
+  var assets=DATA.assets||{};
+  var liveCodes=Object.keys(assets).filter(function(c){return assets[c].market;});
+  try{
+    window.AlphaLive.start(liveCodes,5000,function(){
+      var all=window.AlphaLive.all?window.AlphaLive.all():{};
+      var got=0;
+      Object.keys(assets).forEach(function(c){
+        var sym=(assets[c].market||'sh')+c;
+        var lv=all[sym]||all[c];
+        if(!lv||!isFinite(lv.last)||lv.last<=0)return;
+        assets[c].price=lv.last;
+        if(isFinite(lv.chgPct))assets[c].changePct=lv.chgPct;
+        got++;
+      });
+      if(got>0){
+        LIVE_READY=true;
+        setLiveBadge('LIVE',window.AlphaLive.status&&window.AlphaLive.status().stamp);
+        renderPositions();renderPen();renderDivTable();
+      }
+    });
+  }catch(e){setLiveBadge('SNAPSHOT');}
+  // 6 秒兜底降级：拿不到有效报价就切 SNAPSHOT，不卡 CONNECTING
+  setTimeout(function(){
+    if(!LIVE_READY)setLiveBadge('SNAPSHOT');
+  },6000);
+}
+
+function applyPreset(id,skipSave){
   var p=(DATA.presets||[]).filter(function(x){return x.id===id;})[0];
   if(!p)return;
   S.preset=id;S.positions=p.positions.map(function(x){return {code:x.code,amount:Number(x.amount)};});
   Array.prototype.forEach.call($('preset-list').children,function(b){b.className=b.getAttribute('data-id')===id?'preset on':'preset';});
-  renderPositions();renderPen();
+  if(!skipSave)saveUserState();renderPositions();renderPen();
 }
 
 function renderPositions(){
@@ -319,10 +490,10 @@ function renderPositions(){
   }).join(''):'<div class="note">暂无持仓，选一个预设或手动添加。</div>';
   Array.prototype.forEach.call($('pos-list').querySelectorAll('input[data-idx]'),function(inp){
     inp.oninput=function(){var i=+this.getAttribute('data-idx');S.positions[i].amount=Number(this.value)||0;
-      S.preset=null;renderPositions();renderPen();};
+      S.preset=null;saveUserState();renderPositions();renderPen();};
   });
   Array.prototype.forEach.call($('pos-list').querySelectorAll('button[data-idx]'),function(b){
-    b.onclick=function(){S.positions.splice(+this.getAttribute('data-idx'),1);S.preset=null;renderPositions();renderPen();};
+    b.onclick=function(){S.positions.splice(+this.getAttribute('data-idx'),1);S.preset=null;saveUserState();renderPositions();renderPen();};
   });
   $('cover-note').textContent='共 '+S.positions.length+' 只 · 合计 ¥'+fmt(total,0);
 }
@@ -414,6 +585,10 @@ function renderTax(){
   ].map(function(x){return '<div class="r"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>';}).join('');
 }
 
+// 契约导出：验收脚本与调试可访问内部状态
+window.ALPHALENS_V3={state:S,buildCheckupMarkdown:buildCheckupMarkdown,
+  saveUserState:saveUserState,loadUserState:loadUserState,clearUserState:clearUserState,
+  applyLoadedState:applyLoadedState,currentCheckup:currentCheckup,toast:toast};
 boot();
 })();
 </script>
