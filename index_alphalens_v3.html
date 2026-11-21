@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="AlphaLens v3 — 个人稳健投资持仓体检与高股息分析终端">
+<title>AlphaLens — 持仓穿透 · 吃息真相</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0b0b'/%3E%3Ctext x='16' y='23' font-size='18' font-family='monospace' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+<style>
+/* AlphaLens v3 — single-color system, zero CDN, file:// ready */
+:root{
+  --bg:#fff;--surface:#f5f5f5;--well:#f6f6f6;--line:#00000012;--line2:#0000002b;
+  --ink:#0b0b0b;--ink-soft:#00000085;--ink-faint:#00000061;
+  --up:#D92D20;--down:#079455;--flat:#8a8a8a;--info:#2563EB;
+  --radius:10px;--radius-sm:6px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --font-figure:"Satoshi",var(--font);
+  --mono:"SF Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+:root[data-theme=dark]{
+  --bg:#0b0b0b;--surface:#161616;--well:#171717;--line:#ffffff1a;--line2:#ffffff3d;
+  --ink:#f2f2f2;--ink-soft:#fff9;--ink-faint:#ffffff6b;color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+.num,.mono,.figure{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num,.figure{text-align:right}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--flat)}
+button,input,select{font-family:var(--font);font-size:12px;color:var(--ink)}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+.skip{position:absolute;left:-9999px}.skip:focus{left:8px;top:8px;z-index:99;background:var(--ink);color:var(--bg);padding:6px 10px}
+
+/* 顶栏 */
+header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:12px 24px;display:flex;align-items:center;gap:20px;min-height:60px}
+.brand h1{font-size:16px;font-weight:700;letter-spacing:-.02em}
+.brand p{font-size:10px;color:var(--ink-faint);letter-spacing:.04em}
+.main-tabs{display:flex;gap:2px;background:var(--surface);padding:3px;border-radius:8px;margin-left:12px}
+.main-tabs button{border:none;background:transparent;padding:6px 14px;border-radius:6px;color:var(--ink-soft);font-weight:500}
+.main-tabs button.on{background:var(--bg);color:var(--ink);font-weight:600;box-shadow:0 1px 3px #00000012}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:10px;color:var(--ink-faint)}
+.st{display:inline-flex;align-items:center;gap:5px}
+.st i{width:6px;height:6px;border-radius:50%;background:var(--flat)}
+.st.live i{background:var(--down)}.st.warn i{background:var(--up)}
+.theme-btn{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:4px 8px;font-size:10px}
+
+main{max-width:1500px;margin:0 auto;padding:20px 24px 60px}
+.view{display:none}.view.on{display:block}
+
+/* 通用卡片 */
+.card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
+.card h2{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h2 small{font:10px var(--mono);color:var(--ink-faint);font-weight:400}
+.note{font-size:10px;color:var(--ink-faint);line-height:1.6}
+.mb{margin-bottom:14px}
+
+/* Tab1 布局 */
+.pen-layout{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+@media(max-width:980px){.pen-layout{grid-template-columns:1fr}}
+.preset-list{display:flex;flex-direction:column;gap:8px}
+.preset{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;text-align:left;transition:border-color .15s}
+.preset:hover{border-color:var(--line2)}
+.preset.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.preset b{display:block;font-size:12px;margin-bottom:3px}
+.preset span{font-size:10px;color:var(--ink-faint);line-height:1.4}
+.add-row{display:flex;gap:6px;margin:12px 0}
+.add-row select,.add-row input{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:7px 8px;min-width:0}
+.add-row select{flex:1}.add-row input{width:76px}
+.add-row button{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:var(--radius-sm);padding:6px 10px}
+.pos-list{display:flex;flex-direction:column;gap:6px}
+.pos{display:flex;align-items:center;gap:8px;font-size:11px}
+.pos .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pos input{width:82px;border:1px solid var(--line);border-radius:4px;padding:4px 6px;text-align:right;font-family:var(--mono)}
+.pos .pw{width:42px;text-align:right;color:var(--ink-faint);font-family:var(--mono)}
+.pos .del{border:none;background:none;color:var(--ink-faint);font-size:14px;padding:0 2px}
+
+/* KPI 条 */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+.kpi .k{font-size:10px;color:var(--ink-faint);margin-bottom:5px}
+.kpi .v{font:600 18px var(--font-figure);font-variant-numeric:tabular-nums}
+.kpi .v.sm{font-size:14px}
+.risk{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid var(--line2)}
+.risk.LOW{color:var(--down)}.risk.MEDIUM{color:#B54708}.risk.HIGH{color:var(--up)}
+
+/* 穿透条形图 */
+.exp-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px}
+.exp-row .nm{width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-row .track{flex:1;height:14px;background:var(--surface);border-radius:3px;overflow:hidden;position:relative}
+.exp-row .track i{display:block;height:100%;background:var(--ink-soft)}
+.exp-row .pct{width:48px;text-align:right;font-family:var(--mono)}
+.exp-row .contrib{font-size:9px;color:var(--ink-faint);flex-basis:200px}
+.tag-overlap{background:var(--up);color:#fff;font-size:8px;padding:1px 4px;border-radius:3px;margin-left:4px}
+
+/* 双图 */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:1100px){.chart-grid{grid-template-columns:1fr}}
+
+/* Tab2 排行表 */
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{font-size:10px;color:var(--ink-faint);text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+th:first-child,td:first-child{text-align:left}
+th.l,td.l{text-align:left}
+td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
+tbody tr{cursor:pointer}
+tbody tr:hover,tbody tr.sel{background:var(--surface)}
+.badge{font:9px var(--mono);padding:1px 5px;border:1px solid var(--line);border-radius:3px;color:var(--ink-faint)}
+.badge.OK{color:var(--down)}.badge.FETCH_ERROR,.badge.NO_DIVIDEND{color:var(--up)}
+
+/* 测算器 */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.calc-grid{grid-template-columns:1fr}}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;color:var(--ink-faint);margin-bottom:5px}
+.field input[type=number],.field input[type=range]{width:100%}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:5px 9px}
+.seg button.on{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.result{background:var(--surface);border-radius:var(--radius-sm);padding:14px;margin-top:10px}
+.result .r{display:flex;justify-content:space-between;padding:5px 0;font-size:11px;border-bottom:1px solid var(--line)}
+.result .r:last-child{border:none}
+.result .r b{font-family:var(--mono)}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;font-size:10px;color:var(--ink-faint);max-width:1500px;margin-left:auto;margin-right:auto;line-height:1.7}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a href="#main" class="skip">跳到主内容</a>
+<header>
+  <div class="brand"><h1>AlphaLens</h1><p>持仓穿透 · 吃息真相</p></div>
+  <div class="main-tabs" role="tablist">
+    <button class="on" data-main="pen" role="tab" aria-selected="true">组合持仓穿透体检</button>
+    <button data-main="div" role="tab" aria-selected="false">高股息吃息真相</button>
+  </div>
+  <div class="top-right">
+    <span class="st" id="live-state"><i></i><span id="live-label">连接实时行情…</span></span>
+    <button class="theme-btn" id="theme-btn" aria-label="切换主题">◐ 主题</button>
+    <span>Zen Ao / AZEN-jc</span>
+  </div>
+</header>
+
+<main id="main">
+<!-- ============ TAB 1: 组合持仓穿透 ============ -->
+<section class="view on" id="view-pen">
+  <div class="pen-layout">
+    <div>
+      <div class="card mb">
+        <h2>预设组合 <small>PRESETS</small></h2>
+        <div class="preset-list" id="preset-list"></div>
+      </div>
+      <div class="card mb">
+        <h2>我的持仓 <small>POSITIONS</small></h2>
+        <div class="add-row">
+          <select id="asset-select" aria-label="选择标的"></select>
+          <input id="amount-input" type="number" min="0" step="1000" value="10000" aria-label="投入金额">
+          <button id="add-btn">添加</button>
+        </div>
+        <div class="pos-list" id="pos-list"></div>
+        <div class="note" style="margin-top:10px" id="cover-note">—</div>
+      </div>
+    </div>
+    <div>
+      <div class="kpis" id="kpis"></div>
+      <div class="card mb"><h2>底层持仓穿透 Top 15 <small>LOOK-THROUGH EXPOSURE</small></h2><div id="exposure-list"></div></div>
+      <div class="chart-grid">
+        <div class="card"><h2>资产相关性 <small id="corr-meta">PEARSON</small></h2><div id="corr-chart"></div></div>
+        <div class="card"><h2>组合净值与最大回撤 <small id="nav-meta">NAV / MDD</small></h2><div id="nav-chart"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 2: 高股息吃息真相 ============ -->
+<section class="view" id="view-div">
+  <div class="card mb"><h2>15 只高股息 A 股 <small>点击列头排序 · 点击行切换诊断</small></h2><div style="overflow-x:auto"><table id="div-table"><thead><tr>
+    <th class="l" data-sort="name">代码 / 名称</th><th class="l" data-sort="category">行业</th>
+    <th data-sort="consecutiveYears">连续分红年</th><th data-sort="ttmYieldPct">税前股息率</th>
+    <th data-sort="fillWinRatePct">填权胜率</th><th data-sort="avgFillDays">平均填权天</th><th data-sort="status">状态</th>
+  </tr></thead><tbody id="div-body"></tbody></table></div></div>
+  <div class="calc-grid">
+    <div class="card"><h2 id="div-detail-title">所选个股分红诊断 <small>FILL HISTORY</small></h2><div id="div-chart"></div><div class="note" id="div-detail-note" style="margin-top:8px"></div></div>
+    <div class="card"><h2>红利税后真实收益测算 <small>AFTER-TAX YIELD</small></h2>
+      <div class="field"><label>投入本金（元）</label><input id="principal" type="number" min="0" step="10000" value="100000"></div>
+      <div class="field"><label>持股周期（A股差别化红利税）</label><div class="seg" id="period-seg">
+        <button data-period="lt_1m">≤1个月 · 20%</button><button data-period="1m_to_1y">1月–1年 · 10%</button><button class="on" data-period="gt_1y">&gt;1年 · 免税</button>
+      </div></div>
+      <div class="field"><label>定存 / 国债基准利率 <span id="bench-val" class="mono">2.0%</span></label><input id="benchmark" type="range" min="0" max="6" step="0.1" value="2"></div>
+      <div class="result" id="tax-result"></div>
+      <div class="note" style="margin-top:8px">税后口径：≤1个月 20%、1个月至1年 10%、超过1年免征。基准利率可滑动对照。</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer id="footer-note">数据口径加载中…</footer>
+
+<script src="analytics.js"></script>
+<script src="live.js"></script>
+<script>
+(function(){
+'use strict';
+/* 构建时注入的唯一锚点 */
+var DATA=/*__ALPHALENS_DATA__*/;
+window.ALPHALENS_DATA=DATA; // 契约：构建注入的数据全局可读（验收脚本依赖）
+var AZ=window.AlphaLensAnalytics;
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(v,d){if(v==null||!isFinite(v))return '--';return Number(v).toFixed(d==null?2:d);}
+function pct(v,d){if(v==null||!isFinite(v))return '--';return (v>0?'+':'')+Number(v).toFixed(d==null?2:d)+'%';}
+
+var S={main:'pen',positions:[],preset:null,asset:null,sortKey:'ttmYieldPct',sortDir:-1,
+       period:'gt_1y',principal:100000,benchmark:2.0};
+
+/* ---------- 启动数据 ---------- */
+function boot(){
+  var assets=DATA.assets||{},divs=DATA.dividends||{};
+  // footer 口径
+  var m=DATA.meta||{};
+  $('footer-note').innerHTML='数据生成时间：'+esc(m.generatedAt||'--')
+    +' &nbsp;·&nbsp; ETF 仅穿透最新季度前十大重仓，覆盖率不等于全仓；未填权年份以红色标注。'
+    +'<br>数据源：'+esc((m.dataSources&&m.dataSources.etfHoldings)||'--')
+    +' ｜ '+esc((m.dataSources&&m.dataSources.dividends)||'--')
+    +' ｜ '+esc((m.dataSources&&m.dataSources.dailyPrices)||'--');
+  // 下拉
+  var opts=Object.keys(assets).sort().map(function(c){
+    return '<option value="'+esc(c)+'">'+esc(c)+' '+esc(assets[c].name)+'</option>';
+  }).join('');
+  $('asset-select').innerHTML=opts;
+  // 预设
+  $('preset-list').innerHTML=(DATA.presets||[]).map(function(p){
+    return '<button class="preset" data-id="'+esc(p.id)+'"><b>'+esc(p.name)+'</b><span>'+esc(p.desc)+'</span></button>';
+  }).join('');
+  Array.prototype.forEach.call($('preset-list').children,function(b){
+    b.onclick=function(){applyPreset(b.getAttribute('data-id'));};
+  });
+  // 持仓输入
+  $('add-btn').onclick=function(){
+    var c=$('asset-select').value,amt=Number($('amount-input').value);
+    if(!c||!(amt>0))return;
+    var ex=S.positions.filter(function(p){return p.code===c;})[0];
+    if(ex)ex.amount+=amt;else S.positions.push({code:c,amount:amt});
+    S.preset=null;renderPositions();renderPen();
+  };
+  $('amount-input').oninput=function(){S.principal=Number(this.value)||0;renderTax();};
+  // 主 Tab
+  Array.prototype.forEach.call(document.querySelectorAll('.main-tabs button'),function(b){
+    b.onclick=function(){
+      S.main=b.getAttribute('data-main');
+      Array.prototype.forEach.call(document.querySelectorAll('.main-tabs button'),function(x){
+        var on=x===b;x.className=on?'on':'';x.setAttribute('aria-selected',on?'true':'false');
+      });
+      $('view-pen').className='view'+(S.main==='pen'?' on':'');
+      $('view-div').className='view'+(S.main==='div'?' on':'');
+      if(S.main==='div')renderDivTable();else renderPen();
+    };
+  });
+  // 排行表排序
+  Array.prototype.forEach.call($('div-table').querySelectorAll('th[data-sort]'),function(th){
+    th.onclick=function(){var k=th.getAttribute('data-sort');
+      if(S.sortKey===k)S.sortDir*=-1;else{S.sortKey=k;S.sortDir=-1;}
+      renderDivTable();};
+  });
+  // 红利税控件
+  Array.prototype.forEach.call($('period-seg').children,function(b){
+    b.onclick=function(){S.period=b.getAttribute('data-period');
+      Array.prototype.forEach.call($('period-seg').children,function(x){x.className=x===b?'on':'';});
+      renderTax();};
+  });
+  $('benchmark').oninput=function(){S.benchmark=Number(this.value);$('bench-val').textContent=fmt(S.benchmark,1)+'%';renderTax();};
+  // 主题
+  $('theme-btn').onclick=function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var next=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    try{localStorage.setItem('al.theme',next);}catch(e){}
+    renderPen();renderDivDetail();
+  };
+  try{var t=localStorage.getItem('al.theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
+  // 实时状态（live.js 可选增强，失败不影响分析）
+  if(window.AlphaLive){
+    window.AlphaLive.status&&window.AlphaLive.status();
+    window.AlphaLive.subscribe&&window.AlphaLive.subscribe(function(st){
+      $('live-label').textContent=(st&&st.state)||'SNAPSHOT';
+      $('live-state').className='st '+((st&&st.state==='LIVE')?'live':'warn');
+    });
+    var liveCodes=Object.keys(assets).filter(function(c){return assets[c].market;});
+    window.AlphaLive.start(liveCodes,6000,function(){});
+    setTimeout(function(){
+      var st=window.AlphaLive.status?window.AlphaLive.status():{state:'SNAPSHOT'};
+      $('live-label').textContent=st.state==='LIVE'?'LIVE · 实时价':'SNAPSHOT · 离线快照';
+      $('live-state').className='st '+(st.state==='LIVE'?'live':'warn');
+    },6500);
+  }
+  applyPreset((DATA.presets&&DATA.presets[0]&&DATA.presets[0].id)||null);
+}
+
+function applyPreset(id){
+  var p=(DATA.presets||[]).filter(function(x){return x.id===id;})[0];
+  if(!p)return;
+  S.preset=id;S.positions=p.positions.map(function(x){return {code:x.code,amount:Number(x.amount)};});
+  Array.prototype.forEach.call($('preset-list').children,function(b){b.className=b.getAttribute('data-id')===id?'preset on':'preset';});
+  renderPositions();renderPen();
+}
+
+function renderPositions(){
+  var assets=DATA.assets||{},total=S.positions.reduce(function(s,p){return s+p.amount;},0);
+  $('pos-list').innerHTML=S.positions.length?S.positions.map(function(p,i){
+    var a=assets[p.code]||{},pw=total>0?p.amount/total*100:0;
+    return '<div class="pos"><span class="nm">'+esc(p.code)+' '+esc(a.name||'')+'</span>'
+      +'<input type="number" min="0" step="1000" value="'+p.amount+'" data-idx="'+i+'" aria-label="金额">'
+      +'<span class="pw">'+fmt(pw,1)+'%</span><button class="del" data-idx="'+i+'" aria-label="删除">×</button></div>';
+  }).join(''):'<div class="note">暂无持仓，选一个预设或手动添加。</div>';
+  Array.prototype.forEach.call($('pos-list').querySelectorAll('input[data-idx]'),function(inp){
+    inp.oninput=function(){var i=+this.getAttribute('data-idx');S.positions[i].amount=Number(this.value)||0;
+      S.preset=null;renderPositions();renderPen();};
+  });
+  Array.prototype.forEach.call($('pos-list').querySelectorAll('button[data-idx]'),function(b){
+    b.onclick=function(){S.positions.splice(+this.getAttribute('data-idx'),1);S.preset=null;renderPositions();renderPen();};
+  });
+  $('cover-note').textContent='共 '+S.positions.length+' 只 · 合计 ¥'+fmt(total,0);
+}
+
+function renderPen(){
+  var A=DATA.assets||{},pen=AZ.penetratePortfolio(S.positions,A);
+  var codes=S.positions.map(function(p){return p.code;});
+  var corr=AZ.computeCorrelationMatrix(codes,A);
+  var curve=AZ.computePortfolioCurveAndDrawdown(S.positions,A);
+  // 费率缺失（null）不能当 0：显示 -- 而不是 0.00%
+  var hasFee=S.positions.some(function(p){var a=A[p.code];return a&&a.fee!=null;});
+  // KPI
+  $('kpis').innerHTML=[
+    ['总金额','¥'+fmt(pen.totalAmount,0),''],
+    ['穿透覆盖率',fmt(pen.coveredRatio*100,1)+'%','sm'],
+    ['重合重仓股',String(pen.overlaps.length),'sm'],
+    ['加权费率',hasFee?fmt(pen.weightedFee,2)+'%':'--','sm'],
+    ['历史最大回撤',curve?fmt(curve.maxDrawdown*100,2)+'%':'--','sm'],
+    ['分散度评级','<span class="risk '+pen.riskLevel+'">'+({LOW:'低风险',MEDIUM:'中风险',HIGH:'高风险',EMPTY:'空'}[pen.riskLevel]||pen.riskLevel)+'</span>','']
+  ].map(function(k){return '<div class="kpi"><div class="k">'+k[0]+'</div><div class="v '+k[2]+'">'+k[1]+'</div></div>';}).join('');
+  // Top15
+  var maxW=pen.exposures.length?pen.exposures[0].totalWeight:1;
+  $('exposure-list').innerHTML=pen.exposures.length?pen.exposures.map(function(e){
+    var dup=e.contributors.length>=2;
+    var src=e.contributors.map(function(c){return esc(c.sourceName)+' '+fmt(c.contribution*100,1)+'%';}).join(' + ');
+    return '<div class="exp-row"><span class="nm">'+esc(e.name)+' <span class="mono">'+esc(e.code)+'</span>'
+      +(dup?'<span class="tag-overlap">重合</span>':'')+'</span>'
+      +'<span class="track"><i style="width:'+(e.totalWeight/maxW*100).toFixed(1)+'%"></i></span>'
+      +'<span class="pct">'+fmt(e.totalWeight*100,2)+'%</span>'
+      +(dup?'<span class="contrib">'+src+'</span>':'<span class="contrib">—</span>')+'</div>';
+  }).join(''):'<div class="note">无有效持仓</div>';
+  // 相关性
+  $('corr-meta').textContent='PEARSON · '+corr.sampleDays+'日';
+  $('corr-chart').innerHTML=AZ.correlationSVG(corr,codes.map(function(c){return c.slice(-4);}));
+  // 净值回撤
+  $('nav-meta').textContent=curve?(fmt(curve.totalReturn*100,2)+'% · 年化波动 '+fmt(curve.annualizedVol*100,1)+'%'):'NAV / MDD';
+  $('nav-chart').innerHTML=curve?AZ.navDrawdownSVG(curve):'<div class="note">数据不足</div>';
+}
+
+/* ---------- Tab2 ---------- */
+var sortedDivs=[];
+function renderDivTable(){
+  var list=Object.keys(DATA.dividends||{}).map(function(c){
+    var d=DATA.dividends[c];return Object.assign({code:c},d);
+  });
+  var k=S.sortKey,dir=S.sortDir;
+  list.sort(function(a,b){
+    var av=a[k],bv=b[k];
+    if(typeof av==='string'||typeof bv==='string')return String(av||'').localeCompare(String(bv||''))*dir;
+    return ((Number(av)||0)-(Number(bv)||0))*dir;
+  });
+  sortedDivs=list;
+  $('div-body').innerHTML=list.map(function(d){
+    return '<tr data-code="'+esc(d.code)+'" class="'+(S.asset===d.code?'sel':'')+'">'
+      +'<td class="l"><b>'+esc(d.code)+'</b> '+esc(d.name)+'</td><td class="l">'+esc(d.category||'--')+'</td>'
+      +'<td>'+fmt(d.consecutiveYears,0)+'</td><td>'+(d.ttmYieldPct!=null?fmt(d.ttmYieldPct,2)+'%':'--')+'</td>'
+      +'<td>'+(d.fillWinRatePct!=null?fmt(d.fillWinRatePct,1)+'%':'--')+'</td>'
+      +'<td>'+(d.avgFillDays!=null?fmt(d.avgFillDays,0):'--')+'</td>'
+      +'<td><span class="badge '+esc(d.status)+'">'+esc(d.status)+'</span></td></tr>';
+  }).join('');
+  Array.prototype.forEach.call($('div-body').querySelectorAll('tr'),function(tr){
+    tr.onclick=function(){S.asset=tr.getAttribute('data-code');renderDivTable();renderDivDetail();renderTax();};
+  });
+  if(!S.asset&&list.length)S.asset=list[0].code;
+  if(S.asset){renderDivDetail();renderTax();}
+}
+function renderDivDetail(){
+  var d=(DATA.dividends||{})[S.asset];
+  if(!d){$('div-chart').innerHTML='<div class="note">请选择标的</div>';return;}
+  $('div-detail-title').innerHTML=esc(d.name)+' <small>'+esc(d.code)+' · 近10年现金分红</small>';
+  $('div-chart').innerHTML=AZ.dividendTimelineSVG(d);
+  var miss=(d.history||[]).filter(function(h){return h.filled===false;});
+  $('div-detail-note').textContent='连续派息 '+d.consecutiveYears+' 年 · 填权胜率 '
+    +(d.fillWinRatePct!=null?fmt(d.fillWinRatePct,1)+'%':'--')+' · 平均填权 '
+    +(d.avgFillDays!=null?fmt(d.avgFillDays,0)+' 个交易日':'--')+' 日'
+    +(miss.length?' · '+miss.length+' 次未填权（红色柱）':'');
+}
+function renderTax(){
+  var d=(DATA.dividends||{})[S.asset],y=d&&d.ttmYieldPct;
+  if(y==null){$('tax-result').innerHTML='<div class="note">该标的无有效股息率数据</div>';return;}
+  var r=AZ.calcAfterTaxDividend(y,S.principal,S.period,S.benchmark);
+  $('tax-result').innerHTML=[
+    ['税前股息率',fmt(y,2)+'%'],
+    ['红利税率',fmt(r.taxRate*100,0)+'%'],
+    ['税后年化股息率',fmt(r.netYieldPct,2)+'%'],
+    ['年度到手现金','¥'+fmt(r.annualCashAfterTax,0)],
+    ['跑赢基准',fmt(r.spreadPct,2)+'%'],
+    ['相对基准差额','¥'+fmt(r.extraCashVsBenchmark,0)]
+  ].map(function(x){return '<div class="r"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>';}).join('');
+}
+
+boot();
+})();
+</script>
+</body>
+</html>

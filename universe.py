@@ -1,76 +1,97 @@
-"""AlphaLens instrument directory for search.
+"""AlphaLens v3 — curated 30-instrument universe (15 ETF + 15 high-dividend A-shares).
 
-Static catalog only: code, name, pinyin initials, category. No market data.
-A hit here means "searchable", not "cached". The UI checks snapshot.cache_keys
-before letting a user switch; uncached hits show an explicit network-required hint.
+Design goals:
+  * Module A (portfolio penetration): ETFs with real top-10 holdings.
+  * Module B (dividend truth): A-shares with real cash dividend history.
+  * 3 preset portfolios for one-click demonstration.
+
+No market data here — this is a static catalog only.
 """
-
-STOCKS = [
-    ("600519", "贵州茅台", "gzmt", "A股"),
-    ("300750", "宁德时代", "ndsd", "A股"),
-    ("002027", "分众传媒", "fzcm", "A股"),
-    ("000858", "五粮液", "wly", "A股"),
-    ("601318", "中国平安", "zgpa", "A股"),
-    ("600036", "招商银行", "zsyh", "A股"),
-    ("000333", "美的集团", "mdjt", "A股"),
-    ("601899", "紫金矿业", "zjky", "A股"),
-    ("002594", "比亚迪", "byd", "A股"),
-    ("600900", "长江电力", "cjdl", "A股"),
-    ("688981", "中芯国际", "zxgj", "A股"),
-    ("002415", "海康威视", "hkws", "A股"),
-    ("600276", "恒瑞医药", "hryy", "A股"),
-    ("601012", "隆基绿能", "ljln", "A股"),
-    ("000001", "平安银行", "payh", "A股"),
-    ("600887", "伊利股份", "ylgf", "A股"),
-    ("603259", "药明康德", "ymkd", "A股"),
-    ("002475", "立讯精密", "lxjm", "A股"),
-    ("600030", "中信证券", "zxzq", "A股"),
-    ("601888", "中国中免", "zgzm", "A股"),
-]
-
-INDICES = [
-    ("000001", "上证指数", "szzs", "指数"),
-    ("399001", "深证成指", "szcz", "指数"),
-    ("399006", "创业板指", "cybz", "指数"),
-    ("000688", "科创50", "kc50", "指数"),
-    ("000300", "沪深300", "hs300", "指数"),
-    ("000905", "中证500", "zz500", "指数"),
-    ("000852", "中证1000", "zz1000", "指数"),
-    ("000016", "上证50", "sz50", "指数"),
-]
-
 ETFS = [
-    ("510300", "沪深300ETF", "hs300etf", "ETF"),
-    ("510050", "上证50ETF", "sz50etf", "ETF"),
-    ("510500", "中证500ETF", "zz500etf", "ETF"),
-    ("159915", "创业板ETF", "cybetf", "ETF"),
-    ("588000", "科创50ETF", "kc50etf", "ETF"),
-    ("512480", "半导体ETF", "bdtetf", "ETF"),
-    ("515790", "光伏ETF", "gfetf", "ETF"),
-    ("512690", "酒ETF", "jiuetf", "ETF"),
+    {"code": "510300", "name": "沪深300ETF", "category": "宽基", "market": "sh"},
+    {"code": "510500", "name": "中证500ETF", "category": "宽基", "market": "sh"},
+    {"code": "510050", "name": "上证50ETF",  "category": "宽基", "market": "sh"},
+    {"code": "159915", "name": "创业板ETF",  "category": "成长", "market": "sz"},
+    {"code": "588000", "name": "科创50ETF",  "category": "成长", "market": "sh"},
+    {"code": "510880", "name": "红利ETF",    "category": "红利", "market": "sh"},
+    {"code": "512890", "name": "红利低波ETF","category": "红利", "market": "sh"},
+    {"code": "515180", "name": "中证红利ETF","category": "红利", "market": "sh"},
+    {"code": "512800", "name": "银行ETF",    "category": "行业", "market": "sh"},
+    {"code": "159928", "name": "消费ETF",    "category": "行业", "market": "sz"},
+    {"code": "512010", "name": "医药ETF",    "category": "行业", "market": "sh"},
+    {"code": "512480", "name": "半导体ETF",  "category": "行业", "market": "sh"},
+    {"code": "516160", "name": "新能源ETF",  "category": "行业", "market": "sh"},
+    {"code": "512880", "name": "证券ETF",    "category": "行业", "market": "sh"},
+    {"code": "518880", "name": "黄金ETF",    "category": "商品", "market": "sh"},
 ]
 
-FUTURES = [
-    ("IF", "沪深300期指", "hs300qz", "期货"),
-    ("IC", "中证500期指", "zz500qz", "期货"),
-    ("IM", "中证1000期指", "zz1000qz", "期货"),
-    ("IH", "上证50期指", "sz50qz", "期货"),
-    ("AU0", "沪金主力", "hjzl", "期货"),
-    ("CU0", "沪铜主力", "htzl", "期货"),
-    ("SC0", "原油主力", "yyzl", "期货"),
-    ("RB0", "螺纹钢主力", "lwgzl", "期货"),
-    ("LC0", "碳酸锂主力", "tslzl", "期货"),
+DIVIDEND_STOCKS = [
+    {"code": "600900", "name": "长江电力", "category": "电力", "market": "sh"},
+    {"code": "601088", "name": "中国神华", "category": "煤炭", "market": "sh"},
+    {"code": "601398", "name": "工商银行", "category": "银行", "market": "sh"},
+    {"code": "601939", "name": "建设银行", "category": "银行", "market": "sh"},
+    {"code": "601288", "name": "农业银行", "category": "银行", "market": "sh"},
+    {"code": "600036", "name": "招商银行", "category": "银行", "market": "sh"},
+    {"code": "600519", "name": "贵州茅台", "category": "消费", "market": "sh"},
+    {"code": "000333", "name": "美的集团", "category": "家电", "market": "sz"},
+    {"code": "000651", "name": "格力电器", "category": "家电", "market": "sz"},
+    {"code": "600941", "name": "中国移动", "category": "通信", "market": "sh"},
+    {"code": "601728", "name": "中国电信", "category": "通信", "market": "sh"},
+    {"code": "600028", "name": "中国石化", "category": "能源", "market": "sh"},
+    {"code": "601857", "name": "中国石油", "category": "能源", "market": "sh"},
+    {"code": "601006", "name": "大秦铁路", "category": "交运", "market": "sh"},
+    {"code": "600377", "name": "宁沪高速", "category": "交运", "market": "sh"},
+]
+
+PRESET_PORTFOLIOS = [
+    {
+        "id": "fake_diversification",
+        "name": "典型“假分散”踩坑组合",
+        "desc": "宽基+上证50+银行ETF看似分散，穿透后共持招行/茅台/平安/紫金等，高度重合",
+        "positions": [
+            {"code": "510300", "amount": 40000},
+            {"code": "510050", "amount": 30000},
+            {"code": "512800", "amount": 30000},
+        ],
+    },
+    {
+        "id": "dividend_income",
+        "name": "稳健吃息防回撤组合",
+        "desc": "红利ETF与高股息水电煤炭龙头混合配置，侧重低回撤与稳定现金流",
+        "positions": [
+            {"code": "510880", "amount": 40000},
+            {"code": "600900", "amount": 30000},
+            {"code": "601088", "amount": 30000},
+        ],
+    },
+    {
+        "id": "balanced_contrast",
+        "name": "红利+黄金+成长低相关对照",
+        "desc": "红利股(周期)+黄金商品(无股票持仓)+创业板成长，底层几乎不重合，用于对比分散效果",
+        "positions": [
+            {"code": "510880", "amount": 40000},
+            {"code": "518880", "amount": 30000},
+            {"code": "159915", "amount": 30000},
+        ],
+    },
 ]
 
 
 def build():
+    """Return unified catalog rows: {code,name,category,market,type}."""
     rows = []
-    for group in (STOCKS, INDICES, ETFS, FUTURES):
-        for code, name, py, kind in group:
-            rows.append({"code": code, "name": name, "py": py, "kind": kind})
+    for group, typ in ((ETFS, "ETF"), (DIVIDEND_STOCKS, "STOCK")):
+        for item in group:
+            rows.append({
+                "code": item["code"], "name": item["name"],
+                "category": item["category"], "market": item["market"], "type": typ,
+            })
     return rows
 
 
 if __name__ == "__main__":
     import json
-    print(json.dumps(build(), ensure_ascii=False, indent=1))
+    print(json.dumps({
+        "catalog": build(),
+        "presets": PRESET_PORTFOLIOS,
+    }, ensure_ascii=False, indent=1))

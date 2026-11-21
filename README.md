@@ -146,3 +146,18 @@ node verify_ui_fiapp.mjs               # 13 项 UI 硬核验收
 - 全面排查并修复 4 个 bug：主题切换在部分浏览器不生效、深色热力图硬编码黑墨不可见、`&nbsp;` 二次转义、雷达图/Toast 硬编码色
 - 按 `executor_spec.md` 复刻 vibedesign.tips 五大类：物理按键墨键、Odometer、Focus 聚焦、图表斜纹生长、单色排版、深浅主题
 - 实测：13/13 UI 验收、verify.js 59/0、pstack 四门禁、零 JS 错误、零 CDN
+
+---
+
+## AlphaLens v3（2026-11-21 新增）
+
+产品重塑：从行情看板改为**有输入、有算法、有诊断结论**的垂直工具。
+
+- 主入口：`index_alphalens_v3_live.html`（双击即开，零依赖）
+- 模块 A：组合持仓穿透 —— 输入 2–6 只 ETF/股票与金额，穿透底层前十大重仓，揪出「假分散」，计算相关性矩阵与最大回撤
+- 模块 B：高股息吃息真相 —— 15 只高股息 A 股的真实连续分红年数、除权后填权天数与胜率、A 股分段红利税税后收益测算
+- 数据：`analysis_data.json`（30 标的、ETF 真实持仓、近 10 年分红与不复权填权核验）
+- 计算：`analytics.js`（4 个纯函数 + 手写 SVG 渲染器）
+- 验收：`node verify_v3.mjs` → 7/7
+
+v3 与 v2 并存：v2 门户仍是 `index_fiapp_live.html`，v3 是独立新入口，互不破坏。
