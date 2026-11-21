@@ -1,0 +1,38 @@
+<svg id="fig1" viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0A0A0A;font-family:Menlo,Consolas,'PingFang SC',monospace">
+<defs><marker id="a1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#8A8A8A"/></marker></defs>
+<rect width="960" height="520" fill="#0A0A0A"/>
+<text x="24" y="32" fill="#EAEAEA" font-size="18" font-weight="bold">FIG 1  /  系统总体架构</text>
+<text x="24" y="51" fill="#8A8A8A" font-size="11">分层架构 · 单向依赖 · 唯一数据契约 window.AlphaLens.load(snapshot)</text>
+<line x1="24" y1="62" x2="936" y2="62" stroke="#333"/>
+
+<rect x="24" y="74" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="94" fill="#E8B33A" font-size="12" font-weight="bold">L1  外部数据源 / EXTERNAL SOURCES</text>
+<text x="36" y="114" fill="#C9C9C9" font-size="11">新浪日线 · 东财 push2his 四档资金 · 同花顺行业资金 · 乐咕市场宽度</text>
+<text x="36" y="130" fill="#C9C9C9" font-size="11">财务摘要 · 期货主力 · ETF 期权 · 指数行情</text>
+<line x1="480" y1="136" x2="480" y2="154" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="158" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="178" fill="#E8B33A" font-size="12" font-weight="bold">L2  采集与缓存 / FETCH AND CACHE</text>
+<text x="36" y="198" fill="#C9C9C9" font-size="11">fetch_snapshot.py：12 段独立抓取 · 逐段最小缓存 cache/ · 单段失败不拖垮同组真数据</text>
+<text x="36" y="214" fill="#C9C9C9" font-size="11">curl 子进程绕过 TLS 指纹过滤 · --offline 从缓存重建 · 网络请求为零</text>
+<line x1="480" y1="220" x2="480" y2="238" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="242" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="262" fill="#E8B33A" font-size="12" font-weight="bold">L3  校验与快照 / VALIDATE AND SNAPSHOT</text>
+<text x="36" y="282" fill="#C9C9C9" font-size="11">Python 与 Node 双重校验：四档零和 · 有限性 · 分母非零 · 帧对齐 · 宽度求和</text>
+<text x="36" y="298" fill="#C9C9C9" font-size="11">snapshot.json · meta.proxies 代理清单 · index_live.html 注入投屏可见披露条</text>
+<line x1="480" y1="304" x2="480" y2="322" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="326" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="346" fill="#E8B33A" font-size="12" font-weight="bold">L4  核心引擎 / CORE ENGINE  (core.js)</text>
+<text x="36" y="366" fill="#C9C9C9" font-size="11">setSource → validate → computeAll → fundSeries / volumeRadar / temperature</text>
+<text x="36" y="382" fill="#C9C9C9" font-size="11">scoreReport / derivSignals / treemap · 全部纯函数，零外部依赖</text>
+<line x1="480" y1="388" x2="480" y2="406" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="410" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="430" fill="#E8B33A" font-size="12" font-weight="bold">L5  渲染与交互 / UI  (index.html)</text>
+<text x="36" y="450" fill="#C9C9C9" font-size="11">四面板 · 48 帧逐帧回放 · 深链 panel/code/frame · 原生 SVG 图表</text>
+<text x="36" y="466" fill="#C9C9C9" font-size="11">姓名学号水印 · 打印电子签章 · 数据口径条常驻</text>
+
+<text x="24" y="500" fill="#4AF626" font-size="11">注入契约  window.AlphaLens.load(s)  →  setSource(s)  →  computeAll(code)  →  render()</text>
+</svg>

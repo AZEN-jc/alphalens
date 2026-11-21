@@ -1,0 +1,77 @@
+<svg id="fig3" viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0A0A0A;font-family:Menlo,Consolas,'PingFang SC',monospace">
+<rect width="960" height="520" fill="#0A0A0A"/>
+<text x="24" y="32" fill="#EAEAEA" font-size="18" font-weight="bold">FIG 3  /  功能模块结构</text>
+<text x="24" y="51" fill="#8A8A8A" font-size="11">四面板业务能力 + 四项公共能力</text>
+<line x1="24" y1="62" x2="936" y2="62" stroke="#333"/>
+
+<rect x="350" y="78" width="260" height="44" fill="#1A1010" stroke="#FF2A2A"/>
+<text x="480" y="106" fill="#FF2A2A" font-size="14" font-weight="bold" text-anchor="middle">ALPHALENS 终端</text>
+
+<g font-size="10">
+<rect x="16" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="106" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 1 量价透视</text>
+<line x1="28" y1="196" x2="184" y2="196" stroke="#333"/>
+<text x="28" y="220" fill="#C9C9C9">K 线主图</text>
+<text x="28" y="244" fill="#C9C9C9">主力散户剪刀差</text>
+<text x="28" y="268" fill="#C9C9C9">四档资金流</text>
+<text x="28" y="292" fill="#C9C9C9">吸筹派发标记</text>
+<text x="28" y="316" fill="#C9C9C9">量比与换手率</text>
+<text x="28" y="340" fill="#4AF626">四种量价形态</text>
+<text x="28" y="380" fill="#8A8A8A">回答：谁在买</text>
+<text x="28" y="400" fill="#8A8A8A">谁在卖</text>
+
+<rect x="208" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="298" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 2 温度热力</text>
+<line x1="220" y1="196" x2="376" y2="196" stroke="#333"/>
+<text x="220" y="220" fill="#C9C9C9">四项加权温度</text>
+<text x="220" y="244" fill="#C9C9C9">五档区间建议</text>
+<text x="220" y="268" fill="#C9C9C9">涨跌家数统计</text>
+<text x="220" y="292" fill="#C9C9C9">板块矩形树图</text>
+<text x="220" y="316" fill="#C9C9C9">资金净额着色</text>
+<text x="220" y="340" fill="#4AF626">成交额占比</text>
+<text x="220" y="380" fill="#8A8A8A">回答：仓位轻重</text>
+<text x="220" y="400" fill="#8A8A8A">钱往哪走</text>
+
+<rect x="400" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="490" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 3 衍生雷达</text>
+<line x1="412" y1="196" x2="568" y2="196" stroke="#333"/>
+<text x="412" y="220" fill="#C9C9C9">IF / IC / IM 基差</text>
+<text x="412" y="244" fill="#C9C9C9">基差环比风向</text>
+<text x="412" y="268" fill="#C9C9C9">商品主力联动</text>
+<text x="412" y="292" fill="#C9C9C9">期权权利金比</text>
+<text x="412" y="316" fill="#C9C9C9">已实现波动率</text>
+<text x="412" y="340" fill="#FF2A2A">预警聚合列表</text>
+<text x="412" y="380" fill="#8A8A8A">回答：机构抢跑</text>
+<text x="412" y="400" fill="#8A8A8A">还是对冲</text>
+
+<rect x="592" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="682" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 4 财报体检</text>
+<line x1="604" y1="196" x2="760" y2="196" stroke="#333"/>
+<text x="604" y="220" fill="#C9C9C9">五维线性评分</text>
+<text x="604" y="244" fill="#C9C9C9">A / B / C / D 分级</text>
+<text x="604" y="268" fill="#C9C9C9">净现比核查</text>
+<text x="604" y="292" fill="#C9C9C9">商誉占比核查</text>
+<text x="604" y="316" fill="#C9C9C9">短债覆盖核查</text>
+<text x="604" y="340" fill="#FF2A2A">红绿灯结论</text>
+<text x="604" y="380" fill="#8A8A8A">回答：是不是</text>
+<text x="604" y="400" fill="#8A8A8A">真金白银</text>
+
+<rect x="784" y="160" width="160" height="300" fill="#121212" stroke="#4AF626"/>
+<text x="864" y="184" fill="#4AF626" font-size="12" font-weight="bold" text-anchor="middle">公共能力</text>
+<line x1="796" y1="196" x2="932" y2="196" stroke="#333"/>
+<text x="796" y="220" fill="#C9C9C9">48 帧回放</text>
+<text x="796" y="244" fill="#C9C9C9">深链定位</text>
+<text x="796" y="268" fill="#C9C9C9">水印与本地存储</text>
+<text x="796" y="292" fill="#C9C9C9">打印电子签章</text>
+<text x="796" y="316" fill="#C9C9C9">数据口径条</text>
+<text x="796" y="340" fill="#C9C9C9">状态常驻标识</text>
+<text x="796" y="380" fill="#8A8A8A">横跨四面板</text>
+
+<line x1="410" y1="122" x2="106" y2="158" stroke="#8A8A8A"/>
+<line x1="450" y1="122" x2="298" y2="158" stroke="#8A8A8A"/>
+<line x1="510" y1="122" x2="490" y2="158" stroke="#8A8A8A"/>
+<line x1="550" y1="122" x2="682" y2="158" stroke="#8A8A8A"/>
+<line x1="590" y1="122" x2="864" y2="158" stroke="#8A8A8A"/>
+</g>
+<text x="24" y="498" fill="#8A8A8A" font-size="10">图注：四个面板各自回答一个散户问题，公共能力保证答辩现场可演示、可追溯。</text>
+</svg>

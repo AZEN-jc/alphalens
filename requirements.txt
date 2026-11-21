@@ -1,0 +1,13 @@
+# AlphaLens — Python 依赖（Python 3.13）
+# 只列直接依赖；完整锁定版本见当前 .venv/bin/pip freeze
+akshare>=1.20        # 指数十年日线（fetch_decade.py）、A股快照（fetch_snapshot.py）
+requests>=2.31       # HTTP 抓取
+curl_cffi>=0.17      # 部分接口的 TLS 指纹适配
+beautifulsoup4>=4.12 # HTML 解析
+lxml>=5.0            # 解析器后端
+pandas>=2.2          # AKShare 返回的 DataFrame
+openpyxl>=3.1        # AKShare 依赖的 xlsx 读取
+tqdm>=4.66           # 抓取进度
+
+# 前端零依赖：core.js / live.js / 手写 SVG，无 CDN、无 npm 包。
+# 验收脚本 verify_ui_fiapp.mjs 仅用 Node 内置模块 + 本机 Chrome headless。

@@ -1,0 +1,63 @@
+<svg id="fig2" viewBox="0 0 960 470" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0A0A0A;font-family:Menlo,Consolas,'PingFang SC',monospace">
+<defs><marker id="a2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#8A8A8A"/></marker></defs>
+<rect width="960" height="470" fill="#0A0A0A"/>
+<text x="24" y="32" fill="#EAEAEA" font-size="18" font-weight="bold">FIG 2  /  数据流与代理披露</text>
+<text x="24" y="51" fill="#8A8A8A" font-size="11">七类外部源 → 分段缓存 → 校验 → 快照 → 注入 → 渲染 · 代理信息全程随行</text>
+<line x1="24" y1="62" x2="936" y2="62" stroke="#333"/>
+
+<g font-size="11">
+<rect x="16" y="96" width="140" height="86" fill="#121212" stroke="#E8B33A"/>
+<text x="86" y="118" fill="#E8B33A" font-size="11" text-anchor="middle">外部数据源</text>
+<text x="86" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">日线 / 四档资金</text>
+<text x="86" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">行业 / 宽度 / 财报</text>
+<text x="86" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">期货 / 期权 / 指数</text>
+
+<rect x="176" y="96" width="140" height="86" fill="#121212" stroke="#333"/>
+<text x="246" y="118" fill="#EAEAEA" font-size="11" text-anchor="middle">分段抓取</text>
+<text x="246" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">12 段独立单元</text>
+<text x="246" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">curl 通道取四档</text>
+<text x="246" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">单段失败即回退</text>
+
+<rect x="336" y="96" width="140" height="86" fill="#121212" stroke="#333"/>
+<text x="406" y="118" fill="#EAEAEA" font-size="11" text-anchor="middle">独立缓存</text>
+<text x="406" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">cache/ 12 段</text>
+<text x="406" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">10 CACHE</text>
+<text x="406" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">2 FALLBACK</text>
+
+<rect x="496" y="96" width="140" height="86" fill="#121212" stroke="#333"/>
+<text x="566" y="118" fill="#EAEAEA" font-size="11" text-anchor="middle">双重校验</text>
+<text x="566" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">四档零和</text>
+<text x="566" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">有限性 / 分母</text>
+<text x="566" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">13/13 一致</text>
+
+<rect x="656" y="96" width="140" height="86" fill="#121212" stroke="#FF2A2A"/>
+<text x="726" y="118" fill="#FF2A2A" font-size="11" text-anchor="middle">快照 + 注入</text>
+<text x="726" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">snapshot.json</text>
+<text x="726" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">provenance 披露条</text>
+<text x="726" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">运行时措辞修正</text>
+
+<rect x="816" y="96" width="128" height="86" fill="#121212" stroke="#4AF626"/>
+<text x="880" y="118" fill="#4AF626" font-size="11" text-anchor="middle">终端渲染</text>
+<text x="880" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">四面板</text>
+<text x="880" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">48 帧回放</text>
+<text x="880" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">水印 / 签章</text>
+
+<line x1="156" y1="139" x2="174" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="316" y1="139" x2="334" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="476" y1="139" x2="494" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="636" y1="139" x2="654" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="796" y1="139" x2="814" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+</g>
+
+<line x1="24" y1="202" x2="936" y2="202" stroke="#333"/>
+<text x="24" y="224" fill="#E8B33A" font-size="12" font-weight="bold">代理字段随行路径 / PROVENANCE</text>
+<text x="24" y="246" fill="#C9C9C9" font-size="11">meta.proxies（七条） → CLI 打印 → 注入页 #al-provenance 可见条 → 运行时文本替换</text>
+<text x="24" y="268" fill="#C9C9C9" font-size="11">300750 / 002027 四档资金为量价代理 · 期权 PCR 为权利金比 · IV 为 20 日已实现波动率</text>
+<text x="24" y="290" fill="#C9C9C9" font-size="11">炸板数、昨日成交额、研发费用率为估算或占位 · 600519 资金与财报、板块净额、指数与基差为真实值</text>
+
+<line x1="24" y1="310" x2="936" y2="310" stroke="#333"/>
+<text x="24" y="332" fill="#E8B33A" font-size="12" font-weight="bold">离线分支 / OFFLINE PATH</text>
+<text x="24" y="354" fill="#4AF626" font-size="11">fetch_snapshot.py --offline → 跳过全部抓取 → 直接读 cache/ → 网络请求 0 次</text>
+<text x="24" y="376" fill="#C9C9C9" font-size="11">重建快照与原快照逐字段一致，仅 meta.generated 时间戳不同 · 答辩断网路径实测通过</text>
+<text x="24" y="404" fill="#8A8A8A" font-size="10">图注：真实值与代理值在投屏上分区呈现，代理值不作为投资结论的唯一依据。</text>
+</svg>

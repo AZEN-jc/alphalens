@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlphaLens 阿尔法透视镜 / 毕业设计说明书</title>
+<style>
+:root{--bg:#0A0A0A;--panel:#121212;--line:#333;--fg:#EAEAEA;--dim:#8A8A8A;--red:#FF2A2A;--green:#4AF626;--amber:#E8B33A;--mono:"SF Mono",Menlo,Consolas,"PingFang SC",monospace}
+*{box-sizing:border-box;margin:0;padding:0;border-radius:0!important}
+body{background:var(--bg);color:var(--fg);font:14px/1.85 var(--mono);padding:48px 24px}
+.wrap{max-width:1040px;margin:0 auto}
+header{border-bottom:2px solid var(--red);padding-bottom:20px;margin-bottom:32px}
+h1{font-size:30px;letter-spacing:.04em;margin-bottom:8px}
+.sub{color:var(--amber);font-size:13px;letter-spacing:.08em}
+.meta{color:var(--dim);font-size:12px;margin-top:12px;line-height:1.9}
+h2{font-size:18px;color:var(--amber);border-left:4px solid var(--red);padding-left:12px;margin:36px 0 14px;letter-spacing:.03em}
+h3{font-size:14px;color:var(--fg);margin:20px 0 8px}
+p{color:#C9C9C9;text-align:justify;margin:10px 0;text-indent:2em}
+p.noindent{text-indent:0}
+.fig{margin:24px 0 30px;border:1px solid var(--line);background:#080808;padding:14px}
+.cap{color:var(--dim);font-size:12px;margin-top:10px;text-align:center;letter-spacing:.04em}
+.key{color:var(--red)}
+.ok{color:var(--green)}
+.amber{color:var(--amber)}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:12px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+th{background:#1A1A1A;color:var(--amber)}
+.note{border-left:3px solid var(--amber);background:#1A1608;padding:12px 16px;margin:18px 0;color:#D8D2BE;font-size:13px}
+footer{border-top:1px solid var(--line);margin-top:48px;padding-top:16px;color:var(--dim);font-size:12px}
+@media print{
+ body{background:#fff;color:#000;padding:0;font-size:10.5pt}
+ h1,h2,h3,.sub,.cap{color:#000}
+ p{color:#111}
+ .fig{border:1px solid #999;background:#fff;page-break-inside:avoid}
+ .meta,footer,.note,th,td{color:#333}
+ th{background:#eee}
+ h2{border-left:3px solid #000}
+ @page{size:A4;margin:18mm 15mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>ALPHALENS / 阿尔法透视镜</h1>
+  <div class="sub">散户 vs 主力资金博弈全景终端 · 毕业设计说明书</div>
+  <div class="meta">
+    交付形态：零依赖静态单页 · 双击 index.html 可运行 · 断网可用<br>
+    技术栈：原生 HTML / CSS / JavaScript（零框架、零 CDN）· Python 3 + AKShare 数据生成层<br>
+    数据基准：2026-11-13 收盘快照 · 三只标的 × 48 交易日 · 核心自检 59 条断言全过
+  </div>
+</header>
+
+<h2>1 问题定义与目标</h2>
+<p>散户看盘普遍卡在两个地方。第一是只看涨跌、看不到资金结构，容易把主力的拉高派发误读成突破，或在吸筹阶段被震出局。第二是财报术语门槛高，净资产收益率、净现比、商誉占净资产比重这些指标，很难直接翻译成可执行的判断。市面上的数据终端要么依赖实时网络，答辩现场断网或收盘之后即刻失效；要么把代理指标包装成实盘行情，结论看着专业，被追问一句口径就露馅。</p>
+<p>本设计的目标，是交付一个断网可跑、四面板可现场操作的静态终端：覆盖量价透视、大盘温度与板块热力、期指期权先行雷达、财报傻瓜体检；支持逐帧离线回放、深链定位、姓名学号水印与打印电子签章；算法可被断言实证，数据口径在投屏上可见，仿真与真实数据不互相冒充。</p>
+
+<h2>2 设计约束与技术取舍</h2>
+<p>硬约束来自答辩场景：现场网络不可靠，不能依赖 CDN 或实时接口；必须在普通浏览器里双击打开；不能装包、不能配环境。由此确定快照优先架构——实时 AKShare 接口退化为可选的数据生成层，界面与算法层只认一个注入入口 <span class="key">window.AlphaLens.load(snapshot)</span>。渲染层与数据层靠这一份契约解耦，换数据源不需要改一行渲染代码。</p>
+<p>视觉锁定 Tactical Telemetry 单一原型：暗色 CRT 基底、等宽字、刚性栅格、无圆角，红涨绿跌。绿色只用于行情数值与曲线，不进入按钮、边框或标题，避免颜色语义被污染。四档资金净额严格守恒，主力累计与散户累计互为镜像，从图上就能看出钱从哪来、到哪去，而不是靠一句说法。</p>
+
+<h2>3 系统总体架构</h2>
+<p>系统自下而上分为五层，依赖方向单向。数据生成层负责抓取与缓存，输出一份结构固定的快照；注入层把快照写进自包含页面，并补上投屏可见的数据口径披露；核心引擎完成校验与全部指标计算；渲染层只消费引擎输出，负责四面板、回放与签章。任一层出错都不会静默穿透到上一层，校验在入口处直接抛错。</p>
+
+<div class="fig">
+<svg id="fig1" viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0A0A0A;font-family:Menlo,Consolas,'PingFang SC',monospace">
+<defs><marker id="a1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#8A8A8A"/></marker></defs>
+<rect width="960" height="520" fill="#0A0A0A"/>
+<text x="24" y="32" fill="#EAEAEA" font-size="18" font-weight="bold">FIG 1  /  系统总体架构</text>
+<text x="24" y="51" fill="#8A8A8A" font-size="11">分层架构 · 单向依赖 · 唯一数据契约 window.AlphaLens.load(snapshot)</text>
+<line x1="24" y1="62" x2="936" y2="62" stroke="#333"/>
+
+<rect x="24" y="74" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="94" fill="#E8B33A" font-size="12" font-weight="bold">L1  外部数据源 / EXTERNAL SOURCES</text>
+<text x="36" y="114" fill="#C9C9C9" font-size="11">新浪日线 · 东财 push2his 四档资金 · 同花顺行业资金 · 乐咕市场宽度</text>
+<text x="36" y="130" fill="#C9C9C9" font-size="11">财务摘要 · 期货主力 · ETF 期权 · 指数行情</text>
+<line x1="480" y1="136" x2="480" y2="154" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="158" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="178" fill="#E8B33A" font-size="12" font-weight="bold">L2  采集与缓存 / FETCH AND CACHE</text>
+<text x="36" y="198" fill="#C9C9C9" font-size="11">fetch_snapshot.py：12 段独立抓取 · 逐段最小缓存 cache/ · 单段失败不拖垮同组真数据</text>
+<text x="36" y="214" fill="#C9C9C9" font-size="11">curl 子进程绕过 TLS 指纹过滤 · --offline 从缓存重建 · 网络请求为零</text>
+<line x1="480" y1="220" x2="480" y2="238" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="242" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="262" fill="#E8B33A" font-size="12" font-weight="bold">L3  校验与快照 / VALIDATE AND SNAPSHOT</text>
+<text x="36" y="282" fill="#C9C9C9" font-size="11">Python 与 Node 双重校验：四档零和 · 有限性 · 分母非零 · 帧对齐 · 宽度求和</text>
+<text x="36" y="298" fill="#C9C9C9" font-size="11">snapshot.json · meta.proxies 代理清单 · index_live.html 注入投屏可见披露条</text>
+<line x1="480" y1="304" x2="480" y2="322" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="326" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="346" fill="#E8B33A" font-size="12" font-weight="bold">L4  核心引擎 / CORE ENGINE  (core.js)</text>
+<text x="36" y="366" fill="#C9C9C9" font-size="11">setSource → validate → computeAll → fundSeries / volumeRadar / temperature</text>
+<text x="36" y="382" fill="#C9C9C9" font-size="11">scoreReport / derivSignals / treemap · 全部纯函数，零外部依赖</text>
+<line x1="480" y1="388" x2="480" y2="406" stroke="#8A8A8A" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<rect x="24" y="410" width="912" height="62" fill="#121212" stroke="#333"/>
+<text x="36" y="430" fill="#E8B33A" font-size="12" font-weight="bold">L5  渲染与交互 / UI  (index.html)</text>
+<text x="36" y="450" fill="#C9C9C9" font-size="11">四面板 · 48 帧逐帧回放 · 深链 panel/code/frame · 原生 SVG 图表</text>
+<text x="36" y="466" fill="#C9C9C9" font-size="11">姓名学号水印 · 打印电子签章 · 数据口径条常驻</text>
+
+<text x="24" y="500" fill="#4AF626" font-size="11">注入契约  window.AlphaLens.load(s)  →  setSource(s)  →  computeAll(code)  →  render()</text>
+</svg>
+<div class="cap">图 1  系统总体架构：五层单向依赖，数据契约位于 L3 与 L4 之间</div>
+</div>
+
+<h2>4 数据层与口径披露</h2>
+<p>数据生成脚本把抓取任务拆成十二个最小缓存单元：指数、板块、衍生品、三只标的的日线与财报、以及其中一只标的的真实四档资金。每个单元独立抓取、独立落盘、独立回退。东财 push2his 的四档资金能返回真实响应，但 Python 客户端的 TLS 指纹被服务端拒绝，改用系统 curl 子进程取回原始 klines 再解析，绕过了误判。600519 的四档资金 48 帧全部非零，主力累计净额约正 11.46 亿元；另外两只标的的资金为量价代理值，已在元数据里逐条标注。</p>
+<p>代理字段不藏在代码注释里，而是走完整披露链：写入 meta.proxies，命令行同步打印，注入页再插一条投屏可见的口径条。运行时把「PCR」改写为权利金比代理，把「隐波」改写为 20 日已实现波动率，把「万手」改写为万股。这样即使老师现场追问口径，页面上也能直接指给人看。冻结的 index.html 保持零改动，所有修正都发生在注入脚本里。</p>
+
+<div class="fig">
+<svg id="fig2" viewBox="0 0 960 470" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0A0A0A;font-family:Menlo,Consolas,'PingFang SC',monospace">
+<defs><marker id="a2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#8A8A8A"/></marker></defs>
+<rect width="960" height="470" fill="#0A0A0A"/>
+<text x="24" y="32" fill="#EAEAEA" font-size="18" font-weight="bold">FIG 2  /  数据流与代理披露</text>
+<text x="24" y="51" fill="#8A8A8A" font-size="11">七类外部源 → 分段缓存 → 校验 → 快照 → 注入 → 渲染 · 代理信息全程随行</text>
+<line x1="24" y1="62" x2="936" y2="62" stroke="#333"/>
+
+<g font-size="11">
+<rect x="16" y="96" width="140" height="86" fill="#121212" stroke="#E8B33A"/>
+<text x="86" y="118" fill="#E8B33A" font-size="11" text-anchor="middle">外部数据源</text>
+<text x="86" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">日线 / 四档资金</text>
+<text x="86" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">行业 / 宽度 / 财报</text>
+<text x="86" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">期货 / 期权 / 指数</text>
+
+<rect x="176" y="96" width="140" height="86" fill="#121212" stroke="#333"/>
+<text x="246" y="118" fill="#EAEAEA" font-size="11" text-anchor="middle">分段抓取</text>
+<text x="246" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">12 段独立单元</text>
+<text x="246" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">curl 通道取四档</text>
+<text x="246" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">单段失败即回退</text>
+
+<rect x="336" y="96" width="140" height="86" fill="#121212" stroke="#333"/>
+<text x="406" y="118" fill="#EAEAEA" font-size="11" text-anchor="middle">独立缓存</text>
+<text x="406" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">cache/ 12 段</text>
+<text x="406" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">10 CACHE</text>
+<text x="406" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">2 FALLBACK</text>
+
+<rect x="496" y="96" width="140" height="86" fill="#121212" stroke="#333"/>
+<text x="566" y="118" fill="#EAEAEA" font-size="11" text-anchor="middle">双重校验</text>
+<text x="566" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">四档零和</text>
+<text x="566" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">有限性 / 分母</text>
+<text x="566" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">13/13 一致</text>
+
+<rect x="656" y="96" width="140" height="86" fill="#121212" stroke="#FF2A2A"/>
+<text x="726" y="118" fill="#FF2A2A" font-size="11" text-anchor="middle">快照 + 注入</text>
+<text x="726" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">snapshot.json</text>
+<text x="726" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">provenance 披露条</text>
+<text x="726" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">运行时措辞修正</text>
+
+<rect x="816" y="96" width="128" height="86" fill="#121212" stroke="#4AF626"/>
+<text x="880" y="118" fill="#4AF626" font-size="11" text-anchor="middle">终端渲染</text>
+<text x="880" y="138" fill="#C9C9C9" font-size="9" text-anchor="middle">四面板</text>
+<text x="880" y="153" fill="#C9C9C9" font-size="9" text-anchor="middle">48 帧回放</text>
+<text x="880" y="168" fill="#C9C9C9" font-size="9" text-anchor="middle">水印 / 签章</text>
+
+<line x1="156" y1="139" x2="174" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="316" y1="139" x2="334" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="476" y1="139" x2="494" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="636" y1="139" x2="654" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+<line x1="796" y1="139" x2="814" y2="139" stroke="#8A8A8A" marker-end="url(#a2)"/>
+</g>
+
+<line x1="24" y1="202" x2="936" y2="202" stroke="#333"/>
+<text x="24" y="224" fill="#E8B33A" font-size="12" font-weight="bold">代理字段随行路径 / PROVENANCE</text>
+<text x="24" y="246" fill="#C9C9C9" font-size="11">meta.proxies（七条） → CLI 打印 → 注入页 #al-provenance 可见条 → 运行时文本替换</text>
+<text x="24" y="268" fill="#C9C9C9" font-size="11">300750 / 002027 四档资金为量价代理 · 期权 PCR 为权利金比 · IV 为 20 日已实现波动率</text>
+<text x="24" y="290" fill="#C9C9C9" font-size="11">炸板数、昨日成交额、研发费用率为估算或占位 · 600519 资金与财报、板块净额、指数与基差为真实值</text>
+
+<line x1="24" y1="310" x2="936" y2="310" stroke="#333"/>
+<text x="24" y="332" fill="#E8B33A" font-size="12" font-weight="bold">离线分支 / OFFLINE PATH</text>
+<text x="24" y="354" fill="#4AF626" font-size="11">fetch_snapshot.py --offline → 跳过全部抓取 → 直接读 cache/ → 网络请求 0 次</text>
+<text x="24" y="376" fill="#C9C9C9" font-size="11">重建快照与原快照逐字段一致，仅 meta.generated 时间戳不同 · 答辩断网路径实测通过</text>
+<text x="24" y="404" fill="#8A8A8A" font-size="10">图注：真实值与代理值在投屏上分区呈现，代理值不作为投资结论的唯一依据。</text>
+</svg>
+<div class="cap">图 2  数据流与代理披露：七类外部源经十二段缓存汇入快照，代理信息全程随行</div>
+</div>
+
+<h2>5 核心算法</h2>
+<p>所有指标计算集中在 core.js，入口是 computeAll，内部按六个函数展开。资金序列 fundSeries 把四档净额按主力（超大单加大单）与散户（中单加小单）聚合成两条累计曲线，每帧强制四档之和为零，再用六帧斜率加量比识别吸筹与派发：价格横盘、主力斜率超阈值且散户流出记为吸筹；价格拉升超过百分之一点二、量比大于一点五五且主力流出记为派发，同类信号间隔不少于九帧。量价雷达 volumeRadar 用末帧成交量与前五帧均量之比判断底部放量、高位缩量、天量见天价与放量下跌四种形态。</p>
+<p>市场温度计 temperature 由涨跌家数比、涨跌停比、封板稳固度、成交额增减四项加权，权重分别为零点三五、零点二五、零点二、零点二，映射到冰点期到过热期五个区间并给出仓位建议。财报体检 scoreReport 把盈利能力、成长潜力、现金流含金量、财务安全性、运营管理效率五维线性归一化后取均分，按七十五、五十五、三十五分为 A/B/C/D 四级，再叠加净现比、商誉占比、短债覆盖等红绿灯规则。衍生品雷达 derivSignals 用基差环比是否超过正负六点判断多头抢跑或贴水扩大，期权侧在注入页明确标注为权利金比代理。板块热力 treemap 采用行贪心布局，板块数较少时宽高比会漂移，但换来实现简单、无外部依赖。</p>
+
+<div class="fig">
+<svg id="fig4" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0A0A0A;font-family:Menlo,Consolas,'PingFang SC',monospace">
+<defs><marker id="a4" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#8A8A8A"/></marker></defs>
+<rect width="960" height="560" fill="#0A0A0A"/>
+<text x="24" y="32" fill="#EAEAEA" font-size="18" font-weight="bold">FIG 4  /  核心算法流程</text>
+<text x="24" y="51" fill="#8A8A8A" font-size="11">入口校验 → 六路指标计算 → 四面板渲染 · 全部纯函数</text>
+<line x1="24" y1="62" x2="936" y2="62" stroke="#333"/>
+
+<rect x="330" y="76" width="300" height="38" fill="#121212" stroke="#E8B33A"/>
+<text x="480" y="100" fill="#E8B33A" font-size="12" text-anchor="middle">setSource(snapshot) → validate → computeAll(code)</text>
+<line x1="480" y1="114" x2="480" y2="134" stroke="#8A8A8A" marker-end="url(#a4)"/>
+
+<rect x="180" y="138" width="600" height="60" fill="#1A1010" stroke="#FF2A2A"/>
+<text x="480" y="158" fill="#FF2A2A" font-size="12" font-weight="bold" text-anchor="middle">入口校验 / VALIDATE</text>
+<text x="480" y="177" fill="#C9C9C9" font-size="10" text-anchor="middle">帧数≥12 · OHLC 合法 · 四档零和 · 时间戳对齐 · 宽度求和 · 分母有限非零</text>
+<line x1="480" y1="198" x2="480" y2="218" stroke="#8A8A8A" marker-end="url(#a4)"/>
+
+<g font-size="10">
+<rect x="16" y="222" width="180" height="176" fill="#121212" stroke="#333"/>
+<text x="106" y="244" fill="#EAEAEA" font-size="11" font-weight="bold" text-anchor="middle">fundSeries</text>
+<text x="28" y="266" fill="#C9C9C9">主力 = 超大 + 大单</text>
+<text x="28" y="284" fill="#C9C9C9">散户 = 中单 + 小单</text>
+<text x="28" y="302" fill="#C9C9C9">两条累计互为镜像</text>
+<text x="28" y="320" fill="#C9C9C9">六帧斜率 + 量比</text>
+<text x="28" y="338" fill="#4AF626">吸筹 / 派发信号</text>
+<text x="28" y="358" fill="#8A8A8A">同类间隔≥9 帧</text>
+<text x="28" y="380" fill="#8A8A8A">四档严格零和</text>
+
+<rect x="208" y="222" width="180" height="176" fill="#121212" stroke="#333"/>
+<text x="298" y="244" fill="#EAEAEA" font-size="11" font-weight="bold" text-anchor="middle">volumeRadar</text>
+<text x="220" y="266" fill="#C9C9C9">量比 = 末帧 / 前五帧均</text>
+<text x="220" y="284" fill="#C9C9C9">换手 = 成交量 / 流通股</text>
+<text x="220" y="302" fill="#C9C9C9">贴近高点判定</text>
+<text x="220" y="320" fill="#C9C9C9">涨跌幅方向</text>
+<text x="220" y="338" fill="#4AF626">底部放量突破</text>
+<text x="220" y="356" fill="#4AF626">高位缩量滞涨</text>
+<text x="220" y="374" fill="#FF2A2A">天量 / 放量下跌</text>
+
+<rect x="400" y="222" width="180" height="176" fill="#121212" stroke="#333"/>
+<text x="490" y="244" fill="#EAEAEA" font-size="11" font-weight="bold" text-anchor="middle">temperature</text>
+<text x="412" y="266" fill="#C9C9C9">涨跌家数比  0.35</text>
+<text x="412" y="284" fill="#C9C9C9">涨跌停比    0.25</text>
+<text x="412" y="302" fill="#C9C9C9">封板稳固度  0.20</text>
+<text x="412" y="320" fill="#C9C9C9">成交额增减  0.20</text>
+<text x="412" y="340" fill="#E8B33A">五档温度分区</text>
+<text x="412" y="358" fill="#E8B33A">对应仓位建议</text>
+<text x="412" y="380" fill="#8A8A8A">冰点 → 过热</text>
+
+<rect x="592" y="222" width="180" height="176" fill="#121212" stroke="#333"/>
+<text x="682" y="244" fill="#EAEAEA" font-size="11" font-weight="bold" text-anchor="middle">scoreReport</text>
+<text x="604" y="266" fill="#C9C9C9">盈利能力 / 成长</text>
+<text x="604" y="284" fill="#C9C9C9">现金流含金量</text>
+<text x="604" y="302" fill="#C9C9C9">财务安全性</text>
+<text x="604" y="320" fill="#C9C9C9">运营管理效率</text>
+<text x="604" y="340" fill="#E8B33A">A≥75 B≥55</text>
+<text x="604" y="358" fill="#E8B33A">C≥35 D 其余</text>
+<text x="604" y="380" fill="#FF2A2A">红绿灯规则叠加</text>
+
+<rect x="784" y="222" width="160" height="176" fill="#121212" stroke="#333"/>
+<text x="864" y="244" fill="#EAEAEA" font-size="11" font-weight="bold" text-anchor="middle">derivSignals</text>
+<text x="796" y="266" fill="#C9C9C9">基差 = 期货 - 现货</text>
+<text x="796" y="284" fill="#C9C9C9">环比阈值 ±6</text>
+<text x="796" y="302" fill="#4AF626">多头抢跑 / 贴水</text>
+<text x="796" y="320" fill="#C9C9C9">权利金比代理</text>
+<text x="796" y="338" fill="#C9C9C9">商品板块联动</text>
+<text x="796" y="360" fill="#E8B33A">treemap</text>
+<text x="796" y="378" fill="#8A8A8A">行贪心布局</text>
+
+<line x1="480" y1="218" x2="106" y2="220" stroke="#8A8A8A" marker-end="url(#a4)"/>
+<line x1="480" y1="218" x2="298" y2="220" stroke="#8A8A8A" marker-end="url(#a4)"/>
+<line x1="480" y1="218" x2="490" y2="220" stroke="#8A8A8A" marker-end="url(#a4)"/>
+<line x1="480" y1="218" x2="682" y2="220" stroke="#8A8A8A" marker-end="url(#a4)"/>
+<line x1="480" y1="218" x2="864" y2="220" stroke="#8A8A8A" marker-end="url(#a4)"/>
+</g>
+
+<line x1="106" y1="398" x2="106" y2="430" stroke="#8A8A8A"/>
+<line x1="298" y1="398" x2="298" y2="430" stroke="#8A8A8A"/>
+<line x1="490" y1="398" x2="490" y2="430" stroke="#8A8A8A"/>
+<line x1="682" y1="398" x2="682" y2="430" stroke="#8A8A8A"/>
+<line x1="864" y1="398" x2="864" y2="430" stroke="#8A8A8A"/>
+<line x1="106" y1="430" x2="864" y2="430" stroke="#8A8A8A"/>
+<line x1="480" y1="430" x2="480" y2="450" stroke="#8A8A8A" marker-end="url(#a4)"/>
+
+<rect x="300" y="454" width="360" height="42" fill="#121212" stroke="#4AF626"/>
+<text x="480" y="480" fill="#4AF626" font-size="13" font-weight="bold" text-anchor="middle">四面板渲染 · 逐帧回放 · 水印签章</text>
+
+<text x="24" y="528" fill="#8A8A8A" font-size="10">图注：任一校验不通过即抛错，非法状态在入口被拦截，不进入指标计算与渲染。</text>
+</svg>
+<div class="cap">图 4  核心算法流程：一次校验、六路计算、四面板输出</div>
+</div>
+
+<h2>6 功能模块</h2>
+<p>四个面板各自回答一个具体问题。面板一量价透视，用 K 线主图、主力与散户累计剪刀差、四档资金柱状与吸筹派发标记，回答「谁在买、谁在卖」。面板二大盘温度与板块热力，用四项加权温度计、五档仓位建议和按成交额铺开的板块矩形树图，回答「现在该重仓还是空仓、钱在往哪个板块走」。面板三期指期权先行雷达，用 IF、IC、IM 的基差与环比风向、商品主力对板块的联动、期权代理指标，回答「机构是在抢跑还是对冲」。面板四财报傻瓜体检，把五维评分、等级与红绿灯规则压成一张卡，回答「这家公司赚的是不是真钱」。</p>
+<p>公共能力横跨四个面板：48 帧滑块与自动播放支持逐帧回放；深链参数可直接定位面板、标的与帧号；姓名学号水印随输入实时更新并写入本地存储；打印时生成电子签章与免责声明。顶部常驻快照状态标识，明确告知当前是仿真快照还是真实收盘快照，不出现实盘字样。</p>
+
+<div class="fig">
+<svg id="fig3" viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0A0A0A;font-family:Menlo,Consolas,'PingFang SC',monospace">
+<rect width="960" height="520" fill="#0A0A0A"/>
+<text x="24" y="32" fill="#EAEAEA" font-size="18" font-weight="bold">FIG 3  /  功能模块结构</text>
+<text x="24" y="51" fill="#8A8A8A" font-size="11">四面板业务能力 + 四项公共能力</text>
+<line x1="24" y1="62" x2="936" y2="62" stroke="#333"/>
+
+<rect x="350" y="78" width="260" height="44" fill="#1A1010" stroke="#FF2A2A"/>
+<text x="480" y="106" fill="#FF2A2A" font-size="14" font-weight="bold" text-anchor="middle">ALPHALENS 终端</text>
+
+<g font-size="10">
+<rect x="16" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="106" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 1 量价透视</text>
+<line x1="28" y1="196" x2="184" y2="196" stroke="#333"/>
+<text x="28" y="220" fill="#C9C9C9">K 线主图</text>
+<text x="28" y="244" fill="#C9C9C9">主力散户剪刀差</text>
+<text x="28" y="268" fill="#C9C9C9">四档资金流</text>
+<text x="28" y="292" fill="#C9C9C9">吸筹派发标记</text>
+<text x="28" y="316" fill="#C9C9C9">量比与换手率</text>
+<text x="28" y="340" fill="#4AF626">四种量价形态</text>
+<text x="28" y="380" fill="#8A8A8A">回答：谁在买</text>
+<text x="28" y="400" fill="#8A8A8A">谁在卖</text>
+
+<rect x="208" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="298" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 2 温度热力</text>
+<line x1="220" y1="196" x2="376" y2="196" stroke="#333"/>
+<text x="220" y="220" fill="#C9C9C9">四项加权温度</text>
+<text x="220" y="244" fill="#C9C9C9">五档区间建议</text>
+<text x="220" y="268" fill="#C9C9C9">涨跌家数统计</text>
+<text x="220" y="292" fill="#C9C9C9">板块矩形树图</text>
+<text x="220" y="316" fill="#C9C9C9">资金净额着色</text>
+<text x="220" y="340" fill="#4AF626">成交额占比</text>
+<text x="220" y="380" fill="#8A8A8A">回答：仓位轻重</text>
+<text x="220" y="400" fill="#8A8A8A">钱往哪走</text>
+
+<rect x="400" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="490" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 3 衍生雷达</text>
+<line x1="412" y1="196" x2="568" y2="196" stroke="#333"/>
+<text x="412" y="220" fill="#C9C9C9">IF / IC / IM 基差</text>
+<text x="412" y="244" fill="#C9C9C9">基差环比风向</text>
+<text x="412" y="268" fill="#C9C9C9">商品主力联动</text>
+<text x="412" y="292" fill="#C9C9C9">期权权利金比</text>
+<text x="412" y="316" fill="#C9C9C9">已实现波动率</text>
+<text x="412" y="340" fill="#FF2A2A">预警聚合列表</text>
+<text x="412" y="380" fill="#8A8A8A">回答：机构抢跑</text>
+<text x="412" y="400" fill="#8A8A8A">还是对冲</text>
+
+<rect x="592" y="160" width="180" height="300" fill="#121212" stroke="#333"/>
+<text x="682" y="184" fill="#E8B33A" font-size="12" font-weight="bold" text-anchor="middle">面板 4 财报体检</text>
+<line x1="604" y1="196" x2="760" y2="196" stroke="#333"/>
+<text x="604" y="220" fill="#C9C9C9">五维线性评分</text>
+<text x="604" y="244" fill="#C9C9C9">A / B / C / D 分级</text>
+<text x="604" y="268" fill="#C9C9C9">净现比核查</text>
+<text x="604" y="292" fill="#C9C9C9">商誉占比核查</text>
+<text x="604" y="316" fill="#C9C9C9">短债覆盖核查</text>
+<text x="604" y="340" fill="#FF2A2A">红绿灯结论</text>
+<text x="604" y="380" fill="#8A8A8A">回答：是不是</text>
+<text x="604" y="400" fill="#8A8A8A">真金白银</text>
+
+<rect x="784" y="160" width="160" height="300" fill="#121212" stroke="#4AF626"/>
+<text x="864" y="184" fill="#4AF626" font-size="12" font-weight="bold" text-anchor="middle">公共能力</text>
+<line x1="796" y1="196" x2="932" y2="196" stroke="#333"/>
+<text x="796" y="220" fill="#C9C9C9">48 帧回放</text>
+<text x="796" y="244" fill="#C9C9C9">深链定位</text>
+<text x="796" y="268" fill="#C9C9C9">水印与本地存储</text>
+<text x="796" y="292" fill="#C9C9C9">打印电子签章</text>
+<text x="796" y="316" fill="#C9C9C9">数据口径条</text>
+<text x="796" y="340" fill="#C9C9C9">状态常驻标识</text>
+<text x="796" y="380" fill="#8A8A8A">横跨四面板</text>
+
+<line x1="410" y1="122" x2="106" y2="158" stroke="#8A8A8A"/>
+<line x1="450" y1="122" x2="298" y2="158" stroke="#8A8A8A"/>
+<line x1="510" y1="122" x2="490" y2="158" stroke="#8A8A8A"/>
+<line x1="550" y1="122" x2="682" y2="158" stroke="#8A8A8A"/>
+<line x1="590" y1="122" x2="864" y2="158" stroke="#8A8A8A"/>
+</g>
+<text x="24" y="498" fill="#8A8A8A" font-size="10">图注：四个面板各自回答一个散户问题，公共能力保证答辩现场可演示、可追溯。</text>
+</svg>
+<div class="cap">图 3  功能模块结构：四面板业务能力与四项公共能力</div>
+</div>
+
+<h2>7 实证结果</h2>
+<p>自检脚本以零依赖 Node 实现，共 59 条断言，覆盖非法快照拒绝、四档零和、有限性、短帧回放、基差渲染契约等，实测失败数为零。独立验证器做了对抗复核：从真实快照派生十三组变异，Node 与 Python 两侧各自判定，结果十三组全部一致、分歧为零，上一轮的三组契约分歧已全部消除。投屏侧用无头 Chrome 对四个面板逐一取 DOM，披露条每面板命中一次，权利金比、隐波、万手等旧措辞在可见区域均为零处，未出现未定义值或非数值。</p>
+<p>数据侧以 2026-11-13 收盘为基准，三只标的各 48 帧。600519 四档资金 48 帧全部非零，主力累计约正 11.46 亿元；财报体检命中真实净资产收益率三年 32.5、36.0、34.2，综合得分 74.2，评级 B；板块净额取同花顺行业资金，半导体净流出约 127.44 亿元；指数与基差为真实值。离线重建从缓存读出十二段，其中十段命中缓存、两段走回退，网络请求计数为零，关键字段与原快照逐字段一致。</p>
+<div class="note">工程取舍：四档净额守恒是硬不变量，不能为了曲线好看而放宽；代理值集中在元数据并在投屏披露，不冒充实盘；index.html 作为冻结源文件零改动，所有适配都放在注入脚本，换来数据层与渲染层的彻底解耦。</div>
+
+<h2>8 局限与结论</h2>
+<p>本设计仍有三处已知局限。第一，期权侧没有真实的成交量认沽认购比与隐含波动率数据源，页面展示的是权利金比代理与二十日已实现波动率，只能作情绪参考，不能作为方向性结论的唯一依据。第二，300750 与 002027 的四档资金为量价代理，不是真实的单笔委托分档，已在页面和元数据双重标注。第三，未制作桌面安装包，答辩以双击静态页面交付，这样最稳也最省事。</p>
+<p>总体看，系统把散户最关心的四个问题压缩进一个断网可跑的页面，用严格的数据契约和双重校验保证口径一致，用可见披露替代模糊话术。四张工程图分别交代了架构、数据、功能与算法，59 条断言和独立复核给出了可复现的实证。作为毕业设计，它既能在现场被直接操作，也能在被追问实现细节时逐层展开，达到了设计目标。</p>
+
+<footer>
+  AlphaLens 毕业设计说明书 · 2026-11-16 · 与 alphalens/ 目录代码版本一致 · 可打印为 A4
+</footer>
+
+</div>
+</body>
+</html>
