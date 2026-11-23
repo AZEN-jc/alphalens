@@ -1,60 +1,397 @@
 {
   "errs": [],
-  "reqs": [],
   "hasData": true,
   "hasAnalytics": true,
-  "assets": 30,
+  "assets": 36,
+  "etfs": 21,
   "divs": 15,
-  "presets": 3,
+  "presets": 5,
   "summaries": [
     {
       "id": "fake_diversification",
       "total": 100000,
       "covered": 0.4162,
       "overlaps": 8,
-      "risk": "HIGH",
-      "mdd": -0.3726529187197847,
-      "vol": 0.1864579992421376,
-      "avgCorr": 0.5891196094868691,
-      "sample": 1667,
-      "hasNaN": false,
-      "curveLen": 1668
+      "overlapCodes": [
+        "600036",
+        "601166",
+        "600519",
+        "601398",
+        "601318",
+        "601899",
+        "603259",
+        "600900"
+      ],
+      "avgCorr1y": 0.28444159803768476,
+      "sample1y": 250,
+      "dateRange1y": [
+        "2025-11-12",
+        "2026-11-23"
+      ],
+      "mdd1y": -0.08456973828222544,
+      "vol1y": 0.11900637674752591,
+      "avgCorr3y": 0.5739601163481697,
+      "sample3y": 726,
+      "dateRange3y": [
+        "2023-11-23",
+        "2026-11-23"
+      ],
+      "mdd3y": -0.10371056391107641,
+      "vol3y": 0.15043394877632432,
+      "risk1y": {
+        "concentration": {
+          "level": "LOW",
+          "label": "分散良好",
+          "detail": "单一底层最高 6.9%"
+        },
+        "overlap": {
+          "level": "HIGH",
+          "label": "严重重合",
+          "detail": "8 只重合 · 合计 26.2%"
+        },
+        "correlation": {
+          "level": "LOW",
+          "label": "低相关分散",
+          "detail": "均值 0.28"
+        },
+        "drawdownVol": {
+          "level": "LOW",
+          "label": "低波动稳健",
+          "detail": "最大回撤 -8.5%"
+        }
+      },
+      "risk3y": {
+        "concentration": {
+          "level": "LOW",
+          "label": "分散良好",
+          "detail": "单一底层最高 6.9%"
+        },
+        "overlap": {
+          "level": "HIGH",
+          "label": "严重重合",
+          "detail": "8 只重合 · 合计 26.2%"
+        },
+        "correlation": {
+          "level": "MEDIUM",
+          "label": "中等相关",
+          "detail": "均值 0.57"
+        },
+        "drawdownVol": {
+          "level": "LOW",
+          "label": "低波动稳健",
+          "detail": "最大回撤 -10.4%"
+        }
+      },
+      "hasNaN": false
     },
     {
       "id": "dividend_income",
       "total": 100000,
       "covered": 0.7301599999999999,
       "overlaps": 0,
-      "risk": "HIGH",
-      "mdd": -0.13180315751174904,
-      "vol": 0.1759179437828847,
-      "avgCorr": 0.5162733530390022,
-      "sample": 197,
-      "hasNaN": false,
-      "curveLen": 198
+      "overlapCodes": [],
+      "avgCorr1y": 0.5060597186812594,
+      "sample1y": 250,
+      "dateRange1y": [
+        "2025-11-12",
+        "2026-11-23"
+      ],
+      "mdd1y": -0.13385625249855987,
+      "vol1y": 0.16471724225202244,
+      "avgCorr3y": 0.5366109124590405,
+      "sample3y": 716,
+      "dateRange3y": [
+        "2023-11-23",
+        "2026-11-23"
+      ],
+      "mdd3y": -0.13969445235113578,
+      "vol3y": 0.16542460514121196,
+      "risk1y": {
+        "concentration": {
+          "level": "HIGH",
+          "label": "高集中",
+          "detail": "单一底层最高 30.0%"
+        },
+        "overlap": {
+          "level": "LOW",
+          "label": "低重合",
+          "detail": "0 只重合"
+        },
+        "correlation": {
+          "level": "MEDIUM",
+          "label": "中等相关",
+          "detail": "均值 0.51"
+        },
+        "drawdownVol": {
+          "level": "MEDIUM",
+          "label": "中等回撤",
+          "detail": "最大回撤 -13.4%"
+        }
+      },
+      "risk3y": {
+        "concentration": {
+          "level": "HIGH",
+          "label": "高集中",
+          "detail": "单一底层最高 30.0%"
+        },
+        "overlap": {
+          "level": "LOW",
+          "label": "低重合",
+          "detail": "0 只重合"
+        },
+        "correlation": {
+          "level": "MEDIUM",
+          "label": "中等相关",
+          "detail": "均值 0.54"
+        },
+        "drawdownVol": {
+          "level": "MEDIUM",
+          "label": "中等回撤",
+          "detail": "最大回撤 -14.0%"
+        }
+      },
+      "hasNaN": false
     },
     {
       "id": "balanced_contrast",
       "total": 100000,
       "covered": 0.59138,
       "overlaps": 0,
-      "risk": "HIGH",
-      "mdd": -0.27115611615652346,
-      "vol": 0.15650698130197468,
-      "avgCorr": 0.15160266557684646,
-      "sample": 1666,
-      "hasNaN": false,
-      "curveLen": 1667
+      "overlapCodes": [],
+      "avgCorr1y": 0.13946695151357516,
+      "sample1y": 250,
+      "dateRange1y": [
+        "2025-11-12",
+        "2026-11-23"
+      ],
+      "mdd1y": -0.21235049297176345,
+      "vol1y": 0.1793847535452942,
+      "avgCorr3y": 0.17994731940381822,
+      "sample3y": 726,
+      "dateRange3y": [
+        "2023-11-23",
+        "2026-11-23"
+      ],
+      "mdd3y": -0.24122958400549585,
+      "vol3y": 0.17420321063853295,
+      "risk1y": {
+        "concentration": {
+          "level": "HIGH",
+          "label": "高集中",
+          "detail": "单一底层最高 30.0%"
+        },
+        "overlap": {
+          "level": "LOW",
+          "label": "低重合",
+          "detail": "0 只重合"
+        },
+        "correlation": {
+          "level": "LOW",
+          "label": "低相关分散",
+          "detail": "均值 0.14"
+        },
+        "drawdownVol": {
+          "level": "MEDIUM",
+          "label": "中等回撤",
+          "detail": "最大回撤 -21.2%"
+        }
+      },
+      "risk3y": {
+        "concentration": {
+          "level": "HIGH",
+          "label": "高集中",
+          "detail": "单一底层最高 30.0%"
+        },
+        "overlap": {
+          "level": "LOW",
+          "label": "低重合",
+          "detail": "0 只重合"
+        },
+        "correlation": {
+          "level": "LOW",
+          "label": "低相关分散",
+          "detail": "均值 0.18"
+        },
+        "drawdownVol": {
+          "level": "MEDIUM",
+          "label": "中等回撤",
+          "detail": "最大回撤 -24.1%"
+        }
+      },
+      "hasNaN": false
+    },
+    {
+      "id": "us_tech_fake_div",
+      "total": 100000,
+      "covered": 0.50365,
+      "overlaps": 10,
+      "overlapCodes": [
+        "US:NVDA",
+        "US:AAPL",
+        "US:GOOGL",
+        "US:MSFT",
+        "US:META",
+        "US:MU",
+        "US:AMD",
+        "US:AMZN",
+        "US:AVGO",
+        "US:TSLA"
+      ],
+      "avgCorr1y": 0.8435517802877613,
+      "sample1y": 250,
+      "dateRange1y": [
+        "2025-11-12",
+        "2026-11-23"
+      ],
+      "mdd1y": -0.15621633179084596,
+      "vol1y": 0.24446434528298686,
+      "avgCorr3y": 0.8474603268959561,
+      "sample3y": 726,
+      "dateRange3y": [
+        "2023-11-23",
+        "2026-11-23"
+      ],
+      "mdd3y": -0.24490532472947837,
+      "vol3y": 0.24261203012586063,
+      "risk1y": {
+        "concentration": {
+          "level": "MEDIUM",
+          "label": "中度集中",
+          "detail": "单一底层最高 9.3%"
+        },
+        "overlap": {
+          "level": "HIGH",
+          "label": "严重重合",
+          "detail": "10 只重合 · 合计 49.6%"
+        },
+        "correlation": {
+          "level": "HIGH",
+          "label": "高正相关",
+          "detail": "均值 0.84"
+        },
+        "drawdownVol": {
+          "level": "HIGH",
+          "label": "高波动回撤",
+          "detail": "最大回撤 -15.6%"
+        }
+      },
+      "risk3y": {
+        "concentration": {
+          "level": "MEDIUM",
+          "label": "中度集中",
+          "detail": "单一底层最高 9.3%"
+        },
+        "overlap": {
+          "level": "HIGH",
+          "label": "严重重合",
+          "detail": "10 只重合 · 合计 49.6%"
+        },
+        "correlation": {
+          "level": "HIGH",
+          "label": "高正相关",
+          "detail": "均值 0.85"
+        },
+        "drawdownVol": {
+          "level": "HIGH",
+          "label": "高波动回撤",
+          "detail": "最大回撤 -24.5%"
+        }
+      },
+      "hasNaN": false
+    },
+    {
+      "id": "global_low_corr",
+      "total": 100000,
+      "covered": 0.5619749999999999,
+      "overlaps": 0,
+      "overlapCodes": [],
+      "avgCorr1y": 0.2364536867727914,
+      "sample1y": 250,
+      "dateRange1y": [
+        "2025-11-12",
+        "2026-11-23"
+      ],
+      "mdd1y": -0.11947112619588637,
+      "vol1y": 0.17181034322209268,
+      "avgCorr3y": 0.1609215907382592,
+      "sample3y": 726,
+      "dateRange3y": [
+        "2023-11-23",
+        "2026-11-23"
+      ],
+      "mdd3y": -0.1405761571495027,
+      "vol3y": 0.14734084859955668,
+      "risk1y": {
+        "concentration": {
+          "level": "HIGH",
+          "label": "高集中",
+          "detail": "单一底层最高 30.0%"
+        },
+        "overlap": {
+          "level": "LOW",
+          "label": "低重合",
+          "detail": "0 只重合"
+        },
+        "correlation": {
+          "level": "LOW",
+          "label": "低相关分散",
+          "detail": "均值 0.24"
+        },
+        "drawdownVol": {
+          "level": "MEDIUM",
+          "label": "中等回撤",
+          "detail": "最大回撤 -11.9%"
+        }
+      },
+      "risk3y": {
+        "concentration": {
+          "level": "HIGH",
+          "label": "高集中",
+          "detail": "单一底层最高 30.0%"
+        },
+        "overlap": {
+          "level": "LOW",
+          "label": "低重合",
+          "detail": "0 只重合"
+        },
+        "correlation": {
+          "level": "LOW",
+          "label": "低相关分散",
+          "detail": "均值 0.16"
+        },
+        "drawdownVol": {
+          "level": "LOW",
+          "label": "低波动稳健",
+          "detail": "最大回撤 -14.1%"
+        }
+      },
+      "hasNaN": false
     }
   ],
+  "windowSwitch": {
+    "changed": true,
+    "hasQfq": true,
+    "hasRange": true
+  },
+  "riskCards": 4,
+  "corrSvg": 1,
+  "navSvg": 1,
+  "exposureRows": 15,
   "hasV3Api": true,
   "md": {
-    "len": 1176,
+    "len": 1526,
     "total": true,
     "mdd": true,
+    "risk4": true,
     "top": true,
     "disclaimer": true,
     "bad": false
+  },
+  "interact": {
+    "addedFound": true,
+    "focusKept": true,
+    "weightChanged": true,
+    "savedAfterEdit": true
   },
   "persist": {
     "saved": true,
@@ -64,13 +401,12 @@
   },
   "brand": true,
   "exportBtns": 3,
+  "divViewOn": true,
   "divRows": 15,
   "divBadges": 15,
+  "fillSampleFmt": true,
+  "taxRenameOk": true,
   "taxChanges": true,
   "taxHasNaN": false,
-  "benchChanges": true,
-  "corrSvg": 1,
-  "navSvg": 1,
-  "exposureRows": 15,
-  "divViewOn": true
+  "benchChanges": true
 }

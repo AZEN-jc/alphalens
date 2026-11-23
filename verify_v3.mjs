@@ -1,95 +1,253 @@
 #!/usr/bin/env node
 /**
- * AlphaLens v3 hard verification (zero dependency, Node builtins + Chrome headless).
+ * AlphaLens v3.1 hard verification (zero dependency, Node builtins + cross-platform Chrome headless).
  * Run: node verify_v3.mjs
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LIVE = path.join(HERE, 'index_alphalens_v3_live.html');
-const CHROME = process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const ROOT_INDEX = path.join(HERE, 'index.html');
+const DATA_FILE = path.join(HERE, 'analysis_data.json');
+const ARCHIVE = path.join(HERE, 'archive', 'v2');
+const README = path.join(HERE, 'README.md');
+const LICENSE = path.join(HERE, 'LICENSE');
 const OUT = path.join(HERE, 'verify_v3_result.json');
+
+function detectChrome() {
+  const candidates = [];
+  if (process.env.CHROME_BIN) candidates.push(process.env.CHROME_BIN);
+  if (process.platform === 'darwin') {
+    candidates.push(
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+    );
+  } else if (process.platform === 'win32') {
+    const localApp = process.env.LOCALAPPDATA || '';
+    candidates.push(
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      localApp ? path.join(localApp, 'Google', 'Chrome', 'Application', 'chrome.exe') : ''
+    );
+  } else {
+    for (const bin of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
+      const which = spawnSync('which', [bin], { encoding: 'utf8' });
+      if (which.status === 0 && which.stdout.trim()) candidates.push(which.stdout.trim());
+    }
+    candidates.push('/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser');
+  }
+  for (const c of candidates) {
+    if (c && fs.existsSync(c)) return c;
+  }
+  return null;
+}
+
+const CHROME = detectChrome();
+if (!CHROME) {
+  console.error(
+    'FATAL: Could not locate Chrome/Chromium automatically.\n' +
+    'Please install Google Chrome / Chromium or set CHROME_BIN=/path/to/chrome and re-run `node verify_v3.mjs`.'
+  );
+  process.exit(1);
+}
+
 const results = [];
 const rec = (n, name, pass, detail) => {
   results.push({ n, name, pass, detail });
   console.log(`${pass ? 'PASS' : 'FAIL'}  [${n}] ${name}${detail ? ' — ' + detail : ''}`);
 };
 
-// ---- 阶段1：目录与入口（Node 层文件检查）----
-const ROOT_INDEX = path.join(HERE, 'index.html');
-const ARCHIVE = path.join(HERE, 'archive', 'v2');
-const README = path.join(HERE, 'README.md');
-const rootOk = fs.existsSync(ROOT_INDEX) && fs.existsSync(LIVE) &&
-  fs.readFileSync(ROOT_INDEX, 'utf8') === fs.readFileSync(LIVE, 'utf8');
-rec(11, '主入口index.html存在且与live版一致', rootOk,
-  `index.html=${fs.existsSync(ROOT_INDEX)} live=${fs.existsSync(LIVE)} identical=${rootOk}`);
+function decodeHtmlJson(raw) {
+  return JSON.parse(
+    (raw || '{}')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&#39;/g, "'")
+  );
+}
+
+function chromeDom(htmlPath, extra = []) {
+  const url = pathToFileURL(htmlPath).href;
+  const r = spawnSync(
+    CHROME,
+    ['--headless=new', '--disable-gpu', '--no-sandbox', '--virtual-time-budget=8000', ...extra, '--dump-dom', url],
+    { encoding: 'utf8', maxBuffer: 40 * 1024 * 1024 }
+  );
+  return r.stdout || '';
+}
+
+// ---- 阶段1：目录、单文件与数据口径（Node 层文件检查）----
+const liveText = fs.existsSync(LIVE) ? fs.readFileSync(LIVE, 'utf8') : '';
+const rootText = fs.existsSync(ROOT_INDEX) ? fs.readFileSync(ROOT_INDEX, 'utf8') : '';
+const extScripts = rootText.match(/<script\b[^>]*\bsrc\s*=/gi) || [];
+const rootOk = fs.existsSync(ROOT_INDEX) && fs.existsSync(LIVE) && rootText === liveText && extScripts.length === 0;
+rec(11, '主入口index.html与live版一致且真单文件无外链JS', rootOk,
+  `index.html=${fs.existsSync(ROOT_INDEX)} live=${fs.existsSync(LIVE)} identical=${rootText === liveText} extScripts=${extScripts.length}`);
+
 const archived = ['core.js', 'index_fiapp.html', 'build_fiapp.py', 'verify.js', 'snapshot.json'];
 const archiveOk = fs.existsSync(ARCHIVE) && archived.every(f => fs.existsSync(path.join(ARCHIVE, f)));
-const rootClean = !['core.js', 'index_fiapp.html', 'build_fiapp.py', 'verify.js', 'snapshot.json']
-  .some(f => fs.existsSync(path.join(HERE, f)));
+const rootClean = !archived.some(f => fs.existsSync(path.join(HERE, f)));
 rec(12, 'v2旧文件已归档且根目录清爽', archiveOk && rootClean,
   `archive=${archiveOk} rootClean=${rootClean}`);
-const readme = fs.existsSync(README) ? fs.readFileSync(README, 'utf8') : '';
-rec(13, 'README已更新为v3文档', /AlphaLens v3/.test(readme) && /持仓穿透/.test(readme) && /红利税/.test(readme) && /archive\/v2/.test(readme),
-  `len=${readme.length} v3=${/AlphaLens v3/.test(readme)} 六章要点齐全=${/红利税/.test(readme) && /archive\/v2/.test(readme)}`);
 
+const readme = fs.existsSync(README) ? fs.readFileSync(README, 'utf8') : '';
+const lic = fs.existsSync(LICENSE) ? fs.readFileSync(LICENSE, 'utf8') : '';
+const docsOk = /AlphaLens v3\.1/.test(readme) && /持仓穿透/.test(readme) && /四维/.test(readme) &&
+  /GitHub Pages/.test(readme) && /archive\/v2/.test(readme) && /MIT License/.test(lic) && /Zen Ao/.test(lic);
+rec(13, 'README v3.1文档与MIT LICENSE齐全', docsOk,
+  `readmeLen=${readme.length} licenseOk=${/MIT License/.test(lic)}`);
+
+// ---- 断言 [17] 窗口一致性（analysis_data.json 静态硬校验）----
+const rawData = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) : {};
+const assetEntries = Object.values(rawData.assets || {});
+const closeLens = assetEntries.map(a => (a.closes || []).length);
+const minCloseLen = closeLens.length ? Math.min(...closeLens) : 0;
+const maxCloseLen = closeLens.length ? Math.max(...closeLens) : 0;
+const endDates = new Set(assetEntries.map(a => (a.closes && a.closes.length) ? a.closes[a.closes.length - 1].t : ''));
+const metaObj = rawData.meta || {};
+const windowConsistencyOk =
+  metaObj.priceAdjustMode === 'qfq' &&
+  metaObj.fillCheckAdjustMode === 'raw' &&
+  assetEntries.length === 36 &&
+  minCloseLen >= 250 &&
+  maxCloseLen - minCloseLen <= 60 &&
+  endDates.size <= 2;
+rec(17, '窗口一致性断言（统一前复权qfq，36标的无错位）', windowConsistencyOk,
+  `adjust=${metaObj.priceAdjustMode}/${metaObj.fillCheckAdjustMode} assets=${assetEntries.length} closes=[${minCloseLen}..${maxCloseLen}] endDates=${Array.from(endDates).join(',')}`);
+
+// ---- 阶段2：主单文件全功能浏览器探针 ----
 const PROBE = String.raw`
 <script>
-window.__errs=[];window.__reqs=[];
+window.__errs=[];
 window.addEventListener('error',function(e){window.__errs.push(e.message)});
 (function(){var oe=console.error;console.error=function(){window.__errs.push([].join.call(arguments,' '));oe.apply(console,arguments)}})();
 window.addEventListener('load',function(){setTimeout(function(){
-var R={errs:window.__errs,reqs:window.__reqs};
+var R={errs:window.__errs};
 try{
-var A=window.AlphaLensAnalytics,D=window.ALPHALENS_DATA;
+var A=window.AlphaLensAnalytics,D=window.ALPHALENS_DATA,V=window.ALPHALENS_V3;
 R.hasData=!!D&&!!D.assets&&!!D.dividends;
-R.hasAnalytics=!!A&&typeof A.penetratePortfolio==='function'&&typeof A.computeCorrelationMatrix==='function'&&typeof A.computePortfolioCurveAndDrawdown==='function'&&typeof A.calcAfterTaxDividend==='function';
-R.assets=Object.keys(D.assets||{}).length;R.divs=Object.keys(D.dividends||{}).length;R.presets=(D.presets||[]).length;
-// 3 预设组合四大函数无 NaN
+R.hasAnalytics=!!A&&typeof A.penetratePortfolio==='function'&&typeof A.computeCorrelationMatrix==='function'&&typeof A.computePortfolioCurveAndDrawdown==='function'&&typeof A.evaluatePortfolioRisk==='function'&&typeof A.calcAfterTaxDividend==='function';
+R.assets=Object.keys(D.assets||{}).length;
+R.etfs=Object.values(D.assets||{}).filter(function(a){return a.type==='ETF'}).length;
+R.divs=Object.keys(D.dividends||{}).length;
+R.presets=(D.presets||[]).length;
+
+// 5 套预设组合在近1年(250日)与近3年(全量)双窗口下无 NaN + 四维风险诊断
 var presets=D.presets||[],summaries=[];
 presets.forEach(function(p){
   var pen=A.penetratePortfolio(p.positions,D.assets);
   var codes=p.positions.map(function(x){return x.code});
-  var corr=A.computeCorrelationMatrix(codes,D.assets);
-  var curve=A.computePortfolioCurveAndDrawdown(p.positions,D.assets);
-  var flat=JSON.stringify({pen:pen,corr:corr,curve:curve});
-  summaries.push({id:p.id,total:pen.totalAmount,covered:pen.coveredRatio,overlaps:pen.overlaps.length,
-    risk:pen.riskLevel,mdd:curve?curve.maxDrawdown:null,vol:curve?curve.annualizedVol:null,
-    avgCorr:corr.avgOffDiagonal,sample:corr.sampleDays,
-    hasNaN:/NaN|Infinity/.test(flat),curveLen:curve?curve.curve.length:0});
+  var corr1y=A.computeCorrelationMatrix(codes,D.assets,250);
+  var curve1y=A.computePortfolioCurveAndDrawdown(p.positions,D.assets,250);
+  var risk1y=A.evaluatePortfolioRisk(pen,corr1y,curve1y);
+  var corr3y=A.computeCorrelationMatrix(codes,D.assets,null);
+  var curve3y=A.computePortfolioCurveAndDrawdown(p.positions,D.assets,null);
+  var risk3y=A.evaluatePortfolioRisk(pen,corr3y,curve3y);
+  var flat=JSON.stringify({pen:pen,corr1y:corr1y,curve1y:curve1y,risk1y:risk1y,corr3y:corr3y,curve3y:curve3y,risk3y:risk3y});
+  summaries.push({
+    id:p.id,total:pen.totalAmount,covered:pen.coveredRatio,
+    overlaps:pen.overlaps.length,
+    overlapCodes:pen.overlaps.map(function(o){return o.code}),
+    avgCorr1y:corr1y.avgOffDiagonal,sample1y:curve1y?curve1y.sampleDays:0,dateRange1y:curve1y?curve1y.dateRange:null,
+    mdd1y:curve1y?curve1y.maxDrawdown:null,vol1y:curve1y?curve1y.annualizedVol:null,
+    avgCorr3y:corr3y.avgOffDiagonal,sample3y:curve3y?curve3y.sampleDays:0,dateRange3y:curve3y?curve3y.dateRange:null,
+    mdd3y:curve3y?curve3y.maxDrawdown:null,vol3y:curve3y?curve3y.annualizedVol:null,
+    risk1y:risk1y,risk3y:risk3y,
+    hasNaN:/NaN|Infinity/.test(flat)
+  });
 });
 R.summaries=summaries;
 
-// ---- 阶段2：报告导出 / localStorage 持久化 / 个人标识 ----
-var V=window.ALPHALENS_V3;
+// 回测窗口切换测试（默认 250 -> 切 all -> 切回 250）
+var metaBefore=document.getElementById('nav-meta').textContent;
+var btn3y=document.querySelector('#window-seg button[data-window=all]');
+if(btn3y)btn3y.click();
+var meta3y=document.getElementById('nav-meta').textContent;
+var btn1y=document.querySelector('#window-seg button[data-window="250"]');
+if(btn1y)btn1y.click();
+R.windowSwitch={
+  changed:metaBefore!==meta3y,
+  hasQfq:/前复权/.test(metaBefore)&&/前复权/.test(meta3y),
+  hasRange:/\d{4}-\d{2}-\d{2}\s*~\s*\d{4}-\d{2}-\d{2}/.test(metaBefore)
+};
+
+// 四维风险 DOM 渲染
+R.riskCards=document.querySelectorAll('#risk-dims .risk-card').length;
+R.corrSvg=document.querySelectorAll('#corr-chart svg').length;
+R.navSvg=document.querySelectorAll('#nav-chart svg').length;
+R.exposureRows=document.querySelectorAll('#exposure-list .exp-row').length;
+
+// 报告导出校验
 R.hasV3Api=!!V&&typeof V.buildCheckupMarkdown==='function';
 if(V){
-  var pen0=A.penetratePortfolio(V.state.positions,D.assets);
-  var corr0=A.computeCorrelationMatrix(V.state.positions.map(function(p){return p.code}),D.assets);
-  var curve0=A.computePortfolioCurveAndDrawdown(V.state.positions,D.assets);
-  var md=V.buildCheckupMarkdown(V.state.positions,D.assets,pen0,corr0,curve0);
-  R.md={len:md.length,total:md.indexOf('组合总金额')>=0,mdd:md.indexOf('历史最大回撤')>=0,
-    top:md.indexOf('底层重仓股穿透 Top 10')>=0, disclaimer:md.indexOf('不构成投资建议')>=0,
-    bad:/undefined|NaN/.test(md)};
-  var orig=V.state.positions[0].amount;
-  V.state.positions[0].amount=99999;V.saveUserState();
-  var stored=JSON.parse(localStorage.getItem('alphalens_v3_state')||'{}');
-  R.persist={saved:stored.positions&&stored.positions[0].amount===99999, hasTab:!!stored.activeTab};
+  var chk=V.currentCheckup();
+  var md=chk.md;
+  R.md={
+    len:md.length,
+    total:md.indexOf('组合总金额')>=0,
+    mdd:md.indexOf('历史最大回撤')>=0,
+    risk4:md.indexOf('四维独立风险诊断')>=0,
+    top:md.indexOf('底层重仓股穿透 Top 10')>=0,
+    disclaimer:md.indexOf('不构成投资建议')>=0,
+    bad:/undefined|NaN/.test(md)
+  };
+
+  // [20] 交互与持久化断言1：添加新持仓立即写入 localStorage
+  localStorage.removeItem('alphalens_v3_state');
+  var sel=document.getElementById('asset-select');
+  sel.value='513100';
+  document.getElementById('amount-input').value='25000';
+  document.getElementById('add-btn').click();
+  var storedAfterAdd=JSON.parse(localStorage.getItem('alphalens_v3_state')||'{}');
+  var addedFound=!!(storedAfterAdd.positions&&storedAfterAdd.positions.some(function(p){return p.code==='513100'&&Number(p.amount)>=25000}));
+
+  // [20] 交互与持久化断言2：编辑金额时 input 保持焦点不失焦且占比就地更新
+  var firstInp=document.querySelector('#pos-list input[data-idx="0"]');
+  var firstWeight=document.querySelector('#pos-list .pos-weight[data-idx="0"]');
+  var weightBefore=firstWeight?firstWeight.textContent:'';
+  var focusKept=false,weightChanged=false,savedAfterEdit=false;
+  if(firstInp){
+    firstInp.focus();
+    firstInp.value='88000';
+    firstInp.dispatchEvent(new Event('input',{bubbles:true}));
+    focusKept=(document.activeElement===firstInp);
+    weightChanged=(firstWeight&&firstWeight.textContent!==weightBefore);
+    var storedAfterEdit=JSON.parse(localStorage.getItem('alphalens_v3_state')||'{}');
+    savedAfterEdit=!!(storedAfterEdit.positions&&storedAfterEdit.positions[0].amount===88000);
+  }
+  R.interact={addedFound:addedFound,focusKept:focusKept,weightChanged:weightChanged,savedAfterEdit:savedAfterEdit};
+
+  // 重置默认与清理 localStorage
   document.getElementById('reset-btn').click();
-  R.persist.reset=V.state.positions[0].amount===orig;
-  R.persist.cleared=!localStorage.getItem('alphalens_v3_state');
+  R.persist={
+    saved:addedFound&&savedAfterEdit,
+    hasTab:!!storedAfterAdd.activeTab,
+    reset:V.state.positions[0].amount===40000&&V.state.positions.length===3,
+    cleared:!localStorage.getItem('alphalens_v3_state')
+  };
 }
-R.brand=document.body.textContent.indexOf('Zen Ao')>=0;
+
+R.brand=document.body.textContent.indexOf('Zen Ao')>=0&&document.body.textContent.indexOf('v3.1')>=0;
 R.exportBtns=document.querySelectorAll('.report-btn').length;
 
-// Tab2 15 股状态与排序表（先切到 div tab，表格在该视图首次显示时渲染）
-var divTab0=document.querySelector('.main-tabs button[data-main=div]');if(divTab0)divTab0.click();
+// Tab2：15 只高股息股 + 填权样本格式 + 红利税更名与财税101号文 + 税率/基准实时更新
+var divTab=document.querySelector('.main-tabs button[data-main=div]');
+if(divTab)divTab.click();
+R.divViewOn=document.getElementById('view-div').className.indexOf('on')>=0;
 R.divRows=document.querySelectorAll('#div-body tr').length;
 R.divBadges=document.querySelectorAll('#div-body .badge').length;
-// 红利税切换实时更新
+var divTableText=document.getElementById('div-body').textContent;
+R.fillSampleFmt=/已填\s*\d+\s*\/\s*未填\s*\d+/.test(divTableText);
+var divSectionText=document.getElementById('view-div').textContent;
+R.taxRenameOk=divSectionText.indexOf('历史股息税后收益情景测算')>=0&&divSectionText.indexOf('101 号文')>=0;
+
 var before=document.getElementById('tax-result').textContent;
 var b2=document.querySelector('#period-seg button[data-period=lt_1m]');if(b2)b2.click();
 var after=document.getElementById('tax-result').textContent;
@@ -97,77 +255,166 @@ R.taxChanges=before!==after;
 R.taxHasNaN=/NaN|Infinity/.test(after);
 var bench=document.getElementById('benchmark');bench.value='4';bench.dispatchEvent(new Event('input',{bubbles:true}));
 R.benchChanges=document.getElementById('tax-result').textContent!==after;
-// 相关性/净值 SVG 已渲染
-R.corrSvg=document.querySelectorAll('#corr-chart svg').length;
-R.navSvg=document.querySelectorAll('#nav-chart svg').length;
-// exposure 行
-R.exposureRows=document.querySelectorAll('#exposure-list .exp-row').length;
-// 主 Tab 切换
-var divTab=document.querySelector('.main-tabs button[data-main=div]');if(divTab)divTab.click();
-R.divViewOn=document.getElementById('view-div').className.indexOf('on')>=0;
-}catch(e){R.fatal=e.message+' @ '+(e.stack||'').split('\\n')[1]}
+}catch(e){R.fatal=e.message+' @ '+(e.stack||'').split('\n')[1]}
 var d=document.createElement('div');d.id='__VR';d.style.display='none';d.textContent=JSON.stringify(R);document.body.appendChild(d);
 },2500);});
 </script>`;
 
-function chromeDom(htmlPath, extra = []) {
-  const r = spawnSync(CHROME, ['--headless=new', '--disable-gpu', '--no-sandbox',
-    '--virtual-time-budget=8000', ...extra, '--dump-dom', 'file://' + htmlPath],
-    { encoding: 'utf8', maxBuffer: 30 * 1024 * 1024 });
-  return r.stdout || '';
-}
-
 if (!fs.existsSync(LIVE)) { console.error('MISSING ' + LIVE); process.exit(1); }
 const tmp = path.join(HERE, '__v3_probe.html');
-fs.writeFileSync(tmp, fs.readFileSync(LIVE, 'utf8').replace('</body>', PROBE + '</body>'));
-const dom = chromeDom(tmp);
-fs.rmSync(tmp, { force: true });
-const m = dom.match(/<div id="__VR"[^>]*>([\s\S]*?)<\/div>/);
 let R;
-try { R = JSON.parse((m ? m[1] : '{}').replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')); }
-catch (e) { R = { fatal: 'parse: ' + e.message }; }
+try {
+  fs.writeFileSync(tmp, liveText.replace('</body>', PROBE + '</body>'));
+  const dom = chromeDom(tmp);
+  const m = dom.match(/<div id="__VR"[^>]*>([\s\S]*?)<\/div>/);
+  try { R = decodeHtmlJson(m ? m[1] : '{}'); }
+  catch (e) { R = { fatal: 'parse: ' + e.message }; }
+} finally {
+  fs.rmSync(tmp, { force: true });
+}
 fs.writeFileSync(OUT, JSON.stringify(R, null, 2));
 
-rec(1, '零运行时错误 / 数据注入完整', (R.errs || []).length === 0 && R.hasData === true && R.hasAnalytics === true,
+rec(1, '零运行时错误 / 数据与五函数引擎完整',
+  (R.errs || []).length === 0 && R.hasData === true && R.hasAnalytics === true,
   `errs=${(R.errs || []).length} data=${R.hasData} analytics=${R.hasAnalytics} fatal=${R.fatal || 'none'}`);
-rec(2, '30标的+15分红+3预设', R.assets === 30 && R.divs === 15 && R.presets === 3,
-  `assets=${R.assets} divs=${R.divs} presets=${R.presets}`);
+
+rec(2, '36标的（21 ETF + 15个股）+ 15分红 + 5预设',
+  R.assets === 36 && R.etfs === 21 && R.divs === 15 && R.presets === 5,
+  `assets=${R.assets} etfs=${R.etfs} divs=${R.divs} presets=${R.presets}`);
+
 const sums = R.summaries || [];
-rec(3, '三预设四函数无NaN/Infinity', sums.length === 3 && sums.every(s => !s.hasNaN && s.total > 0),
-  sums.map(s => `${s.id}:${s.hasNaN ? 'NaN' : 'ok'}`).join(' '));
+rec(3, '5套预设双窗口（1年/3年）全量计算无NaN/Infinity',
+  sums.length === 5 && sums.every(s => !s.hasNaN && s.total > 0 && s.sample1y >= 200 && s.sample3y >= 600),
+  sums.map(s => `${s.id}(1y:${s.sample1y}d,3y:${s.sample3y}d):${s.hasNaN ? 'NaN' : 'ok'}`).join(' '));
+
 const fake = sums.find(s => s.id === 'fake_diversification');
 const bal = sums.find(s => s.id === 'balanced_contrast');
-rec(4, '假分散vs均衡对照有区分', !!(fake && bal && (fake.overlaps !== bal.overlaps || Math.abs((fake.avgCorr || 0) - (bal.avgCorr || 0)) > 0.05)),
-  `fake(overlap=${fake && fake.overlaps},corr=${fake && fake.avgCorr}) bal(overlap=${bal && bal.overlaps},corr=${bal && bal.avgCorr})`);
-rec(5, 'Tab2 15股状态齐全 + 图表渲染', R.divRows === 15 && R.divBadges === 15 && R.corrSvg >= 1 && R.navSvg >= 1 && R.exposureRows > 0,
-  `rows=${R.divRows} badges=${R.divBadges} corrSVG=${R.corrSvg} navSVG=${R.navSvg} exp=${R.exposureRows}`);
-rec(6, '税率/基准切换实时更新且无NaN', R.taxChanges === true && R.benchChanges === true && R.taxHasNaN === false,
-  `taxChange=${R.taxChanges} benchChange=${R.benchChanges} NaN=${R.taxHasNaN}`);
+rec(4, '假分散vs均衡对照有显著区分',
+  !!(fake && bal && fake.overlaps >= 4 && bal.overlaps === 0 && Math.abs((fake.avgCorr3y || 0) - (bal.avgCorr3y || 0)) > 0.15),
+  `fake(overlap=${fake && fake.overlaps},corr3y=${fake && fake.avgCorr3y?.toFixed(2)}) bal(overlap=${bal && bal.overlaps},corr3y=${bal && bal.avgCorr3y?.toFixed(2)})`);
 
-// 断网降级：stub live.js 为永不回调
+rec(5, 'Tab2 15股齐全 + 填权样本透明 + 财税101号文 + SVG渲染',
+  R.divRows === 15 && R.divBadges === 15 && R.fillSampleFmt === true && R.taxRenameOk === true &&
+  R.corrSvg >= 1 && R.navSvg >= 1 && R.exposureRows > 0 && R.riskCards === 4,
+  `rows=${R.divRows} fillFmt=${R.fillSampleFmt} taxRename=${R.taxRenameOk} riskCards=${R.riskCards} corrSVG=${R.corrSvg} navSVG=${R.navSvg}`);
+
+rec(6, '税率/基准与回测窗口切换实时更新且无NaN',
+  R.taxChanges === true && R.benchChanges === true && R.taxHasNaN === false &&
+  R.windowSwitch && R.windowSwitch.changed && R.windowSwitch.hasQfq && R.windowSwitch.hasRange,
+  `tax=${R.taxChanges} bench=${R.benchChanges} winSwitch=${R.windowSwitch && R.windowSwitch.changed} qfq=${R.windowSwitch && R.windowSwitch.hasQfq}`);
+
+// ---- [7] 断网 6 秒降级 SNAPSHOT（stub 内联 live.js）----
 const offlineFile = path.join(HERE, '__v3_offline.html');
-let offlineHtml = fs.readFileSync(LIVE, 'utf8');
-offlineHtml = offlineHtml.replace('<script src="live.js"></script>',
-  '<script>window.AlphaLive={start:function(){},status:function(){return{state:"SNAPSHOT",stamp:"",count:0}}};</script>');
-offlineHtml = offlineHtml.replace('</body>', '<div id="__OFF" style="display:none"></div><script>setTimeout(function(){var t=document.querySelector(".main-tabs button[data-main=div]");if(t)t.click();document.getElementById("__OFF").textContent=JSON.stringify({label:document.getElementById("live-label").textContent,svg:document.querySelectorAll("#corr-chart svg").length,rows:document.querySelectorAll("#div-body tr").length,tax:document.getElementById("tax-result").textContent.length})},7000)</script></body>');
-fs.writeFileSync(offlineFile, offlineHtml);
-const odom = chromeDom(offlineFile, ['--virtual-time-budget=9000']);
-fs.rmSync(offlineFile, { force: true });
-const om = odom.match(/<div id="__OFF"[^>]*>([\s\S]*?)<\/div>/);
 let O = {};
-try { O = JSON.parse((om ? om[1] : '{}').replace(/&quot;/g, '"')); } catch (e) {}
-rec(7, '断网6秒降级SNAPSHOT且图表测算可用', /SNAPSHOT/.test(O.label || '') && (O.svg || 0) >= 1 && (O.rows || 0) === 15 && (O.tax || 0) > 10,
-  `label=${O.label} svg=${O.svg} rows=${O.rows} taxLen=${O.tax}`);
+try {
+  const stubbed = liveText.replace(
+    /<script data-inline="live\.js">[\s\S]*?<\/script>/,
+    '<script data-inline="live.js">window.AlphaLive={start:function(){},status:function(){return{state:"SNAPSHOT",stamp:"",count:0,lastCount:0,total:36}}};</script>'
+  ).replace(
+    '</body>',
+    '<div id="__OFF" style="display:none"></div><script>setTimeout(function(){var t=document.querySelector(".main-tabs button[data-main=div]");if(t)t.click();document.getElementById("__OFF").textContent=JSON.stringify({label:document.getElementById("live-label").textContent,svg:document.querySelectorAll("#corr-chart svg").length,rows:document.querySelectorAll("#div-body tr").length,snaps:document.querySelectorAll("#div-body .snap-tag").length,tax:document.getElementById("tax-result").textContent.length})},6800)</script></body>'
+  );
+  fs.writeFileSync(offlineFile, stubbed);
+  const odom = chromeDom(offlineFile, ['--virtual-time-budget=9500']);
+  const om = odom.match(/<div id="__OFF"[^>]*>([\s\S]*?)<\/div>/);
+  try { O = decodeHtmlJson(om ? om[1] : '{}'); } catch (_) {}
+} finally {
+  fs.rmSync(offlineFile, { force: true });
+}
+rec(7, '断网6秒降级SNAPSHOT且表格标注快照与图表可用',
+  /SNAPSHOT/.test(O.label || '') && (O.svg || 0) >= 1 && (O.rows || 0) === 15 && (O.snaps || 0) === 15 && (O.tax || 0) > 10,
+  `label=${O.label} svg=${O.svg} rows=${O.rows} snapTags=${O.snaps} taxLen=${O.tax}`);
 
-// ---- 阶段2 浏览器断言 ----
+// ---- 阶段2 报告/持久化/标识断言 ----
 const md = R.md || {}, ps = R.persist || {};
-rec(14, '报告导出内容完整无NaN', R.hasV3Api === true && md.len > 500 && md.total && md.mdd && md.top && md.disclaimer && !md.bad,
-  `len=${md.len} 总金额=${md.total} MDD=${md.mdd} Top10=${md.top} 免责=${md.disclaimer} bad=${md.bad}`);
-rec(15, 'localStorage持久化与重置', ps.saved === true && ps.hasTab === true && ps.reset === true && ps.cleared === true,
+rec(14, '报告导出完整（含四维诊断/总金额/MDD/Top10/免责）无NaN',
+  R.hasV3Api === true && md.len > 600 && md.total && md.mdd && md.risk4 && md.top && md.disclaimer && !md.bad,
+  `len=${md.len} risk4=${md.risk4} MDD=${md.mdd} Top10=${md.top} bad=${md.bad}`);
+
+rec(15, 'localStorage持久化与重置默认',
+  ps.saved === true && ps.hasTab === true && ps.reset === true && ps.cleared === true,
   `saved=${ps.saved} tab=${ps.hasTab} reset=${ps.reset} cleared=${ps.cleared}`);
-rec(16, '个人标识与导出按钮', R.brand === true && (R.exportBtns || 0) >= 3,
+
+rec(16, 'v3.1个人标识与导出按钮',
+  R.brand === true && (R.exportBtns || 0) >= 3,
   `brand=${R.brand} exportBtns=${R.exportBtns}`);
 
+// ---- [18] 美股重仓归一化断言 ----
+const usTech = sums.find(s => s.id === 'us_tech_fake_div');
+const usCodes = (usTech && usTech.overlapCodes) || [];
+const hasUsCore = ['US:NVDA', 'US:AAPL', 'US:MSFT'].every(c => usCodes.includes(c));
+rec(18, '美股重仓归一化断言（us_tech_fake_div重合>=3且识别US:NVDA/AAPL/MSFT）',
+  !!(usTech && usTech.overlaps >= 3 && hasUsCore),
+  `overlaps=${usTech && usTech.overlaps} top=${usCodes.slice(0, 6).join(',')}`);
+
+// ---- [19] 四维风险区分度断言 ----
+const globalLow = sums.find(s => s.id === 'global_low_corr');
+const divInc = sums.find(s => s.id === 'dividend_income');
+const allLevels = new Set();
+sums.forEach(s => {
+  if (!s.risk1y) return;
+  Object.values(s.risk1y).forEach(d => allLevels.add(d.level));
+});
+const notAllHigh = sums.every(s => s.risk1y && !Object.values(s.risk1y).every(d => d.level === 'HIGH'));
+const riskDiffOk = !!(
+  notAllHigh &&
+  globalLow && globalLow.risk1y.correlation.level === 'LOW' &&
+  usTech && usTech.risk1y.overlap.level === 'HIGH' && usTech.risk1y.correlation.level === 'HIGH' &&
+  divInc && divInc.risk3y.drawdownVol.level !== 'HIGH' &&
+  Math.abs(divInc.mdd3y) < Math.abs(usTech.mdd3y) &&
+  allLevels.has('LOW') && allLevels.has('MEDIUM') && allLevels.has('HIGH')
+);
+rec(19, '四维风险区分度断言（告别一刀切标红）', riskDiffOk,
+  `globalLow.corr=${globalLow && globalLow.risk1y.correlation.level} usTech.overlap=${usTech && usTech.risk1y.overlap.level} divInc.mdd3y=${divInc && (divInc.mdd3y * 100).toFixed(1)}% vs usTech.mdd3y=${usTech && (usTech.mdd3y * 100).toFixed(1)}%`);
+
+// ---- [20] 交互与持久化断言（新增即存 + 编辑金额不失焦）----
+const ix = R.interact || {};
+rec(20, '交互与持久化断言（新增即存localStorage + 修改金额输入框保焦）',
+  ix.addedFound === true && ix.focusKept === true && ix.weightChanged === true && ix.savedAfterEdit === true,
+  `addedSaved=${ix.addedFound} focusKept=${ix.focusKept} weightInPlace=${ix.weightChanged} editSaved=${ix.savedAfterEdit}`);
+
+// ---- [21] 孤立单文件验收（仅拷贝 index.html 至系统临时目录单独加载）----
+const isoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alphalens_isolated_'));
+const isoFile = path.join(isoDir, 'index.html');
+let ISO = {};
+try {
+  const isoProbe = String.raw`
+<script>
+window.__isoErrs=[];
+window.addEventListener('error',function(e){window.__isoErrs.push(e.message)});
+(function(){var oe=console.error;console.error=function(){window.__isoErrs.push([].join.call(arguments,' '));oe.apply(console,arguments)}})();
+window.addEventListener('load',function(){setTimeout(function(){
+  var R={errs:window.__isoErrs,extScripts:document.querySelectorAll('script[src]').length};
+  try{
+    R.hasData=!!window.ALPHALENS_DATA;
+    R.hasAnalytics=!!window.AlphaLensAnalytics;
+    R.assets=Object.keys((window.ALPHALENS_DATA&&window.ALPHALENS_DATA.assets)||{}).length;
+    R.corrSvg=document.querySelectorAll('#corr-chart svg').length;
+    R.navSvg=document.querySelectorAll('#nav-chart svg').length;
+    R.riskCards=document.querySelectorAll('#risk-dims .risk-card').length;
+    R.expRows=document.querySelectorAll('#exposure-list .exp-row').length;
+    var md=window.ALPHALENS_V3?window.ALPHALENS_V3.currentCheckup().md:'';
+    R.mdOk=md.length>500&&!/undefined|NaN/.test(md);
+    var t=document.querySelector('.main-tabs button[data-main=div]');if(t)t.click();
+    R.divRows=document.querySelectorAll('#div-body tr').length;
+    R.divSvg=document.querySelectorAll('#div-chart svg').length;
+  }catch(e){R.fatal=e.message}
+  var d=document.createElement('div');d.id='__ISO';d.style.display='none';d.textContent=JSON.stringify(R);document.body.appendChild(d);
+},2200);});
+</script>`;
+  fs.writeFileSync(isoFile, rootText.replace('</body>', isoProbe + '</body>'));
+  const idom = chromeDom(isoFile);
+  const im = idom.match(/<div id="__ISO"[^>]*>([\s\S]*?)<\/div>/);
+  try { ISO = decodeHtmlJson(im ? im[1] : '{}'); } catch (e) { ISO = { fatal: e.message }; }
+} finally {
+  fs.rmSync(isoDir, { recursive: true, force: true });
+}
+const isoOk = (ISO.errs || []).length === 0 && ISO.extScripts === 0 && ISO.hasData && ISO.hasAnalytics &&
+  ISO.assets === 36 && ISO.corrSvg >= 1 && ISO.navSvg >= 1 && ISO.riskCards === 4 &&
+  ISO.expRows > 0 && ISO.divRows === 15 && ISO.divSvg >= 1 && ISO.mdOk === true && !ISO.fatal;
+rec(21, '孤立单文件验收（拷贝至临时目录零外部文件独立加载）', isoOk,
+  `errs=${(ISO.errs || []).length} extSrc=${ISO.extScripts} assets=${ISO.assets} svgs=${ISO.corrSvg}/${ISO.navSvg}/${ISO.divSvg} riskCards=${ISO.riskCards} mdOk=${ISO.mdOk}`);
+
 const passed = results.filter(r => r.pass).length;
-console.log(`\n=== VERIFY_V3: ${passed}/${results.length} PASS ===`);
+console.log(`\n=== VERIFY_V3.1: ${passed}/${results.length} PASS (Chrome: ${CHROME}) ===`);
 if (passed !== results.length) process.exit(1);

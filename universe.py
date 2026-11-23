@@ -1,12 +1,21 @@
-"""AlphaLens v3 — curated 30-instrument universe (15 ETF + 15 high-dividend A-shares).
+"""AlphaLens v3.1 — curated 36-instrument universe (21 ETF + 15 high-dividend A-shares).
 
 Design goals:
-  * Module A (portfolio penetration): ETFs with real top-10 holdings.
+  * Module A (portfolio penetration): A-share & cross-market QDII/tech ETFs with real top-10 holdings.
   * Module B (dividend truth): A-shares with real cash dividend history.
-  * 3 preset portfolios for one-click demonstration.
+  * 5 preset portfolios for one-click cross-market demonstration.
 
 No market data here — this is a static catalog only.
 """
+NEW_TECH_QDII_ETFS = [
+    {"code": "513100", "name": "纳指ETF",       "category": "美股QDII", "market": "sh"},
+    {"code": "513500", "name": "标普500ETF",    "category": "美股QDII", "market": "sh"},
+    {"code": "159509", "name": "纳指科技ETF",   "category": "美股QDII", "market": "sz"},
+    {"code": "513180", "name": "恒生科技ETF",   "category": "港股QDII", "market": "sh"},
+    {"code": "515000", "name": "科技ETF",       "category": "A股科技",  "market": "sh"},
+    {"code": "515070", "name": "人工智能AIETF", "category": "A股科技",  "market": "sh"},
+]
+
 ETFS = [
     {"code": "510300", "name": "沪深300ETF", "category": "宽基", "market": "sh"},
     {"code": "510500", "name": "中证500ETF", "category": "宽基", "market": "sh"},
@@ -23,7 +32,7 @@ ETFS = [
     {"code": "516160", "name": "新能源ETF",  "category": "行业", "market": "sh"},
     {"code": "512880", "name": "证券ETF",    "category": "行业", "market": "sh"},
     {"code": "518880", "name": "黄金ETF",    "category": "商品", "market": "sh"},
-]
+] + NEW_TECH_QDII_ETFS
 
 DIVIDEND_STOCKS = [
     {"code": "600900", "name": "长江电力", "category": "电力", "market": "sh"},
@@ -72,6 +81,26 @@ PRESET_PORTFOLIOS = [
             {"code": "510880", "amount": 40000},
             {"code": "518880", "amount": 30000},
             {"code": "159915", "amount": 30000},
+        ],
+    },
+    {
+        "id": "us_tech_fake_div",
+        "name": "美股科技“假分散”组合",
+        "desc": "同时买入纳指、标普500与纳指科技，穿透后底层高度重合于美股科技七巨头",
+        "positions": [
+            {"code": "513100", "amount": 40000},
+            {"code": "513500", "amount": 30000},
+            {"code": "159509", "amount": 30000},
+        ],
+    },
+    {
+        "id": "global_low_corr",
+        "name": "跨市场低相关均衡组合",
+        "desc": "美股成长(纳指) + A股红利 + 黄金三类低相关资产搭配，检验跨市场回撤平滑效果",
+        "positions": [
+            {"code": "513100", "amount": 35000},
+            {"code": "510880", "amount": 35000},
+            {"code": "518880", "amount": 30000},
         ],
     },
 ]
