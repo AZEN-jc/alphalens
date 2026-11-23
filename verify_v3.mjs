@@ -75,9 +75,11 @@ function decodeHtmlJson(raw) {
 
 function chromeDom(htmlPath, extra = []) {
   const url = pathToFileURL(htmlPath).href;
+  const hasWinSize = extra.some(a => a.startsWith('--window-size='));
+  const defaultWin = hasWinSize ? [] : ['--window-size=1440,960'];
   const r = spawnSync(
     CHROME,
-    ['--headless=new', '--disable-gpu', '--no-sandbox', '--virtual-time-budget=8000', ...extra, '--dump-dom', url],
+    ['--headless=new', '--disable-gpu', '--no-sandbox', '--virtual-time-budget=8000', ...defaultWin, ...extra, '--dump-dom', url],
     { encoding: 'utf8', maxBuffer: 40 * 1024 * 1024 }
   );
   return r.stdout || '';
@@ -99,7 +101,7 @@ rec(12, 'v2旧文件已归档且根目录清爽', archiveOk && rootClean,
 
 const readme = fs.existsSync(README) ? fs.readFileSync(README, 'utf8') : '';
 const lic = fs.existsSync(LICENSE) ? fs.readFileSync(LICENSE, 'utf8') : '';
-const docsOk = /AlphaLens v3\.[12]/.test(readme) && /持仓穿透/.test(readme) && /四维/.test(readme) &&
+const docsOk = /AlphaLens v3\.[123]/.test(readme) && /持仓穿透/.test(readme) && /四维/.test(readme) &&
   /GitHub Pages/.test(readme) && /archive\/v2/.test(readme) && /MIT License/.test(lic) && /Zen Ao/.test(lic);
 rec(13, 'README 文档与MIT LICENSE齐全', docsOk,
   `readmeLen=${readme.length} licenseOk=${/MIT License/.test(lic)}`);
@@ -269,18 +271,33 @@ if(drillTabs[1])drillTabs[1].click();
 var drillItems=document.querySelectorAll('#etf-drilldown .drill-item').length;
 var drillHasYuan=/¥[\d,]+/.test((document.getElementById('etf-drilldown')||{}).textContent||'');
 var plainOk=!!(document.getElementById('pb-title')&&document.getElementById('pb-title').textContent.length>10);
+var aiLines=document.querySelectorAll('#ai-terminal-log .ai-line').length;
+var hasSpectrum=!!document.getElementById('sp-marker');
+var stageCanvas=document.getElementById('stage-3d-canvas');
+var surfCanvas=document.getElementById('surface-3d-canvas');
+var drillBox=document.getElementById('drill-card');
+var verdictBox=document.getElementById('verdict-card');
+var splitBottomDiff=(drillBox&&verdictBox)?Math.abs(drillBox.getBoundingClientRect().bottom-verdictBox.getBoundingClientRect().bottom):999;
+var pbBadgeTxt=(document.getElementById('pb-badge')||{}).textContent||'';
+var aiLogTxt=(document.getElementById('ai-terminal-log')||{}).textContent||'';
+var noEmojiInNarrator=!/[\u{1F300}-\u{1FAFF}\u{26A0}\u{1F4CA}]/u.test(pbBadgeTxt+aiLogTxt);
 R.vizV32={
-  plainOk:plainOk,
+  plainOk:plainOk&&aiLines===3&&hasSpectrum,
   advDefaultClosed:advDefaultClosed,
   flowNodes:flowNodes.length,
   flowEdges:flowEdges,
   flowFocused:flowFocused,
   drillTabs:drillTabs.length,
   drillItems:drillItems,
-  drillHasYuan:drillHasYuan
+  drillHasYuan:drillHasYuan,
+  aiLines:aiLines,
+  stage3dOk:!!(stageCanvas&&stageCanvas.width>=600&&stageCanvas.height>=200),
+  surf3dOk:!!(surfCanvas&&surfCanvas.width>=200&&surfCanvas.height>=150),
+  zeroVoidEqualHeight:splitBottomDiff<=2,
+  poeticNarratorOk:/【.*】/.test(pbBadgeTxt)&&/壹·观澜/.test(aiLogTxt)&&/贰·听风/.test(aiLogTxt)&&noEmojiInNarrator
 };
 
-R.brand=document.body.textContent.indexOf('Zen Ao')>=0&&/v3\.[12]/.test(document.body.textContent);
+R.brand=document.body.textContent.indexOf('Zen Ao')>=0&&/v3\.[123]/.test(document.body.textContent);
 R.exportBtns=document.querySelectorAll('.report-btn').length;
 
 // Tab2：15 只高股息股 + 填权样本格式 + 红利税更名与财税101号文 + 税率/基准实时更新
@@ -431,6 +448,10 @@ rec(23, '流向连线图 + 单只ETF持仓展开 + 三层递进默认收起断�
   vz.plainOk === true && vz.advDefaultClosed === true && vz.flowNodes >= 5 && vz.flowEdges >= 5 &&
   vz.flowFocused === true && vz.drillTabs === 3 && vz.drillItems >= 5 && vz.drillHasYuan === true,
   `plain=${vz.plainOk} advClosed=${vz.advDefaultClosed} flow=${vz.flowNodes}n/${vz.flowEdges}e focus=${vz.flowFocused} drill=${vz.drillItems}i`);
+
+rec(25, '双真3D透视Canvas引擎(观澜+叠嶂) + 四象限零空洞等高对齐 + 东方尺牍诗意判词无Emoji断言',
+  vz.stage3dOk === true && vz.surf3dOk === true && vz.zeroVoidEqualHeight === true && vz.poeticNarratorOk === true,
+  `stage3d=${vz.stage3dOk} surf3d=${vz.surf3dOk} equalHeight=${vz.zeroVoidEqualHeight} poeticNoEmoji=${vz.poeticNarratorOk}`);
 
 // ---- [21] 孤立单文件验收（仅拷贝 index.html 至系统临时目录单独加载）----
 const isoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alphalens_isolated_'));
