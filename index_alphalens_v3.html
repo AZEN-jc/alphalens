@@ -4,31 +4,31 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#ffffff">
-<meta name="description" content="AlphaLens v3.1 — 个人稳健投资持仓体检与高股息分析终端">
-<title>AlphaLens v3.1 — 持仓穿透 · 吃息真相</title>
+<meta name="description" content="AlphaLens v3.2 — 面向普通人的基金持仓穿透可视化与高股息分析终端">
+<title>AlphaLens v3.2 — 持仓穿透 · 吃息真相</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0b0b'/%3E%3Ctext x='16' y='23' font-size='18' font-family='monospace' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <style>
-/* AlphaLens v3.1 — single-color system, zero CDN, true single-file file:// ready */
+/* AlphaLens v3.2 — progressive hierarchy, fund->stock visualization, mobile-first ergonomics */
 :root{
-  --bg:#fff;--surface:#f5f5f5;--well:#f6f6f6;--line:#00000012;--line2:#0000002b;
-  --ink:#0b0b0b;--ink-soft:#00000085;--ink-faint:#00000061;
+  --bg:#fff;--surface:#f5f6f8;--well:#f1f3f5;--line:#00000014;--line2:#0000002b;
+  --ink:#0b0b0b;--ink-soft:#0000008c;--ink-faint:#00000063;
   --up:#D92D20;--down:#079455;--warn:#B54708;--flat:#8a8a8a;--info:#2563EB;
-  --up-bg:#D92D2012;--down-bg:#07945512;--warn-bg:#B5470814;--flat-bg:#8a8a8a16;
-  --radius:10px;--radius-sm:6px;
+  --up-bg:#D92D2010;--down-bg:#07945510;--warn-bg:#B5470812;--flat-bg:#8a8a8a16;
+  --radius:12px;--radius-sm:8px;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --font-figure:"Satoshi",var(--font);
   --mono:"SF Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
 }
 :root[data-theme=dark]{
-  --bg:#0b0b0b;--surface:#161616;--well:#171717;--line:#ffffff1a;--line2:#ffffff3d;
-  --ink:#f2f2f2;--ink-soft:#fff9;--ink-faint:#ffffff6b;
-  --warn:#F79009;--up-bg:#D92D2026;--down-bg:#07945526;--warn-bg:#F7900924;--flat-bg:#ffffff14;
+  --bg:#0b0b0b;--surface:#151618;--well:#1b1c1f;--line:#ffffff1a;--line2:#ffffff3d;
+  --ink:#f2f2f2;--ink-soft:#ffffffb3;--ink-faint:#ffffff73;
+  --warn:#F79009;--up-bg:#D92D2024;--down-bg:#07945524;--warn-bg:#F7900922;--flat-bg:#ffffff14;
   color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--bg);color:var(--ink);font:13px/1.55 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 .num,.mono,.figure{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .num,.figure{text-align:right}
 .up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--flat)}
@@ -39,123 +39,221 @@ a{color:inherit;text-decoration:none}
 .skip{position:absolute;left:-9999px}.skip:focus{left:8px;top:8px;z-index:99;background:var(--ink);color:var(--bg);padding:6px 10px}
 
 /* 顶栏 */
-header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
-  padding:12px 24px;display:flex;align-items:center;gap:20px;min-height:60px;flex-wrap:wrap}
+header{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:10px 24px;display:flex;align-items:center;gap:16px;min-height:58px;flex-wrap:wrap}
 .brand h1{font-size:16px;font-weight:700;letter-spacing:-.02em}
-.brand p{font-size:10px;color:var(--ink-faint);letter-spacing:.04em}
-.main-tabs{display:flex;gap:2px;background:var(--surface);padding:3px;border-radius:8px;margin-left:12px}
-.main-tabs button{border:none;background:transparent;padding:6px 14px;border-radius:6px;color:var(--ink-soft);font-weight:500}
-.main-tabs button.on{background:var(--bg);color:var(--ink);font-weight:600;box-shadow:0 1px 3px #00000012}
-.top-right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:10px;color:var(--ink-faint)}
+.brand p{font-size:10px;color:var(--ink-faint);letter-spacing:.03em}
+.main-tabs{display:flex;gap:2px;background:var(--surface);padding:3px;border-radius:9px}
+.main-tabs button{border:none;background:transparent;padding:7px 14px;border-radius:7px;color:var(--ink-soft);font-weight:500;min-height:34px}
+.main-tabs button.on{background:var(--bg);color:var(--ink);font-weight:600;box-shadow:0 1px 3px #00000014}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:10px;color:var(--ink-faint)}
 .st{display:inline-flex;align-items:center;gap:5px}
 .st i{width:6px;height:6px;border-radius:50%;background:var(--flat)}
 .st.live i{background:var(--down)}.st.warn i{background:var(--up)}
-.theme-btn{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:4px 8px;font-size:10px}
+.theme-btn{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:5px 9px;font-size:11px;min-height:30px}
 
-main{max-width:1500px;margin:0 auto;padding:20px 24px 60px}
+main{max-width:1460px;margin:0 auto;padding:18px 24px 56px}
 .view{display:none}.view.on{display:block}
 
 /* 通用卡片 */
 .card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
-.card h2{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .card h2 small{font:10px var(--mono);color:var(--ink-faint);font-weight:400}
-.note{font-size:10px;color:var(--ink-faint);line-height:1.6}
+.note{font-size:11px;color:var(--ink-faint);line-height:1.55}
 .mb{margin-bottom:14px}
 
-/* Tab1 布局 */
-.pen-layout{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
-@media(max-width:980px){.pen-layout{grid-template-columns:1fr}}
-.preset-list{display:flex;flex-direction:column;gap:8px}
-.preset{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;text-align:left;transition:border-color .15s}
+/* Tab1 主体：左侧操作 + 右侧三层递进视图 */
+.pen-layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+.sidebar-col,.main-col{min-width:0}
+.preset-list{display:flex;flex-direction:column;gap:7px}
+.preset{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px;text-align:left;transition:border-color .15s}
 .preset:hover{border-color:var(--line2)}
-.preset.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
-.preset b{display:block;font-size:12px;margin-bottom:3px}
-.preset span{font-size:10px;color:var(--ink-faint);line-height:1.4}
-.add-row{display:flex;gap:6px;margin:12px 0}
-.add-row select,.add-row input{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:7px 8px;min-width:0}
+.preset.on{border-color:var(--ink);background:var(--surface);box-shadow:inset 0 0 0 1px var(--ink)}
+.preset b{display:block;font-size:12px;margin-bottom:2px}
+.preset span{display:block;font-size:10px;color:var(--ink-faint);line-height:1.35}
+
+/* 总金额双向可调看板 */
+.capital-bar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cap-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cap-label{font-size:11px;color:var(--ink-soft);font-weight:600}
+.cap-input-wrap{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:4px 10px}
+.cap-input-wrap span{font:600 15px var(--mono);color:var(--ink-soft)}
+.cap-input-wrap input{border:none;background:transparent;width:110px;font:700 17px var(--mono);color:var(--ink);outline:none;text-align:left}
+.cap-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.chip-btn{border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:5px 11px;font-size:11px;font-weight:500;min-height:32px;transition:all .12s}
+.chip-btn:hover{border-color:var(--ink)}
+.chip-btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip-btn.ghost{border-style:dashed;color:var(--ink-soft)}
+
+/* 持仓管理 */
+.add-row{display:flex;gap:6px;margin:10px 0}
+.add-row select,.add-row input{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:7px 8px;min-width:0;min-height:38px}
 .add-row select{flex:1}.add-row input{width:76px}
-.add-row button{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:var(--radius-sm);padding:6px 10px;white-space:nowrap}
-.pos-list{display:flex;flex-direction:column;gap:6px}
-.pos{display:flex;align-items:center;gap:6px;font-size:11px}
-.pos .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pos .pos-px{font-size:10px;color:var(--ink-faint);white-space:nowrap}
-.pos input{width:78px;border:1px solid var(--line);background:var(--bg);border-radius:4px;padding:4px 6px;text-align:right;font-family:var(--mono)}
-.pos .pw{width:42px;text-align:right;color:var(--ink-faint);font-family:var(--mono)}
-.pos .del{border:none;background:none;color:var(--ink-faint);font-size:14px;padding:0 2px}
+.add-row button{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:var(--radius-sm);padding:6px 12px;white-space:nowrap;min-height:38px}
+.pos-list{display:flex;flex-direction:column;gap:8px}
+.pos{display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.pos:last-child{border-bottom:none}
+.pos-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pos .nm-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pos .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.pos .pos-sub{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--ink-faint)}
+.pos .peek-btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:2px 6px;font-size:10px;color:var(--ink-soft)}
+.pos .peek-btn.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+.pos input{width:80px;border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:5px 6px;text-align:right;font-family:var(--mono);min-height:34px}
+.pos .pw{width:40px;text-align:right;color:var(--ink-faint);font-family:var(--mono)}
+.pos .del{border:none;background:none;color:var(--ink-faint);font-size:16px;padding:4px 6px;min-width:28px;min-height:32px}
 .snap-tag{display:inline-block;font:9px var(--mono);padding:0 4px;margin-left:3px;border-radius:3px;border:1px solid var(--line);color:var(--ink-faint);vertical-align:middle}
 
-/* KPI 条 */
-.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px}
-@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
-.kpi .k{font-size:10px;color:var(--ink-faint);margin-bottom:5px}
-.kpi .v{font:600 18px var(--font-figure);font-variant-numeric:tabular-nums}
-.kpi .v.sm{font-size:14px}
+/* 第一层：一句话大白话总结横幅 + 四维灯号 + 轻量指标 */
+.plain-banner{border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;background:var(--bg)}
+.plain-banner.warn{border-left-color:var(--up);background:var(--up-bg)}
+.plain-banner.mid{border-left-color:var(--warn);background:var(--warn-bg)}
+.plain-banner.good{border-left-color:var(--down);background:var(--down-bg)}
+.pb-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.pb-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:var(--ink);color:var(--bg)}
+.plain-banner.warn .pb-badge{background:var(--up);color:#fff}
+.plain-banner.mid .pb-badge{background:var(--warn);color:#fff}
+.plain-banner.good .pb-badge{background:var(--down);color:#fff}
+.pb-title{font-size:15px;font-weight:700;line-height:1.45;color:var(--ink)}
+.pb-detail{font-size:12px;color:var(--ink-soft);line-height:1.55}
 
-/* 四维独立风险诊断 */
-.risk-dims{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-@media(max-width:1100px){.risk-dims{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.risk-dims{grid-template-columns:1fr}}
+.risk-dims{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
 .risk-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:5px}
 .risk-card .rc-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
-.risk-card .rc-name{font-size:10px;color:var(--ink-faint);font-weight:500}
-.risk-card .rc-detail{font:11px var(--mono);color:var(--ink-soft)}
-.risk-pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid transparent}
+.risk-card .rc-name{font-size:11px;color:var(--ink-soft);font-weight:600}
+.risk-card .rc-detail{font:11px var(--font);color:var(--ink-faint)}
+.risk-pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid transparent;white-space:nowrap}
 .risk-pill.LOW{color:var(--down);background:var(--down-bg);border-color:var(--down)}
 .risk-pill.MEDIUM{color:var(--warn);background:var(--warn-bg);border-color:var(--warn)}
 .risk-pill.HIGH{color:var(--up);background:var(--up-bg);border-color:var(--up)}
 .risk-pill.UNKNOWN{color:var(--flat);background:var(--flat-bg);border-color:var(--line2)}
 
-/* 穿透条形图 */
-.exp-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px}
-.exp-row .nm{width:195px;display:flex;align-items:center;gap:4px;min-width:0}
-.exp-row .nm .nm-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.exp-row .track{flex:1;height:14px;background:var(--surface);border-radius:3px;overflow:hidden;position:relative}
-.exp-row .track i{display:block;height:100%;background:var(--ink-soft)}
-.exp-row .pct{width:48px;text-align:right;font-family:var(--mono)}
-.exp-row .contrib{font-size:9px;color:var(--ink-faint);flex-basis:220px}
-.tag-overlap{background:var(--up);color:#fff;font-size:8px;padding:1px 4px;border-radius:3px;flex-shrink:0}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px}
+.kpi .k{font-size:10px;color:var(--ink-faint);margin-bottom:2px}
+.kpi .v{font:600 14px var(--font-figure);font-variant-numeric:tabular-nums}
+.kpi .v.sm{font-size:13px}
 
-/* 回测窗口切换 + 双图 */
-.window-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;background:var(--surface);border-radius:var(--radius-sm)}
+/* 第二层：核心可视化（基金->股票流向图 + 单基金持仓透视 + 分色堆叠条形图） */
+.viz-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.flow-wrap{overflow:hidden;border-radius:var(--radius-sm);background:var(--surface);padding:10px}
+.flow-reset-btn{border:1px solid var(--line2);background:var(--bg);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--ink-soft)}
+
+/* 单只 ETF 内部持仓透视盒 */
+.drill-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;-webkit-overflow-scrolling:touch}
+.drill-tab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:5px 11px;font-size:11px;white-space:nowrap;flex-shrink:0;min-height:34px}
+.drill-tab.on{border-color:var(--ink);background:var(--ink);color:var(--bg);font-weight:600}
+.drill-tab i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.drill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:8px}
+.drill-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;display:flex;flex-direction:column;gap:4px}
+.drill-item.dup{border-color:#D92D2055;background:var(--up-bg)}
+.drill-item .di-top{display:flex;justify-content:space-between;align-items:center;gap:4px;font-size:11.5px;font-weight:600}
+.drill-item .di-sub{display:flex;justify-content:space-between;align-items:center;font:10px var(--mono);color:var(--ink-soft)}
+.drill-item .di-bar{height:4px;background:var(--line);border-radius:99px;overflow:hidden}
+.drill-item .di-bar i{display:block;height:100%;border-radius:99px}
+
+/* 分色堆叠排行条形图 */
+.exp-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px}
+.exp-row .nm{width:190px;display:flex;align-items:center;gap:4px;min-width:0}
+.exp-row .nm .nm-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.exp-row .track{flex:1;height:15px;background:var(--surface);border-radius:4px;overflow:hidden;display:flex;min-width:60px}
+.exp-row .track i{display:block;height:100%}
+.exp-row .val-col{width:118px;text-align:right;font-family:var(--mono);white-space:nowrap}
+.exp-row .val-col b{color:var(--ink)}
+.exp-row .val-col span{color:var(--ink-faint);font-size:10px;margin-left:4px}
+.exp-row .contrib{font-size:10px;color:var(--ink-faint);flex-basis:225px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag-overlap{background:var(--up);color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;flex-shrink:0}
+
+/* 第三层：进阶分析折叠面板 */
+.adv-panel{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.adv-panel summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:600;user-select:none;min-height:48px}
+.adv-panel summary::-webkit-details-marker{display:none}
+.adv-panel summary .adv-sub{font:11px var(--mono);color:var(--ink-faint);font-weight:400}
+.adv-panel summary .adv-arrow{font-size:11px;color:var(--ink-soft);border:1px solid var(--line);padding:3px 9px;border-radius:99px;white-space:nowrap}
+.adv-panel[open] summary{border-bottom:1px solid var(--line);background:var(--surface)}
+.adv-body{padding:14px 16px}
+.window-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:8px 12px;background:var(--surface);border-radius:var(--radius-sm)}
 .window-bar .wb-label{font-size:11px;color:var(--ink-soft);font-weight:500}
 .window-bar .wb-hint{font:10px var(--mono);color:var(--ink-faint)}
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:1100px){.chart-grid{grid-template-columns:1fr}}
 
-/* Tab2 排行表 */
+.export-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px}
+.report-btn{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 11px;font-size:11px;color:var(--ink-soft);min-height:34px}
+.report-btn:hover{border-color:var(--ink);color:var(--ink)}
+
+/* Tab2 排行表 & 测算器 */
 table{width:100%;border-collapse:collapse;font-size:11px}
 th{font-size:10px;color:var(--ink-faint);text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
 th:first-child,td:first-child{text-align:left}
 th.l,td.l{text-align:left}
-td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}
+td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:right}
 tbody tr{cursor:pointer}
 tbody tr:hover,tbody tr.sel{background:var(--surface)}
 .badge{font:9px var(--mono);padding:1px 5px;border:1px solid var(--line);border-radius:3px;color:var(--ink-faint)}
 .badge.OK{color:var(--down)}.badge.FETCH_ERROR,.badge.NO_DIVIDEND{color:var(--up)}
-
-/* 测算器 */
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:980px){.calc-grid{grid-template-columns:1fr}}
 .field{margin-bottom:12px}
-.field label{display:block;font-size:10px;color:var(--ink-faint);margin-bottom:5px}
+.field label{display:block;font-size:11px;color:var(--ink-faint);margin-bottom:5px}
 .field input[type=number],.field input[type=range]{width:100%}
-.field input[type=number]{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:6px 8px;font-family:var(--mono)}
-.seg{display:flex;gap:4px;flex-wrap:wrap}
-.seg button{border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:5px 9px}
+.field input[type=number]{border:1px solid var(--line);background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px;font-family:var(--mono);min-height:38px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 11px;min-height:36px}
 .seg button.on{border-color:var(--ink);background:var(--ink);color:var(--bg)}
 .result{background:var(--surface);border-radius:var(--radius-sm);padding:14px;margin-top:10px}
-.result .r{display:flex;justify-content:space-between;padding:5px 0;font-size:11px;border-bottom:1px solid var(--line)}
+.result .r{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--line)}
 .result .r:last-child{border:none}
 .result .r b{font-family:var(--mono)}
-footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;font-size:10px;color:var(--ink-faint);max-width:1500px;margin-left:auto;margin-right:auto;line-height:1.7}
-.report-btn{border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:5px 9px;font-size:10px;color:var(--ink-soft)}
-.report-btn:hover{border-color:var(--ink);color:var(--ink)}
+footer{border-top:1px solid var(--line);margin-top:24px;padding:16px 24px 30px;font-size:10px;color:var(--ink-faint);max-width:1460px;margin-left:auto;margin-right:auto;line-height:1.7}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
   padding:8px 16px;border-radius:6px;font-size:11px;z-index:99;box-shadow:0 8px 24px #0003}
+
+/* 响应式适配：平板与手机端深度优化 */
+@media(max-width:1100px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .risk-dims{grid-template-columns:repeat(2,1fr)}
+  .chart-grid,.calc-grid{grid-template-columns:1fr}
+}
+@media(max-width:980px){
+  header{padding:10px 14px;gap:10px}
+  .top-right{width:100%;justify-content:space-between}
+  .brand-author{display:none}
+  main{padding:12px 14px 48px}
+  .pen-layout{grid-template-columns:1fr;gap:12px}
+  /* 手机端预设变为横向滑动胶囊，不占首屏高度 */
+  .preset-card{padding:12px}
+  .preset-list{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .preset{flex:0 0 auto;min-width:168px;max-width:210px;scroll-snap-align:start;padding:8px 10px}
+  .preset span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .exp-row{flex-wrap:wrap;gap:5px}
+  .exp-row .nm{width:auto;flex:1 1 55%}
+  .exp-row .val-col{width:auto;flex:0 0 auto}
+  .exp-row .track{order:3;flex:1 1 100%;height:10px}
+  .exp-row .contrib{order:4;flex:1 1 100%;white-space:normal;font-size:10px}
+}
+@media(max-width:600px){
+  .main-tabs{width:100%}
+  .main-tabs button{flex:1;padding:8px 6px;font-size:12px;min-height:40px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .risk-dims{grid-template-columns:1fr 1fr;gap:8px}
+  .risk-card{padding:9px 10px}
+  .cap-input-wrap{width:100%;justify-content:space-between}
+  .cap-input-wrap input{width:100%;text-align:right}
+  .chip-btn,.seg button,.report-btn,.add-row button,.add-row select,.add-row input{min-height:40px}
+  .pos input{min-height:38px;width:82px}
+  .pos .del{min-width:36px;min-height:38px}
+  .drill-grid{grid-template-columns:1fr 1fr}
+  .adv-panel summary{flex-direction:column;align-items:flex-start;gap:6px}
+  /* Tab 2 手机端精简次要列并允许表头换行、两行紧凑排布，390px 免横向滚动即可完整阅读 */
+  #div-table th.col-cat,#div-table td.col-cat,
+  #div-table th.col-win,#div-table td.col-win,
+  #div-table th.col-stat,#div-table td.col-stat{display:none}
+  #div-table th{white-space:normal;line-height:1.25;font-size:9.5px;padding:7px 2px}
+  #div-table td{padding:8px 2px;font-size:10.5px}
+  #div-table td:first-child b{display:block;font-size:9.5px;color:var(--ink-faint);font-weight:500}
+  #div-table .fill-sub{display:block;font-size:9px;color:var(--ink-faint);letter-spacing:-.02em}
+}
 @media print{
-  header,.report-btn,#reset-btn,.add-row,.pos-list,.preset-list,.window-bar .seg{display:none!important}
+  header,.report-btn,#reset-btn,.add-row,.pos-list,.preset-card,.window-bar .seg,.export-bar{display:none!important}
   .pen-layout{grid-template-columns:1fr}
   body{background:#fff;color:#000}
   main{padding:0;max-width:none}
@@ -174,21 +272,22 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;f
   <div class="top-right">
     <span class="st" id="live-state"><i></i><span id="live-label">连接实时行情…</span></span>
     <button class="theme-btn" id="theme-btn" aria-label="切换主题">◐ 主题</button>
-    <span>AlphaLens v3.1 · Zen Ao (GitHub: AZEN-jc)</span>
+    <span class="brand-author">AlphaLens v3.2 · Zen Ao (GitHub: AZEN-jc)</span>
   </div>
 </header>
 
 <main id="main">
-<!-- ============ TAB 1: 组合持仓穿透 ============ -->
+<!-- ============ TAB 1: 组合持仓穿透（三层递进式主次架构） ============ -->
 <section class="view on" id="view-pen">
   <div class="pen-layout">
-    <div>
-      <div class="card mb">
-        <h2>预设组合 <small><button id="reset-btn" style="border:none;background:none;color:var(--ink-faint);font-size:10px;cursor:pointer;text-decoration:underline">重置默认</button></small></h2>
+    <!-- 左栏：快速选组合 + 持仓明细调整 -->
+    <div class="sidebar-col">
+      <div class="card mb preset-card">
+        <h2>快速体验预设 <small><button id="reset-btn" style="border:none;background:none;color:var(--ink-faint);font-size:11px;cursor:pointer;text-decoration:underline">重置默认</button></small></h2>
         <div class="preset-list" id="preset-list"></div>
       </div>
       <div class="card mb">
-        <h2>我的持仓 <small>POSITIONS</small></h2>
+        <h2>我的持仓 <small>点击「看股票」透视单只基金</small></h2>
         <div class="add-row">
           <select id="asset-select" aria-label="选择标的"></select>
           <input id="amount-input" type="number" min="0" step="1000" value="10000" aria-label="投入金额">
@@ -198,28 +297,102 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;f
         <div class="note" style="margin-top:10px" id="cover-note">—</div>
       </div>
     </div>
-    <div>
-      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-        <button class="report-btn" id="copy-report">复制 Markdown 报告</button>
-        <button class="report-btn" id="download-report">下载 .md 报告</button>
-        <button class="report-btn" id="print-report">打印 / 存 PDF</button>
+
+    <!-- 右栏：三层递进主内容区 -->
+    <div class="main-col">
+      <!-- 第一层：总本金互动调整 + 一句话人话结论 + 4 枚红黄绿灯号 -->
+      <div class="capital-bar">
+        <div class="cap-left">
+          <span class="cap-label">总投入本金</span>
+          <label class="cap-input-wrap" aria-label="总投入本金">
+            <span>¥</span>
+            <input id="total-amount-input" type="number" min="0" step="10000" value="100000">
+          </label>
+        </div>
+        <div class="cap-chips" id="cap-chips">
+          <button type="button" class="chip-btn" data-total="10000">1万</button>
+          <button type="button" class="chip-btn" data-total="50000">5万</button>
+          <button type="button" class="chip-btn on" data-total="100000">10万</button>
+          <button type="button" class="chip-btn" data-total="500000">50万</button>
+          <button type="button" class="chip-btn ghost" id="equal-weight-btn">一键平均分</button>
+        </div>
       </div>
-      <div class="kpis" id="kpis"></div>
+
+      <div class="plain-banner" id="plain-summary-banner">
+        <div class="pb-top">
+          <span class="pb-badge" id="pb-badge">诊断中</span>
+        </div>
+        <div class="pb-title" id="pb-title">正在分析你的持仓底层股票…</div>
+        <div class="pb-detail" id="pb-detail"></div>
+      </div>
+
       <div class="risk-dims" id="risk-dims" aria-label="四维独立风险诊断"></div>
-      <div class="card mb"><h2>底层持仓穿透 Top 15 <small>LOOK-THROUGH EXPOSURE · 美股/港股重仓已归一化</small></h2><div id="exposure-list"></div></div>
-      <div class="window-bar">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <span class="wb-label">回测与相关性窗口</span>
-          <div class="seg" id="window-seg" role="group" aria-label="回测时间窗口">
-            <button class="on" data-window="250">近 1 年（250 交易日）</button>
-            <button data-window="all">近 3 年（全量对齐）</button>
+      <div class="kpis" id="kpis"></div>
+
+      <!-- 第二层：核心可视——到底买了哪些股票、怎么撞车的 -->
+      <div class="card mb" id="flow-card">
+        <h2>
+          <span>基金 → 底层股票 资金流向图</span>
+          <small id="flow-hint">点任意基金或股票，高亮它的资金通道</small>
+        </h2>
+        <div class="viz-toolbar">
+          <span class="note">线越粗 = 流向这只股票的钱越多；红点 = 多只基金重复撞车</span>
+          <button type="button" class="flow-reset-btn" id="flow-reset-btn" style="display:none">查看全部连线</button>
+        </div>
+        <div class="flow-wrap" id="flow-chart"></div>
+      </div>
+
+      <div class="card mb" id="drill-card">
+        <h2>
+          <span>单只基金里装了哪 10 只股票</span>
+          <small>点击切换不同基金 · 真金白银折算</small>
+        </h2>
+        <div class="drill-tabs" id="drill-tabs"></div>
+        <div id="etf-drilldown"></div>
+      </div>
+
+      <div class="card mb">
+        <h2>
+          <span>合并底层重仓股 Top 15（按真实占款排序）</span>
+          <small>LOOK-THROUGH · 美股/港股已归一化</small>
+        </h2>
+        <div id="exposure-list"></div>
+      </div>
+
+      <!-- 第三层：进阶专业分析区（默认收起，保持首屏干净） -->
+      <details class="adv-panel" id="adv-panel">
+        <summary>
+          <span>📊 进阶分析：历史走势、最大回撤与相关性矩阵</span>
+          <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="adv-sub" id="adv-summary-meta">点击查看详细图表</span>
+            <span class="adv-arrow" id="adv-arrow-txt">展开图表 ▾</span>
+          </span>
+        </summary>
+        <div class="adv-body">
+          <div class="window-bar">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span class="wb-label">回测与相关性窗口</span>
+              <div class="seg" id="window-seg" role="group" aria-label="回测时间窗口">
+                <button class="on" data-window="250">近 1 年（250 交易日）</button>
+                <button data-window="all">近 3 年（全量对齐）</button>
+              </div>
+            </div>
+            <span class="wb-hint" id="window-hint">统一前复权（qfq）共同交易日对齐</span>
+          </div>
+          <div class="chart-grid">
+            <div class="card"><h2>资产相关性 <small id="corr-meta">PEARSON</small></h2><div id="corr-chart"></div></div>
+            <div class="card"><h2>组合净值与最大回撤 <small id="nav-meta">NAV / MDD</small></h2><div id="nav-chart"></div></div>
           </div>
         </div>
-        <span class="wb-hint" id="window-hint">统一前复权（qfq）共同交易日对齐</span>
-      </div>
-      <div class="chart-grid">
-        <div class="card"><h2>资产相关性 <small id="corr-meta">PEARSON</small></h2><div id="corr-chart"></div></div>
-        <div class="card"><h2>组合净值与最大回撤 <small id="nav-meta">NAV / MDD</small></h2><div id="nav-chart"></div></div>
+      </details>
+
+      <div class="export-bar">
+        <span class="note">想保存或分享这次持仓体检结果？</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="report-btn" id="copy-report">复制 Markdown 报告</button>
+          <button class="report-btn" id="download-report">下载 .md 报告</button>
+          <button class="report-btn" id="print-report">打印 / 存 PDF</button>
+        </div>
       </div>
     </div>
   </div>
@@ -228,12 +401,12 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;f
 <!-- ============ TAB 2: 高股息吃息真相 ============ -->
 <section class="view" id="view-div">
   <div class="card mb"><h2>15 只高股息 A 股 <small>点击列头排序 · 点击行切换诊断 · 除权日口径</small></h2><div style="overflow-x:auto"><table id="div-table"><thead><tr>
-    <th class="l" data-sort="name">代码 / 名称</th><th class="l" data-sort="category">行业</th>
+    <th class="l" data-sort="name">代码 / 名称</th><th class="l col-cat" data-sort="category">行业</th>
     <th data-sort="price">最新/快照价</th>
     <th data-sort="consecutiveYears">连续分红年</th><th data-sort="ttmYieldPct">税前股息率</th>
-    <th data-sort="fillWinRatePct">填权胜率</th><th data-sort="avgFillDays">平均填权天（样本）</th><th data-sort="status">状态</th>
+    <th class="col-win" data-sort="fillWinRatePct">填权胜率</th><th data-sort="avgFillDays">平均填权天（样本）</th><th class="col-stat" data-sort="status">状态</th>
   </tr></thead><tbody id="div-body"></tbody></table></div></div>
-  <div class="calc-grid">
+  <div class="calc-grid" id="div-detail-anchor">
     <div class="card"><h2 id="div-detail-title">所选个股分红诊断 <small>FILL HISTORY · 不复权核验</small></h2><div id="div-chart"></div><div class="note" id="div-detail-note" style="margin-top:8px"></div></div>
     <div class="card"><h2>历史股息税后收益情景测算 <small>AFTER-TAX SCENARIO</small></h2>
       <div class="field"><label>投入本金（元）</label><input id="principal" type="number" min="0" step="10000" value="100000"></div>
@@ -259,16 +432,19 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:16px 24px 30px;f
 var DATA=/*__ALPHALENS_DATA__*/;
 window.ALPHALENS_DATA=DATA; // 契约：构建注入的数据全局可读（验收脚本依赖）
 var AZ=window.AlphaLensAnalytics;
+var COLORS=(AZ&&AZ.ASSET_COLORS)||['#2563EB','#7C3AED','#EA580C','#0D9488','#DB2777','#4F46E5'];
 var $=function(id){return document.getElementById(id);};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function fmt(v,d){if(v==null||!isFinite(v))return '--';return Number(v).toFixed(d==null?2:d);}
+function fmtMoney(v){if(v==null||!isFinite(v))return '--';return '¥'+Math.round(Number(v)).toLocaleString('en-US');}
 function pct(v,d){if(v==null||!isFinite(v))return '--';return (v>0?'+':'')+Number(v).toFixed(d==null?2:d)+'%';}
 
 var S={
   main:'pen',positions:[],preset:null,asset:null,
   sortKey:'ttmYieldPct',sortDir:-1,
   period:'gt_1y',principal:100000,benchmark:2.0,
-  theme:'light',window:'250'
+  theme:'light',window:'250',
+  flowFocus:null,activeDrill:null
 };
 var LIVE_CODES={};
 var LIVE_READY=false;
@@ -294,11 +470,13 @@ function buildCheckupMarkdown(positions, assetsMap, pen, corr, curve, risk4){
   var now=new Date().toLocaleString('zh-CN',{hour12:false});
   var pc=function(v){return (v==null||!isFinite(v))?'--':(v*100).toFixed(2)+'%';};
   var r4=risk4||AZ.evaluatePortfolioRisk(pen,corr,curve);
+  var summary=AZ.generatePlainSummary?AZ.generatePlainSummary(pen,r4,curve,positions,assetsMap):null;
   var hasFee=positions.some(function(p){var a=assetsMap[p.code];return a&&a.fee!=null;});
   var winRange=curve&&curve.dateRange?curve.dateRange.join(' ~ '):(corr&&corr.dateRange?corr.dateRange.join(' ~ '):'--');
   var winDays=curve?curve.sampleDays:(corr?corr.sampleDays:0);
   var lines=[
-    '# AlphaLens v3.1 个人投资组合体检报告','',
+    '# AlphaLens v3.2 个人投资组合体检报告','',
+    summary?('> **一句话总结**：'+summary.title):'',
     '- 生成时间：'+now,
     '- 组合总金额：¥'+pen.totalAmount.toLocaleString('zh-CN'),
     '- 回测与相关性窗口：'+windowLabel()+'（'+winRange+' · 共 '+winDays+' 交易日 · 统一前复权）',
@@ -311,23 +489,24 @@ function buildCheckupMarkdown(positions, assetsMap, pen, corr, curve, risk4){
     '## 一、四维独立风险诊断',
     '| 诊断维度 | 风险等级 | 结论 | 说明 |',
     '| :--- | :--- | :--- | :--- |',
-    '| 集中度 | '+r4.concentration.level+' | '+r4.concentration.label+' | '+r4.concentration.detail+' |',
-    '| 重仓重合 | '+r4.overlap.level+' | '+r4.overlap.label+' | '+r4.overlap.detail+' |',
-    '| 资产相关性 | '+r4.correlation.level+' | '+r4.correlation.label+' | '+r4.correlation.detail+' |',
-    '| 回撤与波动 | '+r4.drawdownVol.level+' | '+r4.drawdownVol.label+' | '+r4.drawdownVol.detail+' |','',
+    '| 单股押注度（集中度） | '+r4.concentration.level+' | '+r4.concentration.label+' | '+r4.concentration.detail+' |',
+    '| 基金撞车度（重仓重合） | '+r4.overlap.level+' | '+r4.overlap.label+' | '+r4.overlap.detail+' |',
+    '| 同涨同跌度（资产相关性） | '+r4.correlation.level+' | '+r4.correlation.label+' | '+r4.correlation.detail+' |',
+    '| 历史抗跌度（回撤与波动） | '+r4.drawdownVol.level+' | '+r4.drawdownVol.label+' | '+r4.drawdownVol.detail+' |','',
     '## 二、当前持仓明细',
     '| 代码 | 名称 | 类型 | 类别 | 金额(元) | 权重 |','| :--- | :--- | :--- | :--- | ---: | ---: |'
-  ];
+  ].filter(Boolean);
   positions.filter(function(p){return Number(p.amount)>0&&assetsMap[p.code];}).forEach(function(p){
     var a=assetsMap[p.code],w=((Number(p.amount)/pen.totalAmount)*100).toFixed(2)+'%';
     lines.push('| '+a.code+' | '+a.name+' | '+a.type+' | '+(a.category||'--')+' | '+Number(p.amount).toLocaleString('zh-CN')+' | '+w+' |');
   });
   lines.push('','## 三、底层重仓股穿透 Top 10（标注重合项）',
-    '| 代码 | 名称 | 真实占比 | 是否重合 | 来源拆解 |','| :--- | :--- | ---: | :--- | :--- |');
+    '| 代码 | 名称 | 折合金额 | 真实占比 | 是否重合 | 来源拆解 |','| :--- | :--- | ---: | ---: | :--- | :--- |');
   pen.exposures.slice(0,10).forEach(function(e){
     var dup=e.contributors.length>=2?'⚠️ 重合':'单一';
-    var src=e.contributors.map(function(c){return c.sourceName+' '+(c.contribution*100).toFixed(2)+'%';}).join(' + ');
-    lines.push('| '+e.code+' | '+e.name+' | '+(e.totalWeight*100).toFixed(2)+'% | '+dup+' | '+src+' |');
+    var yuan=fmtMoney(pen.totalAmount*e.totalWeight);
+    var src=e.contributors.map(function(c){return c.sourceName+' '+fmtMoney(pen.totalAmount*c.contribution)+'('+(c.contribution*100).toFixed(1)+'%)';}).join(' + ');
+    lines.push('| '+e.code+' | '+e.name+' | '+yuan+' | '+(e.totalWeight*100).toFixed(2)+'% | '+dup+' | '+src+' |');
   });
   lines.push('','> 数据声明：ETF 穿透基于公开季报前十大重仓股（美股/港股重仓已做别名归一化），回测净值与相关性采用统一前复权共同交易日口径；报告仅供个人持仓诊断参考，不构成投资建议。');
   return lines.join('\n');
@@ -415,6 +594,72 @@ function setWindow(win){
   renderPen();
 }
 
+/* ---------- 总金额双向调节 & 一键平均分 ---------- */
+function currentTotalAmount(){
+  return S.positions.reduce(function(s,p){return s+(Number(p.amount)||0);},0);
+}
+function syncCapitalChips(total){
+  var t=Math.round(Number(total)||0);
+  var inp=$('total-amount-input');
+  if(inp&&document.activeElement!==inp)inp.value=String(t);
+  Array.prototype.forEach.call($('cap-chips').querySelectorAll('button[data-total]'),function(b){
+    b.className=Number(b.getAttribute('data-total'))===t?'chip-btn on':'chip-btn';
+  });
+}
+function scaleTotalAmount(newTotal, fromInput){
+  var target=Math.max(0,Math.round(Number(newTotal)||0));
+  if(!S.positions.length)return;
+  var cur=currentTotalAmount();
+  if(cur>0){
+    var acc=0;
+    for(var i=0;i<S.positions.length;i++){
+      if(i===S.positions.length-1){
+        S.positions[i].amount=Math.max(0,target-acc);
+      }else{
+        var part=Math.round((Number(S.positions[i].amount)||0)/cur*target);
+        S.positions[i].amount=part;
+        acc+=part;
+      }
+    }
+  }else{
+    var each=Math.floor(target/S.positions.length);
+    var rem=target-each*S.positions.length;
+    S.positions.forEach(function(p,i){p.amount=each+(i===0?rem:0);});
+  }
+  S.preset=null;
+  syncPresetHighlight();
+  // 就地更新左侧持仓输入框值和占比，绝不重建 DOM 失焦
+  Array.prototype.forEach.call($('pos-list').querySelectorAll('input[data-idx]'),function(inp){
+    var idx=+inp.getAttribute('data-idx');
+    if(S.positions[idx]&&document.activeElement!==inp)inp.value=S.positions[idx].amount;
+  });
+  updatePositionWeightsInPlace();
+  syncCapitalChips(target);
+  if(!fromInput&&$('total-amount-input'))$('total-amount-input').value=String(target);
+  saveUserState();
+  renderPen();
+}
+function equalizePositions(){
+  if(!S.positions.length)return;
+  var total=currentTotalAmount();
+  if(total<=0)total=100000;
+  var n=S.positions.length;
+  var each=Math.floor(total/n);
+  var rem=Math.round(total)-each*n;
+  S.positions.forEach(function(p,i){p.amount=each+(i===0?rem:0);});
+  S.preset=null;
+  syncPresetHighlight();
+  Array.prototype.forEach.call($('pos-list').querySelectorAll('input[data-idx]'),function(inp){
+    var idx=+inp.getAttribute('data-idx');
+    if(S.positions[idx])inp.value=S.positions[idx].amount;
+  });
+  updatePositionWeightsInPlace();
+  syncCapitalChips(currentTotalAmount());
+  saveUserState();
+  renderPen();
+  toast('已按 '+fmtMoney(currentTotalAmount())+' 平均分配给 '+n+' 只持仓');
+}
+
 /* ---------- 启动数据 ---------- */
 function boot(){
   var assets=DATA.assets||{};
@@ -429,7 +674,7 @@ function boot(){
     +'<br>数据源：'+esc((m.dataSources&&m.dataSources.etfHoldings)||'--')
     +' ｜ '+esc((m.dataSources&&m.dataSources.dividends)||'--')
     +' ｜ '+esc((m.dataSources&&m.dataSources.dailyPrices)||'--');
-  // 标的下拉（按 ETF / 个股分组，含类别标签）
+  // 标的下拉
   var etfCodes=Object.keys(assets).filter(function(c){return assets[c].type==='ETF';}).sort();
   var stkCodes=Object.keys(assets).filter(function(c){return assets[c].type!=='ETF';}).sort();
   var mkOpt=function(c){
@@ -446,18 +691,46 @@ function boot(){
   Array.prototype.forEach.call($('preset-list').children,function(b){
     b.onclick=function(){applyPreset(b.getAttribute('data-id'));};
   });
-  // 添加持仓（立即 saveUserState() 防止刷新丢失）
+  // 添加持仓（立即 saveUserState()）
   $('add-btn').onclick=function(){
     var c=$('asset-select').value,amt=Number($('amount-input').value);
     if(!c||!(amt>0))return;
     var ex=S.positions.filter(function(p){return p.code===c;})[0];
     if(ex)ex.amount+=amt;else S.positions.push({code:c,amount:amt});
     S.preset=null;
+    S.activeDrill=c;
     syncPresetHighlight();
     saveUserState();
     renderPositions();
     renderPen();
   };
+  // 总金额双向调整与快捷档位
+  $('total-amount-input').oninput=function(){
+    scaleTotalAmount(this.value,true);
+  };
+  Array.prototype.forEach.call($('cap-chips').querySelectorAll('button[data-total]'),function(b){
+    b.onclick=function(){scaleTotalAmount(Number(b.getAttribute('data-total')),false);};
+  });
+  $('equal-weight-btn').onclick=equalizePositions;
+
+  // 资金流向连线图点击交互（事件委托）
+  $('flow-chart').onclick=function(e){
+    var node=e.target&&e.target.closest?e.target.closest('.flow-node'):null;
+    if(!node)return;
+    var code=node.getAttribute('data-flow-code');
+    S.flowFocus=(S.flowFocus===code)?null:code;
+    if(S.flowFocus&&S.positions.some(function(p){return p.code===S.flowFocus;})){
+      S.activeDrill=S.flowFocus;
+    }
+    renderPen();
+  };
+  $('flow-reset-btn').onclick=function(){S.flowFocus=null;renderPen();};
+
+  // 第三层进阶图表折叠文案同步
+  $('adv-panel').ontoggle=function(){
+    $('adv-arrow-txt').textContent=$('adv-panel').open?'收起图表 ▴':'展开图表 ▾';
+  };
+
   // 回测窗口切换
   Array.prototype.forEach.call($('window-seg').children,function(b){
     b.onclick=function(){setWindow(b.getAttribute('data-window'));};
@@ -495,7 +768,7 @@ function boot(){
     document.documentElement.setAttribute('data-theme',S.theme);
     saveUserState();renderPen();renderDivDetail();
   };
-  // 恢复持久化状态（无存档则用第 1 套预设）
+  // 恢复持久化状态
   var restored=applyLoadedState(loadUserState());
   document.documentElement.setAttribute('data-theme',S.theme);
   $('principal').value=S.principal;
@@ -504,7 +777,6 @@ function boot(){
     b.className=b.getAttribute('data-period')===S.period?'on':'';
   });
   syncWindowButtons();
-  // 同步已恢复的 activeTab 视图
   Array.prototype.forEach.call(document.querySelectorAll('.main-tabs button'),function(x){
     var on=x.getAttribute('data-main')===S.main;
     x.className=on?'on':'';x.setAttribute('aria-selected',on?'true':'false');
@@ -529,6 +801,7 @@ function boot(){
   $('reset-btn').onclick=function(){
     clearUserState();
     S.principal=100000;S.benchmark=2.0;S.period='gt_1y';S.theme='light';S.window='250';
+    S.flowFocus=null;S.activeDrill=null;
     $('principal').value=S.principal;$('benchmark').value=S.benchmark;$('bench-val').textContent='2.0%';
     Array.prototype.forEach.call($('period-seg').children,function(b){
       b.className=b.getAttribute('data-period')==='gt_1y'?'on':'';
@@ -538,7 +811,6 @@ function boot(){
     applyPreset((DATA.presets&&DATA.presets[0]&&DATA.presets[0].id)||null,true);
     toast('已恢复默认组合与设置');
   };
-  // 实时价联动（live.js 腾讯 JSONP + 6 秒降级）
   initLive();
   if(restored){
     renderPositions();renderPen();renderDivTable();
@@ -605,7 +877,6 @@ function initLive(){
         LIVE_READY=true;
         var st=window.AlphaLive.status?window.AlphaLive.status():{};
         setLiveBadge('LIVE',stamp||st.stamp,got,LIVE_TOTAL);
-        // 仅就地更新价格/快照标注，绝不重建左侧持仓 DOM 以防打断输入焦点
         updatePositionLiveTagsInPlace();
         if(S.main==='div')renderDivTable();
       }else if(state==='SNAPSHOT'){
@@ -615,7 +886,6 @@ function initLive(){
       }
     });
   }catch(e){setLiveBadge('SNAPSHOT');}
-  // 6 秒兜底降级：全部未拿到有效报价则切 SNAPSHOT
   setTimeout(function(){
     if(!LIVE_READY){
       setLiveBadge('SNAPSHOT');
@@ -629,7 +899,9 @@ function applyPreset(id,skipSave){
   var p=(DATA.presets||[]).filter(function(x){return x.id===id;})[0];
   if(!p)return;
   S.preset=id;
+  S.flowFocus=null;
   S.positions=p.positions.map(function(x){return {code:x.code,amount:Number(x.amount)};});
+  S.activeDrill=S.positions[0]?S.positions[0].code:null;
   syncPresetHighlight();
   if(!skipSave)saveUserState();
   renderPositions();
@@ -637,7 +909,7 @@ function applyPreset(id,skipSave){
 }
 
 function updatePositionWeightsInPlace(){
-  var total=S.positions.reduce(function(s,p){return s+(Number(p.amount)||0);},0);
+  var total=currentTotalAmount();
   var spans=$('pos-list').querySelectorAll('.pos-weight');
   Array.prototype.forEach.call(spans,function(sp){
     var idx=+sp.getAttribute('data-idx');
@@ -645,20 +917,27 @@ function updatePositionWeightsInPlace(){
     var pw=(total>0&&p)?(Number(p.amount)||0)/total*100:0;
     sp.textContent=fmt(pw,1)+'%';
   });
-  $('cover-note').textContent='共 '+S.positions.length+' 只 · 合计 ¥'+fmt(total,0);
+  $('cover-note').textContent='共 '+S.positions.length+' 只 · 合计 '+fmtMoney(total);
 }
 
 function renderPositions(){
-  var assets=DATA.assets||{},total=S.positions.reduce(function(s,p){return s+p.amount;},0);
+  var assets=DATA.assets||{},total=currentTotalAmount();
   $('pos-list').innerHTML=S.positions.length?S.positions.map(function(p,i){
     var a=assets[p.code]||{},pw=total>0?p.amount/total*100:0;
-    return '<div class="pos" data-code="'+esc(p.code)+'"><span class="nm" title="'+esc(p.code)+' '+esc(a.name||'')+'">'+esc(p.code)+' '+esc(a.name||'')+'</span>'
-      +'<span class="pos-px mono">'+formatAssetPriceHtml(p.code)+'</span>'
+    var color=COLORS[i%COLORS.length];
+    var isPeek=S.activeDrill===p.code;
+    return '<div class="pos" data-code="'+esc(p.code)+'">'
+      +'<span class="pos-dot" style="background:'+color+'"></span>'
+      +'<div class="nm-wrap">'
+      +'<span class="nm" title="'+esc(p.code)+' '+esc(a.name||'')+'">'+esc(p.code)+' '+esc(a.name||'')+'</span>'
+      +'<div class="pos-sub"><span class="pos-px mono">'+formatAssetPriceHtml(p.code)+'</span>'
+      +(a.type==='ETF'?'<button type="button" class="peek-btn'+(isPeek?' on':'')+'" data-peek="'+esc(p.code)+'">看股票</button>':'')
+      +'</div></div>'
       +'<input type="number" min="0" step="1000" value="'+p.amount+'" data-idx="'+i+'" aria-label="金额">'
       +'<span class="pw pos-weight" data-idx="'+i+'">'+fmt(pw,1)+'%</span><button class="del" data-idx="'+i+'" aria-label="删除">×</button></div>';
   }).join(''):'<div class="note">暂无持仓，选一个预设或手动添加。</div>';
   Array.prototype.forEach.call($('pos-list').querySelectorAll('input[data-idx]'),function(inp){
-    // 就地更新占比与右侧图表，禁止重建 #pos-list innerHTML 防止失焦
+    // 就地更新占比、总金额与右侧图表，禁止重建 #pos-list innerHTML 防止失焦
     inp.oninput=function(){
       var i=+this.getAttribute('data-idx');
       if(!S.positions[i])return;
@@ -666,13 +945,28 @@ function renderPositions(){
       S.preset=null;
       syncPresetHighlight();
       updatePositionWeightsInPlace();
+      syncCapitalChips(currentTotalAmount());
       saveUserState();
       renderPen();
     };
   });
+  Array.prototype.forEach.call($('pos-list').querySelectorAll('button[data-peek]'),function(btn){
+    btn.onclick=function(){
+      var code=btn.getAttribute('data-peek');
+      S.activeDrill=code;
+      Array.prototype.forEach.call($('pos-list').querySelectorAll('button[data-peek]'),function(x){
+        x.className=x.getAttribute('data-peek')===code?'peek-btn on':'peek-btn';
+      });
+      renderDrilldown();
+      var dc=$('drill-card');
+      if(dc&&dc.scrollIntoView)dc.scrollIntoView({behavior:'smooth',block:'nearest'});
+    };
+  });
   Array.prototype.forEach.call($('pos-list').querySelectorAll('button[data-idx]'),function(b){
     b.onclick=function(){
-      S.positions.splice(+this.getAttribute('data-idx'),1);
+      var removed=S.positions.splice(+this.getAttribute('data-idx'),1)[0];
+      if(removed&&S.flowFocus===removed.code)S.flowFocus=null;
+      if(removed&&S.activeDrill===removed.code)S.activeDrill=S.positions[0]?S.positions[0].code:null;
       S.preset=null;
       syncPresetHighlight();
       saveUserState();
@@ -680,7 +974,72 @@ function renderPositions(){
       renderPen();
     };
   });
-  $('cover-note').textContent='共 '+S.positions.length+' 只 · 合计 ¥'+fmt(total,0);
+  $('cover-note').textContent='共 '+S.positions.length+' 只 · 合计 '+fmtMoney(total);
+  syncCapitalChips(total);
+}
+
+/* ---------- 单只基金内部重仓透视卡片 ---------- */
+function renderDrilldown(penCache){
+  var A=DATA.assets||{};
+  var valid=S.positions.filter(function(p){return Number(p.amount)>0&&A[p.code];});
+  if(!valid.length){
+    $('drill-tabs').innerHTML='';
+    $('etf-drilldown').innerHTML='<div class="note">请先添加至少 1 只持仓。</div>';
+    return;
+  }
+  if(!S.activeDrill||!valid.some(function(p){return p.code===S.activeDrill;})){
+    S.activeDrill=valid[0].code;
+  }
+  var pen=penCache||AZ.penetratePortfolio(S.positions,A);
+  var overlapSet={};
+  (pen.overlaps||[]).forEach(function(o){overlapSet[o.code]=o.contributors.length;});
+
+  $('drill-tabs').innerHTML=valid.map(function(p,idx){
+    var a=A[p.code];
+    var color=COLORS[idx%COLORS.length];
+    var on=p.code===S.activeDrill;
+    return '<button type="button" class="drill-tab'+(on?' on':'')+'" data-drill="'+esc(p.code)+'">'
+      +'<i style="background:'+color+'"></i>'
+      +'<span>'+esc(a.name)+' ('+fmtMoney(p.amount)+')</span></button>';
+  }).join('');
+  Array.prototype.forEach.call($('drill-tabs').querySelectorAll('.drill-tab'),function(b){
+    b.onclick=function(){
+      S.activeDrill=b.getAttribute('data-drill');
+      Array.prototype.forEach.call($('pos-list').querySelectorAll('button[data-peek]'),function(x){
+        x.className=x.getAttribute('data-peek')===S.activeDrill?'peek-btn on':'peek-btn';
+      });
+      renderDrilldown(pen);
+    };
+  });
+
+  var posIdx=valid.findIndex(function(p){return p.code===S.activeDrill;});
+  var pos=valid[posIdx], asset=A[pos.code], color=COLORS[posIdx%COLORS.length];
+  if(asset.type==='STOCK'){
+    $('etf-drilldown').innerHTML='<div class="note"><b>'+esc(asset.name)+' ('+esc(asset.code)+')</b> 为直投个股，你的全部 '+fmtMoney(pos.amount)+' 均直接持有该家公司。</div>';
+    return;
+  }
+  if(asset.holdingsStatus==='NO_EQUITY_HOLDINGS'||!asset.holdings||!asset.holdings.length){
+    $('etf-drilldown').innerHTML='<div class="note"><b>'+esc(asset.name)+' ('+esc(asset.code)+')</b> 属于商品/非股票类资产（'+esc(asset.holdingsQuarter||'无股票持仓')+'），穿透时作为独立大类资产保留 '+fmtMoney(pos.amount)+'，不与任何股票撞车。</div>';
+    return;
+  }
+  var topSum=asset.holdings.reduce(function(s,h){return s+(Number(h.weight)||0);},0);
+  var maxW=Math.max.apply(null,asset.holdings.map(function(h){return Number(h.weight)||0;}))||1;
+  var headerNote='<div class="note" style="margin-bottom:8px">数据季度：'+esc(asset.holdingsQuarter||'最新季报')
+    +' · 前 '+asset.holdings.length+' 大重仓合计占该基金净值 <b>'+fmt(topSum,1)+'%</b>（折合你投入的 <b>'+fmtMoney(pos.amount*(topSum/100))+'</b>）</div>';
+  var cards=asset.holdings.map(function(h){
+    var w=Number(h.weight)||0;
+    var yuan=Number(pos.amount)*(w/100);
+    var dupN=overlapSet[h.code]||0;
+    var cleanName=String(h.name||'').replace(/\s*\([A-Z0-9:]+\)\s*$/i,'');
+    return '<div class="drill-item'+(dupN>=2?' dup':'')+'">'
+      +'<div class="di-top"><span>'+esc(cleanName)+'</span>'
+      +(dupN>=2?'<span class="tag-overlap">'+dupN+'基撞车</span>':'<span class="mono" style="font-size:10px;color:var(--ink-faint)">'+esc(h.code)+'</span>')
+      +'</div>'
+      +'<div class="di-sub"><span>'+fmtMoney(yuan)+'</span><span>占基 '+fmt(w,2)+'%</span></div>'
+      +'<div class="di-bar"><i style="width:'+(w/maxW*100).toFixed(1)+'%;background:'+color+'"></i></div>'
+      +'</div>';
+  }).join('');
+  $('etf-drilldown').innerHTML=headerNote+'<div class="drill-grid">'+cards+'</div>';
 }
 
 function renderPen(){
@@ -692,22 +1051,21 @@ function renderPen(){
   var risk4=AZ.evaluatePortfolioRisk(pen,corr,curve);
   var hasFee=S.positions.some(function(p){var a=A[p.code];return a&&a.fee!=null;});
 
-  // 6 枚核心数字 KPI（单一 HIGH/MEDIUM/LOW 风险标签已升级为下方四维独立诊断）
-  $('kpis').innerHTML=[
-    ['总金额','¥'+fmt(pen.totalAmount,0),''],
-    ['穿透覆盖率',fmt(pen.coveredRatio*100,1)+'%','sm'],
-    ['重合重仓股',pen.overlaps.length+' 只','sm'],
-    ['加权费率',hasFee?fmt(pen.weightedFee,2)+'%':'--','sm'],
-    ['历史最大回撤',curve?fmt(curve.maxDrawdown*100,2)+'%':'--','sm'],
-    ['区间年化波动',curve?fmt(curve.annualizedVol*100,1)+'%':'--','sm']
-  ].map(function(k){return '<div class="kpi"><div class="k">'+k[0]+'</div><div class="v '+k[2]+'">'+k[1]+'</div></div>';}).join('');
+  syncCapitalChips(pen.totalAmount);
 
-  // 四维独立风险诊断徽标
+  // 第一层 1：一句话人话总结
+  var plain=AZ.generatePlainSummary(pen,risk4,curve,S.positions,A);
+  $('plain-summary-banner').className='plain-banner '+plain.tone;
+  $('pb-badge').textContent=plain.badge;
+  $('pb-title').textContent=plain.title;
+  $('pb-detail').textContent=plain.detail;
+
+  // 第一层 2：四维独立灯号（通俗化标题 + 保留 data-dim/data-level 契约）
   var dims=[
-    ['concentration','集中度',risk4.concentration],
-    ['overlap','重仓重合',risk4.overlap],
-    ['correlation','资产相关性',risk4.correlation],
-    ['drawdownVol','回撤与波动',risk4.drawdownVol]
+    ['concentration','单股押注度',risk4.concentration],
+    ['overlap','基金撞车度',risk4.overlap],
+    ['correlation','同涨同跌度',risk4.correlation],
+    ['drawdownVol','历史最大亏幅',risk4.drawdownVol]
   ];
   $('risk-dims').innerHTML=dims.map(function(d){
     var key=d[0],title=d[1],info=d[2];
@@ -717,21 +1075,57 @@ function renderPen(){
       +'<div class="rc-detail">'+esc(info.detail)+'</div></div>';
   }).join('');
 
-  // Top15 穿透
+  // 轻量 KPI 汇总行
+  $('kpis').innerHTML=[
+    ['总投入本金',fmtMoney(pen.totalAmount),''],
+    ['重仓穿透覆盖',fmt(pen.coveredRatio*100,1)+'%','sm'],
+    ['撞车股票数',pen.overlaps.length+' 只','sm'],
+    ['加权年费率',hasFee?fmt(pen.weightedFee,2)+'%':'--','sm'],
+    ['区间最大回撤',curve?fmt(curve.maxDrawdown*100,2)+'%':'--','sm'],
+    ['区间年化波动',curve?fmt(curve.annualizedVol*100,1)+'%':'--','sm']
+  ].map(function(k){return '<div class="kpi"><div class="k">'+k[0]+'</div><div class="v '+k[2]+'">'+k[1]+'</div></div>';}).join('');
+
+  // 第二层 1：左基金 -> 右股票 资金流向连线图
+  $('flow-reset-btn').style.display=S.flowFocus?'inline-block':'none';
+  if(S.flowFocus){
+    var fa=A[S.flowFocus];
+    $('flow-hint').textContent='已锁定「'+(fa?fa.name:S.flowFocus)+'」的资金通道（再次点击可取消）';
+  }else{
+    $('flow-hint').textContent='点任意基金或股票，高亮它的资金通道';
+  }
+  $('flow-chart').innerHTML=AZ.fundStockFlowSVG(S.positions,A,pen,S.flowFocus);
+
+  // 第二层 2：单只基金内部 10 大持仓透视
+  renderDrilldown(pen);
+
+  // 第二层 3：Top15 分色堆叠条形图（含真金白银 ¥ + 占比 %）
+  var validPos=S.positions.filter(function(p){return Number(p.amount)>0&&A[p.code];});
+  var colorBySrc={};
+  validPos.forEach(function(p,idx){colorBySrc[p.code]=COLORS[idx%COLORS.length];});
   var maxW=pen.exposures.length?pen.exposures[0].totalWeight:1;
   $('exposure-list').innerHTML=pen.exposures.length?pen.exposures.map(function(e){
     var dup=e.contributors.length>=2;
-    var src=e.contributors.map(function(c){return esc(c.sourceName)+' '+fmt(c.contribution*100,1)+'%';}).join(' + ');
+    var segs=e.contributors.map(function(c){
+      var segPct=(c.contribution/maxW*100).toFixed(2);
+      var col=colorBySrc[c.sourceCode]||'var(--ink-soft)';
+      return '<i style="width:'+segPct+'%;background:'+col+'" title="'+esc(c.sourceName)+' '+fmtMoney(pen.totalAmount*c.contribution)+'"></i>';
+    }).join('');
+    var src=e.contributors.map(function(c){
+      return esc(c.sourceName)+' '+fmtMoney(pen.totalAmount*c.contribution)+'('+fmt(c.contribution*100,1)+'%)';
+    }).join(' + ');
     return '<div class="exp-row"><span class="nm" title="'+esc(e.name)+' '+esc(e.code)+'"><span class="nm-txt">'+esc(e.name)+' <span class="mono">'+esc(e.code)+'</span></span>'
-      +(dup?'<span class="tag-overlap">重合</span>':'')+'</span>'
-      +'<span class="track"><i style="width:'+(e.totalWeight/maxW*100).toFixed(1)+'%"></i></span>'
-      +'<span class="pct">'+fmt(e.totalWeight*100,2)+'%</span>'
-      +(dup?'<span class="contrib">'+src+'</span>':'<span class="contrib">—</span>')+'</div>';
+      +(dup?'<span class="tag-overlap">撞车</span>':'')+'</span>'
+      +'<span class="track">'+segs+'</span>'
+      +'<span class="val-col"><b>'+fmtMoney(pen.totalAmount*e.totalWeight)+'</b><span>'+fmt(e.totalWeight*100,2)+'%</span></span>'
+      +'<span class="contrib" title="'+esc(src)+'">'+src+'</span></div>';
   }).join(''):'<div class="note">无有效持仓</div>';
 
-  // 回测窗口说明 + 相关性 / 净值双图
+  // 第三层：进阶图表（始终渲染 DOM 供折叠展开/导出/测试读取）
   var corrRange=corr.dateRange?(corr.dateRange[0]+' ~ '+corr.dateRange[1]+' · 共 '+(corr.tradingDays||corr.sampleDays)+' 交易日 · 前复权'):'样本不足';
   var navRange=curve&&curve.dateRange?(curve.dateRange[0]+' ~ '+curve.dateRange[1]+' · 共 '+curve.sampleDays+' 交易日 · 前复权'):'数据不足';
+  $('adv-summary-meta').textContent=(S.window==='250'?'近1年':'近3年')
+    +(curve?(' · 收益 '+pct(curve.totalReturn*100,2)+' · 回撤 '+fmt(curve.maxDrawdown*100,1)+'%'):'')
+    +(corr&&corr.avgOffDiagonal!=null?(' · 相关性 '+corr.avgOffDiagonal.toFixed(2)):'');
   $('window-hint').textContent=(curve&&curve.dateRange)?(curve.dateRange[0]+' ~ '+curve.dateRange[1]+' · 共 '+curve.sampleDays+' 交易日 · 前复权'):'统一前复权（qfq）共同交易日对齐';
   $('corr-meta').textContent=corrRange+(corr.avgOffDiagonal!=null?' · 均值 '+corr.avgOffDiagonal.toFixed(2):'');
   $('corr-chart').innerHTML=AZ.correlationSVG(corr,codes.map(function(c){
@@ -759,16 +1153,29 @@ function renderDivTable(){
   });
   sortedDivs=list;
   $('div-body').innerHTML=list.map(function(d){
+    var fc=Number(d.filledCount)||0,uc=Number(d.unfilledCount)||0;
+    var fillHtml='--';
+    if(fc>0&&d.avgFillDays!=null&&isFinite(d.avgFillDays)){
+      fillHtml='<span class="fill-main">平均 '+Math.round(d.avgFillDays)+' 天</span><span class="fill-sub">（已填 '+fc+' / 未填 '+uc+'）</span>';
+    }else if(fc===0&&uc>0){
+      fillHtml='<span class="fill-main">--</span><span class="fill-sub">（未填 '+uc+' 次）</span>';
+    }
     return '<tr data-code="'+esc(d.code)+'" class="'+(S.asset===d.code?'sel':'')+'">'
-      +'<td class="l"><b>'+esc(d.code)+'</b> '+esc(d.name)+'</td><td class="l">'+esc(d.category||'--')+'</td>'
+      +'<td class="l"><b>'+esc(d.code)+'</b> '+esc(d.name)+'</td><td class="l col-cat">'+esc(d.category||'--')+'</td>'
       +'<td class="mono">'+formatAssetPriceHtml(d.code)+'</td>'
       +'<td>'+fmt(d.consecutiveYears,0)+'</td><td>'+(d.ttmYieldPct!=null?fmt(d.ttmYieldPct,2)+'%':'--')+'</td>'
-      +'<td>'+(d.fillWinRatePct!=null?fmt(d.fillWinRatePct,1)+'%':'--')+'</td>'
-      +'<td>'+esc(fmtFillSummary(d))+'</td>'
-      +'<td><span class="badge '+esc(d.status)+'">'+esc(d.status)+'</span></td></tr>';
+      +'<td class="col-win">'+(d.fillWinRatePct!=null?fmt(d.fillWinRatePct,1)+'%':'--')+'</td>'
+      +'<td>'+fillHtml+'</td>'
+      +'<td class="col-stat"><span class="badge '+esc(d.status)+'">'+esc(d.status)+'</span></td></tr>';
   }).join('');
   Array.prototype.forEach.call($('div-body').querySelectorAll('tr'),function(tr){
-    tr.onclick=function(){S.asset=tr.getAttribute('data-code');renderDivTable();renderDivDetail();renderTax();};
+    tr.onclick=function(){
+      S.asset=tr.getAttribute('data-code');
+      renderDivTable();renderDivDetail();renderTax();
+      if(window.innerWidth<=980&&$('div-detail-anchor')&&$('div-detail-anchor').scrollIntoView){
+        $('div-detail-anchor').scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    };
   });
   if(!S.asset&&list.length)S.asset=list[0].code;
   if(S.asset){renderDivDetail();renderTax();}
@@ -800,7 +1207,8 @@ function renderTax(){
 window.ALPHALENS_V3={
   state:S,buildCheckupMarkdown:buildCheckupMarkdown,
   saveUserState:saveUserState,loadUserState:loadUserState,clearUserState:clearUserState,
-  applyLoadedState:applyLoadedState,currentCheckup:currentCheckup,toast:toast,setWindow:setWindow
+  applyLoadedState:applyLoadedState,currentCheckup:currentCheckup,toast:toast,setWindow:setWindow,
+  scaleTotalAmount:scaleTotalAmount,equalizePositions:equalizePositions
 };
 boot();
 })();

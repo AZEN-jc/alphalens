@@ -1,13 +1,41 @@
-/* AlphaLens v3.1 — pure analytics engine (zero dependency, file:// ready).
- * Five functions from the v3.1 spec. Exposed on window.AlphaLensAnalytics.
- * No export keyword: loaded as plain/inlined <script> on file://.
+/* AlphaLens v3.2 — pure analytics engine (zero dependency, file:// ready).
+ * Five core analytics functions + plain-language summary + hand-written SVG renderers.
+ * Exposed on window.AlphaLensAnalytics. Loaded as plain/inlined <script> on file://.
  */
 (function (global) {
   'use strict';
 
+  var ASSET_COLORS = [
+    '#2563EB', // 蓝
+    '#7C3AED', // 紫
+    '#EA580C', // 橙
+    '#0D9488', // 青
+    '#DB2777', // 玫红
+    '#4F46E5', // 靛蓝
+    '#CA8A04', // 琥珀
+    '#059669'  // 翠绿
+  ];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmtYuan(v) {
+    var n = Math.round(Number(v) || 0);
+    return '¥' + n.toLocaleString('en-US');
+  }
+
+  function shortLabel(name, maxLen) {
+    var s = String(name || '').trim();
+    if (!maxLen || s.length <= maxLen) return s;
+    return s.slice(0, maxLen - 1) + '…';
+  }
+
   function addExposure(map, stockCode, stockName, weight, sourceCode, sourceName) {
     if (!map.has(stockCode)) {
-      map.set(stockCode, { code: stockCode, name: stockName, totalWeight: 0, contributors: [] });
+      map.set(stockCode, { code: stockCode, name: stockName, totalWeight: 0, totalYuan: 0, contributors: [] });
     }
     var entry = map.get(stockCode);
     entry.totalWeight += weight;
@@ -15,13 +43,13 @@
     if (existing) {
       existing.contribution += weight;
     } else {
-      entry.contributors.push({ sourceCode: sourceCode, sourceName: sourceName, contribution: weight });
+      entry.contributors.push({ sourceCode: sourceCode, sourceName: sourceName, contribution: weight, contributionYuan: 0 });
     }
   }
 
   /** 1. Portfolio penetration & fake-diversification check */
   function penetratePortfolio(positions, assetsMap) {
-    var valid = positions.filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
+    var valid = (positions || []).filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
     var totalAmount = valid.reduce(function (sum, p) { return sum + Number(p.amount); }, 0);
     if (totalAmount <= 0) {
       return { totalAmount: 0, exposures: [], overlaps: [], coveredRatio: 0, weightedFee: 0, riskLevel: 'EMPTY' };
@@ -49,6 +77,12 @@
       }
     }
     var exposures = Array.from(exposureMap.values()).sort(function (a, b) { return b.totalWeight - a.totalWeight; });
+    exposures.forEach(function (item) {
+      item.totalYuan = totalAmount * item.totalWeight;
+      item.contributors.forEach(function (c) {
+        c.contributionYuan = totalAmount * c.contribution;
+      });
+    });
     var overlaps = exposures.filter(function (item) { return item.contributors.length >= 2; });
     var maxSingleWeight = exposures[0] ? exposures[0].totalWeight : 0;
     var riskLevel = 'LOW';
@@ -141,7 +175,7 @@
 
   /** 3. Composite NAV curve, max drawdown, annualized volatility (supports optional maxDays window) */
   function computePortfolioCurveAndDrawdown(positions, assetsMap, maxDays) {
-    var valid = positions.filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
+    var valid = (positions || []).filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
     var totalAmount = valid.reduce(function (s, p) { return s + Number(p.amount); }, 0);
     if (totalAmount <= 0) return null;
     var codes = valid.map(function (p) { return p.code; });
@@ -178,10 +212,17 @@
     };
   }
 
+  function cleanStockLabel(name, maxLen) {
+    var s = String(name || '').replace(/\s*\([A-Z0-9:]+\)\s*$/i, '').trim();
+    return shortLabel(s, maxLen);
+  }
+
   /** 4. Four-dimensional independent portfolio risk diagnosis */
   function evaluatePortfolioRisk(pen, corr, curve) {
     var hasPos = !!(pen && pen.totalAmount > 0);
-    var maxSingle = (pen && pen.exposures && pen.exposures[0]) ? pen.exposures[0].totalWeight : 0;
+    var totalAmt = hasPos ? pen.totalAmount : 0;
+    var top1 = (pen && pen.exposures && pen.exposures[0]) ? pen.exposures[0] : null;
+    var maxSingle = top1 ? top1.totalWeight : 0;
     var overlapList = (pen && Array.isArray(pen.overlaps)) ? pen.overlaps : [];
     var overlapCount = overlapList.length;
     var overlapWeight = overlapList.reduce(function (s, x) { return s + x.totalWeight; }, 0);
@@ -189,43 +230,123 @@
     var absMdd = (curve && curve.maxDrawdown != null) ? Math.abs(curve.maxDrawdown) : null;
     var vol = (curve && curve.annualizedVol != null) ? curve.annualizedVol : null;
 
+    var topDetail = top1
+      ? ('最高押注 ' + cleanStockLabel(top1.name, 7) + ' ' + fmtYuan(totalAmt * maxSingle) + ' (' + (maxSingle * 100).toFixed(1) + '%)')
+      : '单一底层最高 0%';
     var concentration = !hasPos
       ? { level: 'UNKNOWN', label: '暂无持仓', detail: '--' }
       : maxSingle >= 0.15
-        ? { level: 'HIGH', label: '高集中', detail: '单一底层最高 ' + (maxSingle * 100).toFixed(1) + '%' }
+        ? { level: 'HIGH', label: '高集中', detail: topDetail }
         : maxSingle >= 0.08
-          ? { level: 'MEDIUM', label: '中度集中', detail: '单一底层最高 ' + (maxSingle * 100).toFixed(1) + '%' }
-          : { level: 'LOW', label: '分散良好', detail: '单一底层最高 ' + (maxSingle * 100).toFixed(1) + '%' };
+          ? { level: 'MEDIUM', label: '中度集中', detail: topDetail }
+          : { level: 'LOW', label: '分散良好', detail: topDetail };
 
     var overlap = !hasPos
       ? { level: 'UNKNOWN', label: '暂无持仓', detail: '--' }
       : (overlapCount >= 4 || overlapWeight >= 0.20)
-        ? { level: 'HIGH', label: '严重重合', detail: overlapCount + ' 只重合 · 合计 ' + (overlapWeight * 100).toFixed(1) + '%' }
+        ? { level: 'HIGH', label: '严重撞车', detail: overlapCount + ' 只重合 · 合计 ' + fmtYuan(totalAmt * overlapWeight) + ' (' + (overlapWeight * 100).toFixed(1) + '%)' }
         : (overlapCount >= 2 || overlapWeight >= 0.08)
-          ? { level: 'MEDIUM', label: '轻度重合', detail: overlapCount + ' 只重合 · 合计 ' + (overlapWeight * 100).toFixed(1) + '%' }
-          : { level: 'LOW', label: '低重合', detail: overlapCount + ' 只重合' };
+          ? { level: 'MEDIUM', label: '轻度撞车', detail: overlapCount + ' 只重合 · 合计 ' + fmtYuan(totalAmt * overlapWeight) + ' (' + (overlapWeight * 100).toFixed(1) + '%)' }
+          : { level: 'LOW', label: overlapCount === 0 ? '零撞车' : '极少撞车', detail: overlapCount + ' 只重合' };
 
     var correlation = avgCorr === null
       ? { level: 'UNKNOWN', label: '样本不足', detail: '--' }
       : avgCorr >= 0.65
-        ? { level: 'HIGH', label: '高正相关', detail: '均值 ' + avgCorr.toFixed(2) }
+        ? { level: 'HIGH', label: '高度同涨同跌', detail: '走势相关性 ' + avgCorr.toFixed(2) }
         : avgCorr >= 0.35
-          ? { level: 'MEDIUM', label: '中等相关', detail: '均值 ' + avgCorr.toFixed(2) }
-          : { level: 'LOW', label: '低相关分散', detail: '均值 ' + avgCorr.toFixed(2) };
+          ? { level: 'MEDIUM', label: '中等同向', detail: '走势相关性 ' + avgCorr.toFixed(2) }
+          : { level: 'LOW', label: '走势互补', detail: '走势相关性仅 ' + avgCorr.toFixed(2) };
 
     var drawdownVol = absMdd === null
       ? { level: 'UNKNOWN', label: '样本不足', detail: '--' }
       : (absMdd >= 0.25 || (vol !== null && vol >= 0.24))
-        ? { level: 'HIGH', label: '高波动回撤', detail: '最大回撤 -' + (absMdd * 100).toFixed(1) + '%' }
+        ? { level: 'HIGH', label: '波动较大', detail: '区间最惨跌 -' + (absMdd * 100).toFixed(1) + '%' }
         : (absMdd >= 0.15 || (vol !== null && vol >= 0.16))
-          ? { level: 'MEDIUM', label: '中等回撤', detail: '最大回撤 -' + (absMdd * 100).toFixed(1) + '%' }
-          : { level: 'LOW', label: '低波动稳健', detail: '最大回撤 -' + (absMdd * 100).toFixed(1) + '%' };
+          ? { level: 'MEDIUM', label: '中等回撤', detail: '区间最惨跌 -' + (absMdd * 100).toFixed(1) + '%' }
+          : { level: 'LOW', label: '相对抗跌', detail: '区间最惨跌 -' + (absMdd * 100).toFixed(1) + '%' };
 
     return {
       concentration: concentration,
       overlap: overlap,
       correlation: correlation,
       drawdownVol: drawdownVol
+    };
+  }
+
+  /** 4b. Plain-language one-sentence summary for ordinary investors */
+  function generatePlainSummary(pen, risk4, curve, positions, assetsMap) {
+    var valid = (positions || []).filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
+    if (!pen || pen.totalAmount <= 0 || valid.length === 0) {
+      return {
+        tone: 'neutral',
+        badge: '等待选基',
+        title: '还没有有效持仓，请先点选上方“预设组合”或从下方添加你想查看的基金 / 股票。',
+        detail: '添加后即可透视每只基金内部重仓了哪些股票，并帮你换算成具体人民币金额。',
+        overlapYuan: 0,
+        overlapPct: 0
+      };
+    }
+
+    var totalAmt = pen.totalAmount;
+    var overlapList = pen.overlaps || [];
+    var overlapCount = overlapList.length;
+    var overlapWeight = overlapList.reduce(function (s, x) { return s + x.totalWeight; }, 0);
+    var overlapYuan = totalAmt * overlapWeight;
+    var overlapPct = overlapWeight * 100;
+    var top1 = (pen.exposures && pen.exposures[0]) ? pen.exposures[0] : null;
+    var top1Name = top1 ? cleanStockLabel(top1.name, 10) : '';
+    var top1Yuan = top1 ? (totalAmt * top1.totalWeight) : 0;
+    var top1Pct = top1 ? (top1.totalWeight * 100) : 0;
+    var corrLevel = risk4 && risk4.correlation ? risk4.correlation.level : 'UNKNOWN';
+    var mddText = (curve && curve.maxDrawdown != null) ? ('-' + (Math.abs(curve.maxDrawdown) * 100).toFixed(1) + '%') : '--';
+
+    if (overlapCount >= 4 || overlapWeight >= 0.20) {
+      return {
+        tone: 'warn',
+        badge: '注意“假分散”',
+        title: '你买的 ' + valid.length + ' 只标的表面分散，其实有 ' + overlapCount + ' 只股票重复买入，撞车资金高达 ' + fmtYuan(overlapYuan) + '（占总钱 ' + overlapPct.toFixed(1) + '%）',
+        detail: (top1 ? '其中仅「' + top1Name + '」一家公司就间接押了 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）。' : '') + '点击下方连线图里的任意基金或股票，可一眼看清钱是怎么撞到一起的。',
+        overlapYuan: overlapYuan,
+        overlapPct: overlapPct
+      };
+    }
+    if (overlapCount >= 1) {
+      return {
+        tone: 'mid',
+        badge: '存在部分撞车',
+        title: '你选的 ' + valid.length + ' 只标的里有 ' + overlapCount + ' 只底层股票出现重合，撞车资金约 ' + fmtYuan(overlapYuan) + '（占 ' + overlapPct.toFixed(1) + '%）',
+        detail: (top1 ? '第一大底层重仓是「' + top1Name + '」，折合 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）。' : '') + '可在下方点开每只基金卡片，查看具体重仓明细。',
+        overlapYuan: overlapYuan,
+        overlapPct: overlapPct
+      };
+    }
+    if (valid.length === 1) {
+      return {
+        tone: 'mid',
+        badge: '单标的持仓',
+        title: '当前只持有一只标的（' + (assetsMap[valid[0].code] ? assetsMap[valid[0].code].name : valid[0].code) + '），总资金 ' + fmtYuan(totalAmt),
+        detail: (top1 ? '该标的头号重仓为「' + top1Name + '」（约 ' + fmtYuan(top1Yuan) + '）。' : '') + '建议再加入 1–2 只不同方向的资产，对比分散效果。',
+        overlapYuan: 0,
+        overlapPct: 0
+      };
+    }
+    if (corrLevel === 'LOW') {
+      return {
+        tone: 'good',
+        badge: '分散效果良好',
+        title: '这组 ' + valid.length + ' 只配置做到了底层 0 撞车，而且平时涨跌互补（相关性低），能真正平滑波动',
+        detail: '总本金 ' + fmtYuan(totalAmt) + ' 分布在不同大类资产中，所选窗口历史最大回撤仅 ' + mddText + '。点击下方基金卡片可随时核查各自持仓。',
+        overlapYuan: 0,
+        overlapPct: 0
+      };
+    }
+    return {
+      tone: 'good',
+      badge: '底层无重仓撞车',
+      title: '你选的 ' + valid.length + ' 只标的底层股票 0 撞车，不过它们整体走势仍有一定同步性（区间最大回撤 ' + mddText + '）',
+      detail: (top1 ? '当前底层占比最大的是「' + top1Name + '」（' + fmtYuan(top1Yuan) + '，' + top1Pct.toFixed(1) + '%）。' : '') + '如果想进一步降低波动，可尝试加入黄金或跨市场资产。',
+      overlapYuan: 0,
+      overlapPct: 0
     };
   }
 
@@ -248,10 +369,175 @@
   }
 
   /* --- Hand-written SVG renderers --- */
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+
+  /** Fund -> Underlying Stock interactive Sankey-style flow SVG */
+  function fundStockFlowSVG(positions, assetsMap, pen, focusCode) {
+    var valid = (positions || []).filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
+    var totalAmt = pen && pen.totalAmount ? pen.totalAmount : 0;
+    var stocks = (pen && pen.exposures) ? pen.exposures.slice(0, 10) : [];
+    if (!valid.length || totalAmt <= 0 || !stocks.length) {
+      return '<div style="padding:24px;text-align:center;color:var(--ink-faint,#888)">暂无有效持仓数据，无法绘制资金穿透连线图</div>';
+    }
+
+    var W = 640;
+    var lx = 8, lw = 186;
+    var rx = 396, rw = 236;
+    var topPad = 24, botPad = 14;
+    var rH = 34, rGap = 7;
+    var rightTotalH = stocks.length * rH + Math.max(0, stocks.length - 1) * rGap;
+
+    var minLeftH = 44;
+    var lGap = 10;
+    var availLeftH = Math.max(rightTotalH, valid.length * minLeftH + Math.max(0, valid.length - 1) * lGap);
+    var H = topPad + availLeftH + botPad;
+
+    // Color map per held position
+    var colorBySource = {};
+    valid.forEach(function (p, idx) {
+      colorBySource[p.code] = ASSET_COLORS[idx % ASSET_COLORS.length];
     });
+
+    // Left nodes distributed vertically proportional to position weight (with minimum height for readability)
+    var totalGapL = Math.max(0, valid.length - 1) * lGap;
+    var usableL = availLeftH - totalGapL;
+    var rawHeights = valid.map(function (p) {
+      return Math.max(minLeftH, (Number(p.amount) / totalAmt) * usableL);
+    });
+    var sumRawH = rawHeights.reduce(function (a, b) { return a + b; }, 0) || 1;
+    var scaleL = usableL / sumRawH;
+    var leftNodes = [];
+    var curY = topPad;
+    valid.forEach(function (p, idx) {
+      var h = rawHeights[idx] * scaleL;
+      var a = assetsMap[p.code] || {};
+      var wPct = (Number(p.amount) / totalAmt) * 100;
+      leftNodes.push({
+        code: p.code,
+        name: a.name || p.code,
+        amount: Number(p.amount),
+        wPct: wPct,
+        color: colorBySource[p.code],
+        x: lx, y: curY, w: lw, h: h,
+        cy: curY + h / 2
+      });
+      curY += h + lGap;
+    });
+
+    // Right nodes (Top 10 underlying stocks)
+    var rightOffsetTop = topPad + Math.max(0, (availLeftH - rightTotalH) / 2);
+    var rightNodes = stocks.map(function (st, idx) {
+      var y = rightOffsetTop + idx * (rH + rGap);
+      return {
+        code: st.code,
+        name: st.name,
+        totalWeight: st.totalWeight,
+        totalYuan: totalAmt * st.totalWeight,
+        contributors: st.contributors || [],
+        isOverlap: (st.contributors || []).length >= 2,
+        x: rx, y: y, w: rw, h: rH,
+        cy: y + rH / 2
+      };
+    });
+
+    var leftByCode = {};
+    leftNodes.forEach(function (n) { leftByCode[n.code] = n; });
+
+    // Compute max single edge contribution for stroke width scaling
+    var maxEdge = 0.001;
+    rightNodes.forEach(function (rn) {
+      rn.contributors.forEach(function (c) {
+        if (c.contribution > maxEdge) maxEdge = c.contribution;
+      });
+    });
+
+    var hasFocus = !!(focusCode && (
+      leftNodes.some(function (n) { return n.code === focusCode; }) ||
+      rightNodes.some(function (n) { return n.code === focusCode; })
+    ));
+
+    var o = '<svg class="flow-svg" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block">';
+    // Column headers
+    o += '<text x="' + lx + '" y="14" font-size="10" font-weight="600" fill="var(--ink-faint,#888)">你持有的 ETF / 股票</text>';
+    o += '<text x="' + rx + '" y="14" font-size="10" font-weight="600" fill="var(--ink-faint,#888)">穿透出的前 10 底层重仓（折合资金）</text>';
+
+    // 1. Edges (draw inactive first so active edges stay on top)
+    var edgesHtml = [];
+    rightNodes.forEach(function (rn) {
+      rn.contributors.forEach(function (c) {
+        var ln = leftByCode[c.sourceCode];
+        if (!ln) return;
+        var active = !hasFocus || focusCode === ln.code || focusCode === rn.code;
+        var sw = Math.max(1.8, Math.min(13, (c.contribution / maxEdge) * 11.5 + 1.5));
+        if (hasFocus && active) sw = Math.min(15, sw * 1.15);
+        var x1 = ln.x + ln.w, y1 = ln.cy;
+        var x2 = rn.x, y2 = rn.cy;
+        var cx1 = x1 + (x2 - x1) * 0.48;
+        var cx2 = x2 - (x2 - x1) * 0.48;
+        var d = 'M' + x1.toFixed(1) + ',' + y1.toFixed(1)
+          + ' C' + cx1.toFixed(1) + ',' + y1.toFixed(1)
+          + ' ' + cx2.toFixed(1) + ',' + y2.toFixed(1)
+          + ' ' + x2.toFixed(1) + ',' + y2.toFixed(1);
+        var opacity = !hasFocus ? (rn.isOverlap ? 0.42 : 0.24) : (active ? 0.82 : 0.06);
+        var edgeColor = ln.color;
+        edgesHtml.push({
+          active: active ? 1 : 0,
+          html: '<path class="flow-edge" data-src="' + esc(ln.code) + '" data-dst="' + esc(rn.code) + '" d="' + d
+            + '" fill="none" stroke="' + edgeColor + '" stroke-width="' + sw.toFixed(2)
+            + '" stroke-linecap="round" opacity="' + opacity + '"/>'
+        });
+      });
+    });
+    edgesHtml.sort(function (a, b) { return a.active - b.active; });
+    edgesHtml.forEach(function (e) { o += e.html; });
+
+    // 2. Left nodes (held funds/stocks)
+    leftNodes.forEach(function (ln) {
+      var isSelf = focusCode === ln.code;
+      var connected = !hasFocus || isSelf || rightNodes.some(function (rn) {
+        return rn.code === focusCode && rn.contributors.some(function (c) { return c.sourceCode === ln.code; });
+      });
+      var nodeOpacity = connected ? 1 : 0.34;
+      o += '<g class="flow-node" data-flow-code="' + esc(ln.code) + '" style="cursor:pointer" opacity="' + nodeOpacity + '">';
+      o += '<rect x="' + ln.x + '" y="' + ln.y.toFixed(1) + '" width="' + ln.w + '" height="' + ln.h.toFixed(1)
+        + '" rx="7" fill="var(--bg,#fff)" stroke="' + (isSelf ? ln.color : 'var(--line2,#ccc)')
+        + '" stroke-width="' + (isSelf ? '2' : '1') + '"/>';
+      o += '<rect x="' + ln.x + '" y="' + ln.y.toFixed(1) + '" width="5" height="' + ln.h.toFixed(1) + '" rx="2" fill="' + ln.color + '"/>';
+      o += '<text x="' + (ln.x + 12) + '" y="' + (ln.cy - 3).toFixed(1) + '" font-size="12.5" font-weight="600" fill="var(--ink,#111)">'
+        + esc(shortLabel(ln.name, 11)) + '</text>';
+      o += '<text x="' + (ln.x + 12) + '" y="' + (ln.cy + 13).toFixed(1) + '" font-size="11" font-family="monospace" fill="var(--ink-soft,#666)">'
+        + esc(fmtYuan(ln.amount)) + ' · ' + ln.wPct.toFixed(0) + '%</text>';
+      o += '</g>';
+    });
+
+    // 3. Right nodes (top 10 underlying stocks)
+    rightNodes.forEach(function (rn) {
+      var isSelf = focusCode === rn.code;
+      var connected = !hasFocus || isSelf || rn.contributors.some(function (c) { return c.sourceCode === focusCode; });
+      var nodeOpacity = connected ? 1 : 0.34;
+      var strokeColor = isSelf ? 'var(--ink,#111)' : (rn.isOverlap ? '#D92D20' : 'var(--line2,#ccc)');
+      var strokeOpacity = isSelf ? '1' : (rn.isOverlap ? '0.55' : '1');
+      o += '<g class="flow-node" data-flow-code="' + esc(rn.code) + '" style="cursor:pointer" opacity="' + nodeOpacity + '">';
+      o += '<rect x="' + rn.x + '" y="' + rn.y.toFixed(1) + '" width="' + rn.w + '" height="' + rn.h + '" rx="6" fill="var(--bg,#fff)" stroke="'
+        + strokeColor + '" stroke-opacity="' + strokeOpacity + '" stroke-width="' + (isSelf ? '1.8' : '1') + '"/>';
+      if (rn.isOverlap) {
+        o += '<circle cx="' + (rn.x + 11) + '" cy="' + (rn.cy).toFixed(1) + '" r="3.5" fill="#D92D20"/>';
+      }
+      var nameX = rn.isOverlap ? (rn.x + 20) : (rn.x + 10);
+      var cleanStockName = String(rn.name || '').replace(/\s*\([A-Z0-9:]+\)\s*$/i, '');
+      o += '<text x="' + nameX + '" y="' + (rn.cy + 4.5).toFixed(1) + '" font-size="12" font-weight="600" fill="var(--ink,#111)">'
+        + esc(shortLabel(cleanStockName, 8)) + '</text>';
+      if (rn.isOverlap) {
+        var tagTxt = rn.contributors.length + '撞车';
+        o += '<rect x="' + (rn.x + 112) + '" y="' + (rn.cy - 8).toFixed(1) + '" width="38" height="16" rx="3" fill="#D92D20" opacity="0.12"/>';
+        o += '<text x="' + (rn.x + 131) + '" y="' + (rn.cy + 3.5).toFixed(1) + '" font-size="9.5" font-weight="600" fill="#D92D20" text-anchor="middle">'
+          + esc(tagTxt) + '</text>';
+      }
+      o += '<text x="' + (rn.x + rn.w - 8) + '" y="' + (rn.cy + 4).toFixed(1) + '" font-size="11.5" font-family="monospace" font-weight="600" fill="var(--ink,#111)" text-anchor="end">'
+        + esc(fmtYuan(rn.totalYuan)) + '</text>';
+      o += '</g>';
+    });
+
+    return o + '</svg>';
   }
 
   /** Correlation heatmap SVG; value printed in each cell. */
@@ -334,11 +620,14 @@
   }
 
   var api = {
+    ASSET_COLORS: ASSET_COLORS,
     penetratePortfolio: penetratePortfolio,
     computeCorrelationMatrix: computeCorrelationMatrix,
     computePortfolioCurveAndDrawdown: computePortfolioCurveAndDrawdown,
     evaluatePortfolioRisk: evaluatePortfolioRisk,
+    generatePlainSummary: generatePlainSummary,
     calcAfterTaxDividend: calcAfterTaxDividend,
+    fundStockFlowSVG: fundStockFlowSVG,
     correlationSVG: correlationSVG,
     navDrawdownSVG: navDrawdownSVG,
     dividendTimelineSVG: dividendTimelineSVG

@@ -42,44 +42,44 @@
         "concentration": {
           "level": "LOW",
           "label": "分散良好",
-          "detail": "单一底层最高 6.9%"
+          "detail": "最高押注 招商银行 ¥6,924 (6.9%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "严重重合",
-          "detail": "8 只重合 · 合计 26.2%"
+          "label": "严重撞车",
+          "detail": "8 只重合 · 合计 ¥26,243 (26.2%)"
         },
         "correlation": {
           "level": "LOW",
-          "label": "低相关分散",
-          "detail": "均值 0.28"
+          "label": "走势互补",
+          "detail": "走势相关性仅 0.28"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "低波动稳健",
-          "detail": "最大回撤 -8.5%"
+          "label": "相对抗跌",
+          "detail": "区间最惨跌 -8.5%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "LOW",
           "label": "分散良好",
-          "detail": "单一底层最高 6.9%"
+          "detail": "最高押注 招商银行 ¥6,924 (6.9%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "严重重合",
-          "detail": "8 只重合 · 合计 26.2%"
+          "label": "严重撞车",
+          "detail": "8 只重合 · 合计 ¥26,243 (26.2%)"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "中等相关",
-          "detail": "均值 0.57"
+          "label": "中等同向",
+          "detail": "走势相关性 0.57"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "低波动稳健",
-          "detail": "最大回撤 -10.4%"
+          "label": "相对抗跌",
+          "detail": "区间最惨跌 -10.4%"
         }
       },
       "hasNaN": false
@@ -110,44 +110,44 @@
         "concentration": {
           "level": "HIGH",
           "label": "高集中",
-          "detail": "单一底层最高 30.0%"
+          "detail": "最高押注 长江电力 ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "低重合",
+          "label": "零撞车",
           "detail": "0 只重合"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "中等相关",
-          "detail": "均值 0.51"
+          "label": "中等同向",
+          "detail": "走势相关性 0.51"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "中等回撤",
-          "detail": "最大回撤 -13.4%"
+          "detail": "区间最惨跌 -13.4%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "HIGH",
           "label": "高集中",
-          "detail": "单一底层最高 30.0%"
+          "detail": "最高押注 长江电力 ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "低重合",
+          "label": "零撞车",
           "detail": "0 只重合"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "中等相关",
-          "detail": "均值 0.54"
+          "label": "中等同向",
+          "detail": "走势相关性 0.54"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "中等回撤",
-          "detail": "最大回撤 -14.0%"
+          "detail": "区间最惨跌 -14.0%"
         }
       },
       "hasNaN": false
@@ -178,44 +178,44 @@
         "concentration": {
           "level": "HIGH",
           "label": "高集中",
-          "detail": "单一底层最高 30.0%"
+          "detail": "最高押注 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "低重合",
+          "label": "零撞车",
           "detail": "0 只重合"
         },
         "correlation": {
           "level": "LOW",
-          "label": "低相关分散",
-          "detail": "均值 0.14"
+          "label": "走势互补",
+          "detail": "走势相关性仅 0.14"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "中等回撤",
-          "detail": "最大回撤 -21.2%"
+          "detail": "区间最惨跌 -21.2%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "HIGH",
           "label": "高集中",
-          "detail": "单一底层最高 30.0%"
+          "detail": "最高押注 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "低重合",
+          "label": "零撞车",
           "detail": "0 只重合"
         },
         "correlation": {
           "level": "LOW",
-          "label": "低相关分散",
-          "detail": "均值 0.18"
+          "label": "走势互补",
+          "detail": "走势相关性仅 0.18"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "中等回撤",
-          "detail": "最大回撤 -24.1%"
+          "detail": "区间最惨跌 -24.1%"
         }
       },
       "hasNaN": false
@@ -257,44 +257,44 @@
         "concentration": {
           "level": "MEDIUM",
           "label": "中度集中",
-          "detail": "单一底层最高 9.3%"
+          "detail": "最高押注 英伟达 ¥9,266 (9.3%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "严重重合",
-          "detail": "10 只重合 · 合计 49.6%"
+          "label": "严重撞车",
+          "detail": "10 只重合 · 合计 ¥49,621 (49.6%)"
         },
         "correlation": {
           "level": "HIGH",
-          "label": "高正相关",
-          "detail": "均值 0.84"
+          "label": "高度同涨同跌",
+          "detail": "走势相关性 0.84"
         },
         "drawdownVol": {
           "level": "HIGH",
-          "label": "高波动回撤",
-          "detail": "最大回撤 -15.6%"
+          "label": "波动较大",
+          "detail": "区间最惨跌 -15.6%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "MEDIUM",
           "label": "中度集中",
-          "detail": "单一底层最高 9.3%"
+          "detail": "最高押注 英伟达 ¥9,266 (9.3%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "严重重合",
-          "detail": "10 只重合 · 合计 49.6%"
+          "label": "严重撞车",
+          "detail": "10 只重合 · 合计 ¥49,621 (49.6%)"
         },
         "correlation": {
           "level": "HIGH",
-          "label": "高正相关",
-          "detail": "均值 0.85"
+          "label": "高度同涨同跌",
+          "detail": "走势相关性 0.85"
         },
         "drawdownVol": {
           "level": "HIGH",
-          "label": "高波动回撤",
-          "detail": "最大回撤 -24.5%"
+          "label": "波动较大",
+          "detail": "区间最惨跌 -24.5%"
         }
       },
       "hasNaN": false
@@ -325,44 +325,44 @@
         "concentration": {
           "level": "HIGH",
           "label": "高集中",
-          "detail": "单一底层最高 30.0%"
+          "detail": "最高押注 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "低重合",
+          "label": "零撞车",
           "detail": "0 只重合"
         },
         "correlation": {
           "level": "LOW",
-          "label": "低相关分散",
-          "detail": "均值 0.24"
+          "label": "走势互补",
+          "detail": "走势相关性仅 0.24"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "中等回撤",
-          "detail": "最大回撤 -11.9%"
+          "detail": "区间最惨跌 -11.9%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "HIGH",
           "label": "高集中",
-          "detail": "单一底层最高 30.0%"
+          "detail": "最高押注 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "低重合",
+          "label": "零撞车",
           "detail": "0 只重合"
         },
         "correlation": {
           "level": "LOW",
-          "label": "低相关分散",
-          "detail": "均值 0.16"
+          "label": "走势互补",
+          "detail": "走势相关性仅 0.16"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "低波动稳健",
-          "detail": "最大回撤 -14.1%"
+          "label": "相对抗跌",
+          "detail": "区间最惨跌 -14.1%"
         }
       },
       "hasNaN": false
@@ -379,7 +379,7 @@
   "exposureRows": 15,
   "hasV3Api": true,
   "md": {
-    "len": 1526,
+    "len": 1860,
     "total": true,
     "mdd": true,
     "risk4": true,
@@ -393,11 +393,27 @@
     "weightChanged": true,
     "savedAfterEdit": true
   },
+  "capitalInteract": {
+    "totFocusKept": true,
+    "totScaled": true,
+    "totSaved": true,
+    "eqOk": true
+  },
   "persist": {
     "saved": true,
     "hasTab": true,
     "reset": true,
     "cleared": true
+  },
+  "vizV32": {
+    "plainOk": true,
+    "advDefaultClosed": true,
+    "flowNodes": 13,
+    "flowEdges": 18,
+    "flowFocused": true,
+    "drillTabs": 3,
+    "drillItems": 10,
+    "drillHasYuan": true
   },
   "brand": true,
   "exportBtns": 3,

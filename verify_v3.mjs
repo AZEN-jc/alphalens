@@ -99,9 +99,9 @@ rec(12, 'v2旧文件已归档且根目录清爽', archiveOk && rootClean,
 
 const readme = fs.existsSync(README) ? fs.readFileSync(README, 'utf8') : '';
 const lic = fs.existsSync(LICENSE) ? fs.readFileSync(LICENSE, 'utf8') : '';
-const docsOk = /AlphaLens v3\.1/.test(readme) && /持仓穿透/.test(readme) && /四维/.test(readme) &&
+const docsOk = /AlphaLens v3\.[12]/.test(readme) && /持仓穿透/.test(readme) && /四维/.test(readme) &&
   /GitHub Pages/.test(readme) && /archive\/v2/.test(readme) && /MIT License/.test(lic) && /Zen Ao/.test(lic);
-rec(13, 'README v3.1文档与MIT LICENSE齐全', docsOk,
+rec(13, 'README 文档与MIT LICENSE齐全', docsOk,
   `readmeLen=${readme.length} licenseOk=${/MIT License/.test(lic)}`);
 
 // ---- 断言 [17] 窗口一致性（analysis_data.json 静态硬校验）----
@@ -224,6 +224,26 @@ if(V){
   }
   R.interact={addedFound:addedFound,focusKept:focusKept,weightChanged:weightChanged,savedAfterEdit:savedAfterEdit};
 
+  // [22] 总金额双向调节与一键平均分断言（先重置回默认 40k/30k/30k）
+  document.getElementById('reset-btn').click();
+  var totInp=document.getElementById('total-amount-input');
+  var totFocusKept=false,totScaled=false,totSaved=false,eqOk=false;
+  if(totInp){
+    totInp.focus();
+    totInp.value='200000';
+    totInp.dispatchEvent(new Event('input',{bubbles:true}));
+    totFocusKept=(document.activeElement===totInp);
+    var sumAfterScale=V.state.positions.reduce(function(s,p){return s+p.amount},0);
+    totScaled=(sumAfterScale===200000&&V.state.positions[0].amount===80000);
+    var stTot=JSON.parse(localStorage.getItem('alphalens_v3_state')||'{}');
+    totSaved=(stTot.positions&&stTot.positions.reduce(function(s,p){return s+p.amount},0)===200000);
+  }
+  var eqBtn=document.getElementById('equal-weight-btn');
+  if(eqBtn)eqBtn.click();
+  var psEq=V.state.positions.map(function(p){return p.amount});
+  eqOk=psEq.length===3&&Math.max.apply(null,psEq)-Math.min.apply(null,psEq)<=2;
+  R.capitalInteract={totFocusKept:totFocusKept,totScaled:totScaled,totSaved:totSaved,eqOk:eqOk};
+
   // 重置默认与清理 localStorage
   document.getElementById('reset-btn').click();
   R.persist={
@@ -234,7 +254,33 @@ if(V){
   };
 }
 
-R.brand=document.body.textContent.indexOf('Zen Ao')>=0&&document.body.textContent.indexOf('v3.1')>=0;
+// [23] 一句话总结 + 流向连线图 + 单只 ETF 持仓展开 + 第三层折叠验证
+var advPanel=document.getElementById('adv-panel');
+var advDefaultClosed=!!(advPanel&&!advPanel.open);
+var flowNodes=document.querySelectorAll('#flow-chart .flow-node');
+var flowEdges=document.querySelectorAll('#flow-chart .flow-edge').length;
+var firstFlow=flowNodes[0];
+if(firstFlow)firstFlow.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+var flowFocused=!!(V&&V.state&&V.state.flowFocus);
+var flowReset=document.getElementById('flow-reset-btn');
+if(flowReset)flowReset.click();
+var drillTabs=document.querySelectorAll('#drill-tabs .drill-tab');
+if(drillTabs[1])drillTabs[1].click();
+var drillItems=document.querySelectorAll('#etf-drilldown .drill-item').length;
+var drillHasYuan=/¥[\d,]+/.test((document.getElementById('etf-drilldown')||{}).textContent||'');
+var plainOk=!!(document.getElementById('pb-title')&&document.getElementById('pb-title').textContent.length>10);
+R.vizV32={
+  plainOk:plainOk,
+  advDefaultClosed:advDefaultClosed,
+  flowNodes:flowNodes.length,
+  flowEdges:flowEdges,
+  flowFocused:flowFocused,
+  drillTabs:drillTabs.length,
+  drillItems:drillItems,
+  drillHasYuan:drillHasYuan
+};
+
+R.brand=document.body.textContent.indexOf('Zen Ao')>=0&&/v3\.[12]/.test(document.body.textContent);
 R.exportBtns=document.querySelectorAll('.report-btn').length;
 
 // Tab2：15 只高股息股 + 填权样本格式 + 红利税更名与财税101号文 + 税率/基准实时更新
@@ -335,7 +381,7 @@ rec(15, 'localStorage持久化与重置默认',
   ps.saved === true && ps.hasTab === true && ps.reset === true && ps.cleared === true,
   `saved=${ps.saved} tab=${ps.hasTab} reset=${ps.reset} cleared=${ps.cleared}`);
 
-rec(16, 'v3.1个人标识与导出按钮',
+rec(16, 'v3.2个人标识与导出按钮',
   R.brand === true && (R.exportBtns || 0) >= 3,
   `brand=${R.brand} exportBtns=${R.exportBtns}`);
 
@@ -373,6 +419,19 @@ rec(20, '交互与持久化断言（新增即存localStorage + 修改金额输�
   ix.addedFound === true && ix.focusKept === true && ix.weightChanged === true && ix.savedAfterEdit === true,
   `addedSaved=${ix.addedFound} focusKept=${ix.focusKept} weightInPlace=${ix.weightChanged} editSaved=${ix.savedAfterEdit}`);
 
+// ---- [22] 总金额双向缩放与一键平均分断言 ----
+const cap = R.capitalInteract || {};
+rec(22, '总金额双向缩放保焦 + 一键平均分断言',
+  cap.totFocusKept === true && cap.totScaled === true && cap.totSaved === true && cap.eqOk === true,
+  `totFocus=${cap.totFocusKept} scaled=${cap.totScaled} saved=${cap.totSaved} equalized=${cap.eqOk}`);
+
+// ---- [23] 一句话诊断 + 基金->股票连线流向图 + 单基金透视 + 第三层默认收起断言 ----
+const vz = R.vizV32 || {};
+rec(23, '流向连线图 + 单只ETF持仓展开 + 三层递进默认收起断言',
+  vz.plainOk === true && vz.advDefaultClosed === true && vz.flowNodes >= 5 && vz.flowEdges >= 5 &&
+  vz.flowFocused === true && vz.drillTabs === 3 && vz.drillItems >= 5 && vz.drillHasYuan === true,
+  `plain=${vz.plainOk} advClosed=${vz.advDefaultClosed} flow=${vz.flowNodes}n/${vz.flowEdges}e focus=${vz.flowFocused} drill=${vz.drillItems}i`);
+
 // ---- [21] 孤立单文件验收（仅拷贝 index.html 至系统临时目录单独加载）----
 const isoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alphalens_isolated_'));
 const isoFile = path.join(isoDir, 'index.html');
@@ -389,6 +448,7 @@ window.addEventListener('load',function(){setTimeout(function(){
     R.hasData=!!window.ALPHALENS_DATA;
     R.hasAnalytics=!!window.AlphaLensAnalytics;
     R.assets=Object.keys((window.ALPHALENS_DATA&&window.ALPHALENS_DATA.assets)||{}).length;
+    R.flowSvg=document.querySelectorAll('#flow-chart svg').length;
     R.corrSvg=document.querySelectorAll('#corr-chart svg').length;
     R.navSvg=document.querySelectorAll('#nav-chart svg').length;
     R.riskCards=document.querySelectorAll('#risk-dims .risk-card').length;
@@ -410,11 +470,52 @@ window.addEventListener('load',function(){setTimeout(function(){
   fs.rmSync(isoDir, { recursive: true, force: true });
 }
 const isoOk = (ISO.errs || []).length === 0 && ISO.extScripts === 0 && ISO.hasData && ISO.hasAnalytics &&
-  ISO.assets === 36 && ISO.corrSvg >= 1 && ISO.navSvg >= 1 && ISO.riskCards === 4 &&
+  ISO.assets === 36 && ISO.flowSvg >= 1 && ISO.corrSvg >= 1 && ISO.navSvg >= 1 && ISO.riskCards === 4 &&
   ISO.expRows > 0 && ISO.divRows === 15 && ISO.divSvg >= 1 && ISO.mdOk === true && !ISO.fatal;
 rec(21, '孤立单文件验收（拷贝至临时目录零外部文件独立加载）', isoOk,
-  `errs=${(ISO.errs || []).length} extSrc=${ISO.extScripts} assets=${ISO.assets} svgs=${ISO.corrSvg}/${ISO.navSvg}/${ISO.divSvg} riskCards=${ISO.riskCards} mdOk=${ISO.mdOk}`);
+  `errs=${(ISO.errs || []).length} extSrc=${ISO.extScripts} assets=${ISO.assets} svgs=${ISO.flowSvg}/${ISO.corrSvg}/${ISO.navSvg}/${ISO.divSvg} riskCards=${ISO.riskCards} mdOk=${ISO.mdOk}`);
+
+// ---- [24] 手机端窄屏响应式无横向溢出与横滑胶囊断言 ----
+const mobFile = path.join(HERE, '__v3_mobile.html');
+let MOB = {};
+try {
+  const mobProbe = String.raw`
+<script>
+window.addEventListener('load',function(){setTimeout(function(){
+  var plist=document.getElementById('preset-list');
+  var cs=plist?getComputedStyle(plist):null;
+  var presetFlexDir=cs?cs.flexDirection:'';
+  var presetScrollW=plist?plist.scrollWidth:0;
+  var presetClientW=plist?plist.clientWidth:0;
+  var flowSvg=document.querySelectorAll('#flow-chart svg').length;
+  var p1=document.documentElement.scrollWidth<=window.innerWidth;
+  var divBtn=document.querySelector('.main-tabs button[data-main=div]');
+  if(divBtn)divBtn.click();
+  var p2=document.documentElement.scrollWidth<=window.innerWidth;
+  var R={
+    vw:window.innerWidth,
+    swPen:document.documentElement.scrollWidth,
+    noOverflowPen:p1,
+    noOverflowDiv:p2,
+    presetFlexDir:presetFlexDir,
+    presetScrollW:presetScrollW,
+    presetClientW:presetClientW,
+    flowSvg:flowSvg
+  };
+  var d=document.createElement('div');d.id='__MOB';d.style.display='none';d.textContent=JSON.stringify(R);document.body.appendChild(d);
+},1800);});
+</script>`;
+  fs.writeFileSync(mobFile, rootText.replace('</body>', mobProbe + '</body>'));
+  const mdom = chromeDom(mobFile, ['--window-size=390,844']);
+  const mm = mdom.match(/<div id="__MOB"[^>]*>([\s\S]*?)<\/div>/);
+  try { MOB = decodeHtmlJson(mm ? mm[1] : '{}'); } catch (e) { MOB = { fatal: e.message }; }
+} finally {
+  fs.rmSync(mobFile, { force: true });
+}
+rec(24, '手机端（窄屏）无横向溢出与横滑胶囊断言',
+  MOB.noOverflowPen === true && MOB.noOverflowDiv === true && MOB.presetFlexDir === 'row' && MOB.presetScrollW > MOB.presetClientW && MOB.flowSvg >= 1,
+  `vw=${MOB.vw} overflowPen=${!MOB.noOverflowPen} overflowDiv=${!MOB.noOverflowDiv} presetDir=${MOB.presetFlexDir} scrollW=${MOB.presetScrollW}/${MOB.presetClientW}`);
 
 const passed = results.filter(r => r.pass).length;
-console.log(`\n=== VERIFY_V3.1: ${passed}/${results.length} PASS (Chrome: ${CHROME}) ===`);
+console.log(`\n=== VERIFY_V3.2: ${passed}/${results.length} PASS (Chrome: ${CHROME}) ===`);
 if (passed !== results.length) process.exit(1);
