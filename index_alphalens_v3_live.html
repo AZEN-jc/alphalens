@@ -372,35 +372,35 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
 <a href="#main" class="skip">跳到主内容</a>
 <header>
   <div class="brand">
-    <span class="seal-brand">玄墨</span>
-    <h1>ALPHALENS</h1>
-    <p>3D PERSPECTIVE QUANT TERMINAL · 东方穿透终端</p>
+    <span class="seal-brand">A</span>
+    <h1>AlphaLens</h1>
+    <p>持仓穿透 · 股息核验</p>
   </div>
   <div class="main-tabs" role="tablist">
-    <button class="on" data-main="pen" role="tab" aria-selected="true">壹 · 穿透观澜</button>
-    <button data-main="div" role="tab" aria-selected="false">贰 · 股息真章</button>
+    <button class="on" data-main="pen" role="tab" aria-selected="true">持仓穿透</button>
+    <button data-main="div" role="tab" aria-selected="false">高股息核验</button>
   </div>
   <div class="top-right">
     <span class="st" id="live-state"><i></i><span id="live-label">连接实时行情…</span></span>
-    <button class="theme-btn" id="theme-btn" aria-label="切换主题">◐ 玄墨/素宣</button>
+    <button class="theme-btn" id="theme-btn" aria-label="切换主题">◐ 浅色 / 深色</button>
     <span class="brand-author">AlphaLens v3.3 · Zen Ao (GitHub: AZEN-jc)</span>
   </div>
 </header>
 
 <main id="main">
-<!-- ============ 卷壹：一屏四象限·零空洞交响舱（璇玑 + 观澜 + 叠嶂 + 定盘 + 尺牍） ============ -->
+<!-- ============ 卷壹：一屏四象限·零空洞交响舱（选基 + 观澜 + 叠嶂 + 定盘 + 尺牍） ============ -->
 <section class="view on" id="view-pen">
   <div class="symphony-frame">
 
-    <!-- 顶部指挥舱：璇玑 · 预置方略 + 总本金双向缩放 + 横排持仓胶囊（彻底消除旧左栏下方的黑洞） -->
-    <div class="command-deck" aria-label="璇玑指挥横舱">
+    <!-- 顶部控制栏：预设组合 + 总本金双向缩放 + 当前持仓胶囊 -->
+    <div class="command-deck" aria-label="组合与本金配置栏">
       <div class="cmd-row-top">
         <div class="cmd-title">
-          <span class="seal-tag">璇玑</span>
-          <span class="mono" style="font-size:10.5px;color:var(--ink-soft)">PRESETS &amp; CAPITAL</span>
+          <span class="seal-tag">预设</span>
+          <span style="font-size:11px;color:var(--ink-soft)">组合示例</span>
         </div>
 
-        <!-- 5 套经典预置方略 -->
+        <!-- 5 套经典预设组合 -->
         <div class="preset-list" id="preset-list"></div>
 
         <!-- 总本金双向调节与一键均分 -->
@@ -415,7 +415,7 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
             <button type="button" class="chip-btn" data-total="50000">5万</button>
             <button type="button" class="chip-btn on" data-total="100000">10万</button>
             <button type="button" class="chip-btn" data-total="500000">50万</button>
-            <button type="button" class="chip-btn ghost" id="equal-weight-btn">一键平均分</button>
+            <button type="button" class="chip-btn ghost" id="equal-weight-btn">一键均分</button>
           </div>
         </div>
       </div>
@@ -424,38 +424,38 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
       <div class="cmd-row-bot">
         <div class="pos-list" id="pos-list"></div>
         <div class="add-row">
-          <span class="mono" id="cover-note" style="font-size:10px;color:var(--ink-faint);margin-right:4px">—</span>
+          <span class="mono" id="cover-note" style="font-size:10.5px;color:var(--ink-faint);margin-right:4px">—</span>
           <select id="asset-select" aria-label="选择标的"></select>
           <input id="amount-input" type="number" min="0" step="1000" value="10000" aria-label="投入金额">
-          <button id="add-btn">遣入标的</button>
+          <button id="add-btn">添加持仓</button>
           <button type="button" class="reset-link" id="reset-btn">重置默认</button>
         </div>
       </div>
     </div>
 
-    <!-- 第一象限（上半屏 100% 全宽）：观澜 · 真 3D 透视穿透景深台 -->
+    <!-- 第一象限（上半屏 100% 全宽）：观澜 · 基金 → 底层重仓股资金去向图 -->
     <div class="stage-quadrant" id="flow-card">
       <div class="panel-hdr">
         <div>
           <span class="hdr-cn">观澜</span>
-          <span class="hdr-en">3D PERSPECTIVE PENETRATION STAGE · 基金三维走廊 → 底层十股晶柱与激光光束</span>
+          <span class="hdr-en">基金 → 底层重仓股资金去向（柱高代表真实持仓金额，红锥代表多基重复持有）</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <small id="flow-hint">轻点任意基金走廊或底层晶柱，独锁其三维激光流向</small>
-          <button type="button" class="flow-reset-btn" id="flow-reset-btn" style="display:none">尽览全局光束</button>
+          <small id="flow-hint">点击图中任意基金或股票，可单独查看它的资金连线</small>
+          <button type="button" class="flow-reset-btn" id="flow-reset-btn" style="display:none">查看全部连线</button>
         </div>
       </div>
 
       <div class="stage-viewport">
-        <!-- 左上角悬浮玄墨毛玻璃篆刻题跋 HUD -->
+        <!-- 左上角悬浮书卷卡片 HUD -->
         <div class="stage-hud" id="plain-summary-banner">
           <div class="hud-main">
             <div class="hud-topline">
-              <span class="pb-badge" id="pb-badge">【审势中】</span>
-              <span class="hud-ticker" id="hud-portfolio-name">PORTFOLIO LOOK-THROUGH</span>
+              <span class="pb-badge" id="pb-badge">【诊断中】</span>
+              <span class="hud-ticker" id="hud-portfolio-name">当前持仓组合</span>
               <span class="hud-amt" id="hud-total-amt">¥100,000</span>
             </div>
-            <div class="pb-title" id="pb-title">正在推演三维持仓穿透景深…</div>
+            <div class="pb-title" id="pb-title">正在分析持仓背后的底层股票…</div>
             <div class="pb-detail" id="pb-detail"></div>
           </div>
         </div>
@@ -468,26 +468,26 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     <!-- 第二 & 第三象限（中下屏 50%:50% 严格等高双子舱）：左「叠嶂」 + 右「定盘」 -->
     <div class="cockpit-split">
 
-      <!-- 第二象限（左下舱）：叠嶂 · 3D 共振地形曲面 + 单基十股/合并十五股名录 -->
+      <!-- 第二象限（左下舱）：叠嶂 · 重仓明细与交集分布 -->
       <div class="quadrant-box" id="drill-card">
         <div class="panel-hdr">
           <div>
             <span class="hdr-cn">叠嶂</span>
-            <span class="hdr-en">3D RESONANCE SURFACE &amp; UNDERLYING LEDGER</span>
+            <span class="hdr-en">单只基金重仓明细 · 组合合并前 15 大重仓股</span>
           </div>
           <div class="sub-tabs" id="holdings-view-tabs">
-            <button type="button" class="on" data-hview="drill">单基十股</button>
-            <button type="button" data-hview="merged">合并十五股</button>
+            <button type="button" class="on" data-hview="drill">单只基金前 10</button>
+            <button type="button" data-hview="merged">合并前 15 总览</button>
           </div>
         </div>
 
         <div class="left-dual-body">
-          <!-- 左半：手写 3D 风险与同源共振地形曲面 Canvas（致敬 @ludoonchart 左下 3D SURFACE） -->
-          <div class="surface-3d-box" title="三维同源共振地形：X轴为单股集中度，Z轴为同源重叠与相关性，发光圆点为当前组合所处地形坐标">
+          <!-- 左半：手写 3D 集中度与重合度地形曲面 Canvas -->
+          <div class="surface-3d-box" title="集中度与重合度地形：地形越平缓代表持仓越分散，圆点为当前组合所处位置">
             <canvas id="surface-3d-canvas"></canvas>
           </div>
 
-          <!-- 右半：单基十股 / 合并十五股精密名录 -->
+          <!-- 右半：单只基金前 10 / 合并前 15 明细名录 -->
           <div class="holdings-col">
             <div class="sub-pane on" id="pane-drill">
               <div class="drill-tabs" id="drill-tabs"></div>
@@ -500,94 +500,93 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
         </div>
       </div>
 
-      <!-- 第三象限（右下舱）：定盘 · 核心衡鉴与光谱段位舱（致敬 @ludoonchart THE LOCKED SETTING） -->
+      <!-- 第三象限（右下舱）：定盘 · 核心指标与四维体检 -->
       <div class="quadrant-box" id="verdict-card">
         <div>
           <div class="panel-hdr">
             <div>
               <span class="hdr-cn">定盘</span>
-              <span class="hdr-en">THE LOCKED VERDICT &amp; SPECTRUM</span>
+              <span class="hdr-en">核心风险读数 · 分散度标尺</span>
             </div>
             <small id="diag-window-tag">近 1 年窗口</small>
           </div>
 
-          <!-- 3 组超大字号核心遥测读数 -->
+          <!-- 3 组核心读数 -->
           <div class="locked-metrics">
             <div class="lm-item">
-              <div class="lm-k">OVERLAP · 同源交叠</div>
+              <div class="lm-k">重复持有股票</div>
               <div class="lm-v" id="lm-overlap-cnt">0 只</div>
-              <div class="lm-sub" id="lm-overlap-yuan">合流 ¥0 (0%)</div>
+              <div class="lm-sub" id="lm-overlap-yuan">重叠 ¥0 (0%)</div>
             </div>
             <div class="lm-item">
-              <div class="lm-k">APEX · 头号重仓</div>
+              <div class="lm-k">第一大重仓股</div>
               <div class="lm-v" id="lm-top1-yuan">¥0</div>
               <div class="lm-sub" id="lm-top1-name">--</div>
             </div>
             <div class="lm-item">
-              <div class="lm-k">MAX DD · 最大回撤</div>
+              <div class="lm-k">历史最大回撤</div>
               <div class="lm-v" id="lm-mdd-val">--</div>
               <div class="lm-sub" id="lm-vol-val">年化波动 --</div>
             </div>
           </div>
 
-          <!-- best ── median ── worst 渐变段位光谱尺 -->
+          <!-- 分散度渐变标尺 -->
           <div class="spectrum-box">
             <div class="sp-bar">
               <div class="sp-marker" id="sp-marker" style="left:20%"></div>
             </div>
             <div class="sp-labels">
-              <span>best · 和合真分散</span>
-              <span>median · 主次适中</span>
-              <span>worst · 同源重撞车</span>
+              <span>多元真分散</span>
+              <span>轻重适中</span>
+              <span>重仓高度重合</span>
             </div>
           </div>
 
-          <!-- 四维独立风险篆刻铭牌 -->
+          <!-- 四维独立风险体检卡片 -->
           <div class="risk-dims" id="risk-dims" aria-label="四维独立风险诊断"></div>
         </div>
 
-        <!-- 底部 6 项核心遥测基线 -->
+        <!-- 底部 6 项核心指标 -->
         <div class="kpis" id="kpis"></div>
       </div>
     </div>
 
-    <!-- 第四象限（底部全宽收口）：尺牍 · 东方诗意终端叙事台 -->
+    <!-- 第四象限（底部全宽收口）：尺牍 · 组合小结与调仓参考 -->
     <div class="ai-console">
       <div>
         <div class="ai-hdr">
           <div class="ai-brand">
             <span class="ai-seal">尺牍</span>
-            <span>东方量化判词终端</span>
-            <span class="ai-tag">INK-JADE NARRATOR 4.0</span>
+            <span>组合穿透小结与调仓参考</span>
           </div>
-          <small class="mono" style="color:var(--emerald)">● 三维穿透实时推演已锁定</small>
+          <small class="mono" style="color:var(--ink-faint)">基于公开季报前十大重仓穿透折算</small>
         </div>
         <div class="ai-logs" id="ai-terminal-log"></div>
       </div>
 
       <div class="ai-export-col">
-        <span class="mono" style="font-size:9.5px;color:var(--ink-faint)">EXPORT DOSSIER · 投委会底稿导出</span>
+        <span style="font-size:10px;color:var(--ink-faint)">保存或分享诊断结果</span>
         <div class="ai-export-row">
-          <button class="report-btn" id="copy-report">复制诊断尺牍 (.md)</button>
+          <button class="report-btn" id="copy-report">复制诊断报告</button>
           <button class="report-btn" id="download-report">下载 .md 报告</button>
-          <button class="report-btn" id="print-report">印制 / 存 PDF</button>
+          <button class="report-btn" id="print-report">打印 / 存 PDF</button>
         </div>
       </div>
     </div>
 
-    <!-- 底部进阶折叠面板（默认收起，保持一屏四象限极致纯粹） -->
+    <!-- 底部进阶折叠面板（默认收起，保持一屏四象限干净清爽） -->
     <details class="adv-panel" id="adv-panel">
       <summary>
-        <span>ADVANCED TELEMETRY · 历史净值丝带、水下回撤与皮尔逊相关矩阵底稿</span>
+        <span>进阶数据：历史净值走势、最大回撤区间与资产相关性矩阵</span>
         <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="adv-sub" id="adv-summary-meta">点击展开底稿</span>
-          <span class="adv-arrow" id="adv-arrow-txt">展开底稿 ▾</span>
+          <span class="adv-sub" id="adv-summary-meta">点击展开图表</span>
+          <span class="adv-arrow" id="adv-arrow-txt">展开图表 ▾</span>
         </span>
       </summary>
       <div class="adv-body">
         <div class="window-bar">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span class="wb-label">BACKTEST WINDOW · 回测时间窗口</span>
+            <span class="wb-label">回测时间窗口</span>
             <div class="seg" id="window-seg" role="group" aria-label="回测时间窗口">
               <button class="on" data-window="250">近 1 年（250 交易日）</button>
               <button data-window="all">近 3 年（全量对齐）</button>
@@ -596,8 +595,8 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
           <span class="wb-hint" id="window-hint">统一前复权（qfq）共同交易日对齐</span>
         </div>
         <div class="chart-grid">
-          <div class="card"><h2><span class="hdr-cn">交感</span>CORRELATION MATRIX · 资产相关性 <small id="corr-meta">PEARSON</small></h2><div id="corr-chart"></div></div>
-          <div class="card"><h2><span class="hdr-cn">行舟</span>EQUITY RIBBON &amp; DRAWDOWN · 组合净值与回撤 <small id="nav-meta">NAV / MDD</small></h2><div id="nav-chart"></div></div>
+          <div class="card"><h2><span>资产走势相关性矩阵</span><small id="corr-meta">PEARSON</small></h2><div id="corr-chart"></div></div>
+          <div class="card"><h2><span>组合历史净值与最大回撤</span><small id="nav-meta">NAV / MDD</small></h2><div id="nav-chart"></div></div>
         </div>
       </div>
     </details>
@@ -605,10 +604,10 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
   </div>
 </section>
 
-<!-- ============ 卷贰：股息真章 · DIVIDEND TRUTH ============ -->
+<!-- ============ 卷贰：高股息核验 ============ -->
 <section class="view" id="view-div">
   <div class="card mb">
-    <h2><div><span class="hdr-cn">真章</span><span class="hdr-en">DIVIDEND TRUTH · 15 只高股息 A 股十年派息与填权核验</span></div><small>点击列头排序 · 点击行切换诊断 · 除权日严格不复权口径</small></h2>
+    <h2><div><span class="hdr-cn">真章</span><span class="hdr-en">15 只高股息 A 股 · 近十年分红与填权核验</span></div><small>点击列头排序 · 点击行切换个股详情 · 除权日严格不复权口径</small></h2>
     <div style="overflow-x:auto"><table id="div-table"><thead><tr>
       <th class="l" data-sort="name">代码 / 名称</th><th class="l col-cat" data-sort="category">行业</th>
       <th data-sort="price">最新/快照价</th>
@@ -617,8 +616,8 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     </tr></thead><tbody id="div-body"></tbody></table></div>
   </div>
   <div class="calc-grid" id="div-detail-anchor">
-    <div class="card"><h2 id="div-detail-title">所选个股分红诊断 <small>FILL HISTORY · 不复权核验</small></h2><div id="div-chart"></div><div class="note" id="div-detail-note" style="margin-top:8px"></div></div>
-    <div class="card"><h2><div><span class="hdr-cn">税筹</span><span class="hdr-en">历史股息税后收益情景测算</span></div><small>AFTER-TAX SCENARIO</small></h2>
+    <div class="card"><h2 id="div-detail-title">所选个股分红诊断 <small>严格不复权填权核验</small></h2><div id="div-chart"></div><div class="note" id="div-detail-note" style="margin-top:8px"></div></div>
+    <div class="card"><h2><div><span class="hdr-cn">税算</span><span class="hdr-en">历史股息税后收益情景测算</span></div><small>差别化红利税测算</small></h2>
       <div class="field"><label>投入本金（元）</label><input id="principal" type="number" min="0" step="10000" value="100000"></div>
       <div class="field"><label>持股周期（A股差别化红利税）</label><div class="seg" id="period-seg">
         <button data-period="lt_1m">≤1个月 · 20%</button><button data-period="1m_to_1y">1月–1年 · 10%</button><button class="on" data-period="gt_1y">&gt;1年 · 暂免</button>
@@ -864,7 +863,7 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     };
   }
 
-  /** 4. Four-dimensional independent portfolio risk diagnosis (Eastern poetic precision) */
+  /** 4. Four-dimensional independent portfolio risk diagnosis (文字含蓄 · 功能明白) */
   function evaluatePortfolioRisk(pen, corr, curve) {
     var hasPos = !!(pen && pen.totalAmount > 0);
     var totalAmt = hasPos ? pen.totalAmount : 0;
@@ -878,39 +877,39 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     var vol = (curve && curve.annualizedVol != null) ? curve.annualizedVol : null;
 
     var topDetail = top1
-      ? ('魁首「' + cleanStockLabel(top1.name, 7) + '」' + fmtYuan(totalAmt * maxSingle) + ' (' + (maxSingle * 100).toFixed(1) + '%)')
-      : '单一底层最高 0%';
+      ? ('最大单股 ' + cleanStockLabel(top1.name, 7) + ' ' + fmtYuan(totalAmt * maxSingle) + ' (' + (maxSingle * 100).toFixed(1) + '%)')
+      : '最大单股 0%';
     var concentration = !hasPos
-      ? { level: 'UNKNOWN', label: '虚席以待', detail: '--' }
+      ? { level: 'UNKNOWN', label: '待添加', detail: '--' }
       : maxSingle >= 0.15
-        ? { level: 'HIGH', label: '孤峰独耸', detail: topDetail }
+        ? { level: 'HIGH', label: '单股偏重', detail: topDetail }
         : maxSingle >= 0.08
-          ? { level: 'MEDIUM', label: '主次有别', detail: topDetail }
-          : { level: 'LOW', label: '众星拱月', detail: topDetail };
+          ? { level: 'MEDIUM', label: '轻重有致', detail: topDetail }
+          : { level: 'LOW', label: '分布均匀', detail: topDetail };
 
     var overlap = !hasPos
-      ? { level: 'UNKNOWN', label: '虚席以待', detail: '--' }
+      ? { level: 'UNKNOWN', label: '待添加', detail: '--' }
       : (overlapCount >= 4 || overlapWeight >= 0.20)
-        ? { level: 'HIGH', label: '同源重聚', detail: overlapCount + ' 股交叠 · 共 ' + fmtYuan(totalAmt * overlapWeight) + ' (' + (overlapWeight * 100).toFixed(1) + '%)' }
+        ? { level: 'HIGH', label: '重叠偏多', detail: overlapCount + ' 只重复 · 共 ' + fmtYuan(totalAmt * overlapWeight) + ' (' + (overlapWeight * 100).toFixed(1) + '%)' }
         : (overlapCount >= 2 || overlapWeight >= 0.08)
-          ? { level: 'MEDIUM', label: '偶有交集', detail: overlapCount + ' 股交叠 · 共 ' + fmtYuan(totalAmt * overlapWeight) + ' (' + (overlapWeight * 100).toFixed(1) + '%)' }
-          : { level: 'LOW', label: overlapCount === 0 ? '泾渭分明' : '疏朗微交', detail: overlapCount + ' 股交叠' };
+          ? { level: 'MEDIUM', label: '略有交集', detail: overlapCount + ' 只重复 · 共 ' + fmtYuan(totalAmt * overlapWeight) + ' (' + (overlapWeight * 100).toFixed(1) + '%)' }
+          : { level: 'LOW', label: overlapCount === 0 ? '互不重叠' : '偶有微交', detail: overlapCount + ' 只重复' };
 
     var correlation = avgCorr === null
-      ? { level: 'UNKNOWN', label: '样本未足', detail: '--' }
+      ? { level: 'UNKNOWN', label: '样本不足', detail: '--' }
       : avgCorr >= 0.65
-        ? { level: 'HIGH', label: '同起同落', detail: '相关系数 ' + avgCorr.toFixed(2) }
+        ? { level: 'HIGH', label: '同涨同跌', detail: '走势相关性 ' + avgCorr.toFixed(2) }
         : avgCorr >= 0.35
-          ? { level: 'MEDIUM', label: '温婉和鸣', detail: '相关系数 ' + avgCorr.toFixed(2) }
-          : { level: 'LOW', label: '东西互补', detail: '相关系数仅 ' + avgCorr.toFixed(2) };
+          ? { level: 'MEDIUM', label: '大体同向', detail: '走势相关性 ' + avgCorr.toFixed(2) }
+          : { level: 'LOW', label: '彼此互补', detail: '走势相关性 ' + avgCorr.toFixed(2) };
 
     var drawdownVol = absMdd === null
-      ? { level: 'UNKNOWN', label: '样本未足', detail: '--' }
+      ? { level: 'UNKNOWN', label: '样本不足', detail: '--' }
       : (absMdd >= 0.25 || (vol !== null && vol >= 0.24))
-        ? { level: 'HIGH', label: '惊涛拍岸', detail: '最大回撤 -' + (absMdd * 100).toFixed(1) + '%' }
+        ? { level: 'HIGH', label: '起伏较大', detail: '历史最大回撤 -' + (absMdd * 100).toFixed(1) + '%' }
         : (absMdd >= 0.15 || (vol !== null && vol >= 0.16))
-          ? { level: 'MEDIUM', label: '中流微澜', detail: '最大回撤 -' + (absMdd * 100).toFixed(1) + '%' }
-          : { level: 'LOW', label: '静水深流', detail: '最大回撤 -' + (absMdd * 100).toFixed(1) + '%' };
+          ? { level: 'MEDIUM', label: '波动适中', detail: '历史最大回撤 -' + (absMdd * 100).toFixed(1) + '%' }
+          : { level: 'LOW', label: '走势平缓', detail: '历史最大回撤 -' + (absMdd * 100).toFixed(1) + '%' };
 
     return {
       concentration: concentration,
@@ -920,15 +919,15 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     };
   }
 
-  /** 4b. Poetic Eastern Financial Narrator (`尺牍诗意判词`) + Spectrum Score + 3-line Inscription Log */
+  /** 4b. Restrained & Clear Portfolio Narrator (文字温润含蓄 · 功能一目了然) */
   function generatePlainSummary(pen, risk4, curve, positions, assetsMap, corr) {
     var valid = (positions || []).filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
     if (!pen || pen.totalAmount <= 0 || valid.length === 0) {
       return {
         tone: 'neutral',
-        badge: '【虚席待命】',
-        title: '砚池未启，请于上方点选「预置方略」或遣入标的，立观三维穿透景深。',
-        detail: '选定持仓后，主舞台将以真 3D 透视走廊推演每路资金去向，并折算每一股的真金白银。',
+        badge: '【待选持仓】',
+        title: '尚未添加持仓。可在上方点选一组「预设组合」，或手动加入您想查看的基金与股票。',
+        detail: '加入后，将为您展开每只基金背后的前十大重仓股，并折算每一份资金的实际去向。',
         overlapYuan: 0,
         overlapPct: 0,
         top1Name: '--',
@@ -936,9 +935,9 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
         top1Pct: 0,
         spectrumScore: 50,
         terminalLines: [
-          { tag: '壹·观澜', cls: 'cyan', text: '阵列待命：尚未检出有效持仓筹码…' },
-          { tag: '贰·听风', cls: 'violet', text: '轻点顶部五组预置方略，三秒洞见基金底层重仓与同源暗涌。' },
-          { tag: '叁·定盘', cls: 'emerald', text: '支持点击三维舞台任意基金走廊或底层晶柱，独锁其激光流向。' }
+          { tag: '壹·观澜', cls: 'cyan', text: '持仓概览：当前尚未录入基金或股票…' },
+          { tag: '贰·听风', cls: 'violet', text: '重仓结构：点选上方任意预设组合，即可看清多只基金背后是否买在同一批股票上。' },
+          { tag: '叁·调仓', cls: 'emerald', text: '操作提示：点击图中任意基金或股票柱体，可单独高亮它的资金流向。' }
         ]
       };
     }
@@ -962,7 +961,7 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     var avgCorrVal = (corr && corr.avgOffDiagonal != null) ? corr.avgOffDiagonal : null;
     var mddText = (curve && curve.maxDrawdown != null) ? ('-' + (Math.abs(curve.maxDrawdown) * 100).toFixed(1) + '%') : '--';
 
-    // Spectrum score: 0 (和合真分散) -> 100 (同源重撞车)
+    // Spectrum score: 0 (真分散) -> 100 (重仓高度重合)
     var rawScore = Math.min(62, overlapWeight * 135)
       + Math.min(22, (top1 ? top1.totalWeight : 0) * 55)
       + (avgCorrVal !== null && avgCorrVal > 0 ? Math.min(16, avgCorrVal * 20) : 0);
@@ -971,19 +970,19 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     var line1 = {
       tag: '壹·观澜',
       cls: 'cyan',
-      text: '账面分持 ' + valid.length + ' 席标的、共统本金 ' + fmtYuan(totalAmt) + '；穿透表象，前五大底层重仓已敛聚 ' + fmtYuan(top5Yuan) + '（占全仓 ' + (top5Weight * 100).toFixed(1) + '%，前十透明覆盖率 ' + (pen.coveredRatio * 100).toFixed(1) + '%）。'
+      text: '持仓概览：共持有 ' + valid.length + ' 只标的、总本金 ' + fmtYuan(totalAmt) + '；穿透基金表层后，前五大重仓股合计占 ' + (top5Weight * 100).toFixed(1) + '%（' + fmtYuan(top5Yuan) + '，前十重仓透明覆盖率 ' + (pen.coveredRatio * 100).toFixed(1) + '%）。'
     };
 
     var line2 = overlapCount > 0
       ? {
           tag: '贰·听风',
           cls: 'rose',
-          text: '检出 ' + overlapCount + ' 处同源交叠，暗合资金达 ' + fmtYuan(overlapYuan) + '（占总本金 ' + overlapPct.toFixed(1) + '%）；魁首「' + top1Name + '」独揽 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）' + (top2Name ? '，次席「' + top2Name + '」紧随其后。' : '。')
+          text: '重仓交集：发现 ' + overlapCount + ' 只底层股票被多只基金重复持有，重叠资金 ' + fmtYuan(overlapYuan) + '（占总本金 ' + overlapPct.toFixed(1) + '%）；其中「' + top1Name + '」一处即占 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）' + (top2Name ? '，次席为「' + top2Name + '」。' : '。')
         }
       : {
           tag: '贰·听风',
           cls: 'emerald',
-          text: '各路底层脉络泾渭分明，前十重仓 0 处交叠；头号压舱石为「' + top1Name + '」，折合 ' + fmtYuan(top1Yuan) + '（占 ' + top1Pct.toFixed(1) + '%）。'
+          text: '重仓分布：各只基金前十大重仓股互不重叠（0 重复）；当前占比最高的单只股票为「' + top1Name + '」，折合 ' + fmtYuan(top1Yuan) + '（占 ' + top1Pct.toFixed(1) + '%）。'
         };
 
     var line3;
@@ -992,15 +991,15 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
 
     if (overlapCount >= 4 || overlapWeight >= 0.20) {
       line3 = {
-        tag: '叁·破局',
+        tag: '叁·调仓',
         cls: 'violet',
-        text: '名虽多路分兵，实则同源合流（恰似千溪归于一壑）；宜裁减同质宽基，拨出 20%~30% 筹码（约 ' + rebalanceLow + '~' + rebalanceHigh + '）改配红利低波、黄金或跨洋资产，方成掎角之势。'
+        text: '配置建议：看似分买多只基金，底层实则流向同一批龙头；若想平抑波动，可考虑腾出 20%~30% 仓位（约 ' + rebalanceLow + '~' + rebalanceHigh + '）换配红利、黄金或跨市场资产。'
       };
       return {
         tone: 'warn',
-        badge: '【同源之困】',
-        title: '名虽 ' + valid.length + ' 路分兵，实则千溪归于一壑：' + overlapCount + ' 只底层核心股多基共持，同源暗合高达 ' + fmtYuan(overlapYuan) + '（' + overlapPct.toFixed(1) + '%）',
-        detail: (top1 ? '仅「' + top1Name + '」一席便借多基合流敛聚 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）。' : '') + '三维舞台中朱砂四棱锥所示即为同源交叠之处，点击任一走廊可独观其脉。',
+        badge: '【重仓同源】',
+        title: '名分 ' + valid.length + ' 篮，实归同源：有 ' + overlapCount + ' 只底层股票被多只基金重复持有，重叠资金达 ' + fmtYuan(overlapYuan) + '（' + overlapPct.toFixed(1) + '%）',
+        detail: (top1 ? '仅「' + top1Name + '」一家便通过多只基金合流了 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）。' : '') + '图中红色棱锥标注处即为重复重仓股，点击任意基金或股票可单看其流向。',
         overlapYuan: overlapYuan,
         overlapPct: overlapPct,
         top1Name: top1Name,
@@ -1012,15 +1011,15 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     }
     if (overlapCount >= 1) {
       line3 = {
-        tag: '叁·审势',
+        tag: '叁·调仓',
         cls: 'violet',
-        text: '阵中虽有微澜交集（区间最大回撤 ' + mddText + '），然未伤大体；可于左下「叠嶂」舱核查共持权重，酌情以跨周期资产微调平衡。'
+        text: '配置建议：组合仅有少量重仓交集（区间最大回撤 ' + mddText + '），整体尚属均衡；可在左下方逐一点开单只基金，核对重合比例是否合意。'
       };
       return {
         tone: 'mid',
-        badge: '【微澜同源】',
-        title: '麾下 ' + valid.length + ' 席持仓偶有交集：检出 ' + overlapCount + ' 只底层重仓跨基共持，合流资金约 ' + fmtYuan(overlapYuan) + '（占 ' + overlapPct.toFixed(1) + '%）',
-        detail: (top1 ? '头号底层重仓为「' + top1Name + '」，折合 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）。' : '') + '可于下方切换「单基十股」与「三维共振曲面」细审脉络。',
+        badge: '【略有交集】',
+        title: '所选 ' + valid.length + ' 只标的中，有 ' + overlapCount + ' 只底层股票出现跨基金重合，涉及资金约 ' + fmtYuan(overlapYuan) + '（占 ' + overlapPct.toFixed(1) + '%）',
+        detail: (top1 ? '当前第一大底层重仓为「' + top1Name + '」，折合 ' + fmtYuan(top1Yuan) + '（' + top1Pct.toFixed(1) + '%）。' : '') + '可在左下方切换查看每只基金各自的前十大股票。',
         overlapYuan: overlapYuan,
         overlapPct: overlapPct,
         top1Name: top1Name,
@@ -1032,15 +1031,15 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     }
     if (valid.length === 1) {
       line3 = {
-        tag: '叁·拓疆',
+        tag: '叁·调仓',
         cls: 'violet',
-        text: '当前独骑孤军（区间最大回撤 ' + mddText + '），风浪全系于一脉；不妨添入 1~2 席异源资产（如红利、黄金或海外宽基），演练跨界制衡之道。'
+        text: '配置建议：当前仅持有单一标的（区间最大回撤 ' + mddText + '）；不妨在上方再加入 1~2 只不同风格的基金，对比分散后的减震效果。'
       };
       return {
         tone: 'mid',
-        badge: '【独木成林】',
-        title: '当前独守一席「' + (assetsMap[valid[0].code] ? assetsMap[valid[0].code].name : valid[0].code) + '」，统御本金 ' + fmtYuan(totalAmt),
-        detail: (top1 ? '该标的头号底层筹码为「' + top1Name + '」（折合 ' + fmtYuan(top1Yuan) + '）。' : '') + '建议于顶部再遣入 1~2 席不同脉络资产，观其三维共振之变。',
+        badge: '【单一持仓】',
+        title: '当前仅持有「' + (assetsMap[valid[0].code] ? assetsMap[valid[0].code].name : valid[0].code) + '」一只标的，投入本金 ' + fmtYuan(totalAmt),
+        detail: (top1 ? '该标的头号重仓股为「' + top1Name + '」（折合 ' + fmtYuan(top1Yuan) + '）。' : '') + '可在上方继续添加其他基金，查看组合穿透后的变化。',
         overlapYuan: 0,
         overlapPct: 0,
         top1Name: top1Name,
@@ -1052,15 +1051,15 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     }
     if (corrLevel === 'LOW') {
       line3 = {
-        tag: '叁·守成',
+        tag: '叁·调仓',
         cls: 'emerald',
-        text: '阵法已得“和而不同”之妙（历史最大回撤仅 ' + mddText + '），东隅纵有风浪，桑榆足可相抵；无需轻易易辙，季末削盈补亏、守正待时即可。'
+        text: '配置建议：各路资产各司其职、涨跌互补（历史最大回撤仅 ' + mddText + '）；日常无需频繁改动，定期检视权重偏离即可。'
       };
       return {
         tone: 'good',
         badge: '【和而不同】',
-        title: '四时各司其职，风浪互为藩篱：' + valid.length + ' 路资产底层 0 交叠且走势互补，深得真分散之妙',
-        detail: '总本金 ' + fmtYuan(totalAmt) + ' 疏朗分布于异源资产，历史最大回撤仅 ' + mddText + '，尽避同源踩踏之虞。',
+        title: '所选 ' + valid.length + ' 只标的底层重仓互不重叠，且平日走势互补，起到了实在的分散减震作用',
+        detail: '总本金 ' + fmtYuan(totalAmt) + ' 分布在不同类别的资产中，区间最大回撤控制在 ' + mddText + '。',
         overlapYuan: 0,
         overlapPct: 0,
         top1Name: top1Name,
@@ -1071,15 +1070,15 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
       };
     }
     line3 = {
-      tag: '叁·守正',
+      tag: '叁·调仓',
       cls: 'violet',
-      text: '底层筹码虽无重叠（区间最大回撤 ' + mddText + '），然同处一域潮汐，走势尚存共鸣；若欲更臻稳健，可掺入一成黄金或高息压舱。'
+      text: '配置建议：底层股票虽无重复（区间最大回撤 ' + mddText + '），但同受单一市场涨跌带动；若想进一步平滑波动，可适当加入黄金或红利资产。'
     };
     return {
       tone: 'good',
-      badge: '【疏朗有致】',
-      title: '麾下 ' + valid.length + ' 席标的底层 0 交叠，筹码疏朗有致；唯同处相近周期，潮汐尚存共鸣（最大回撤 ' + mddText + '）',
-      detail: (top1 ? '当前头号底层重仓为「' + top1Name + '」（' + fmtYuan(top1Yuan) + '，' + top1Pct.toFixed(1) + '%）。' : '') + '若欲进一步削峰填谷，可引入跨洋或商品资产。',
+      badge: '【分布疏朗】',
+      title: '所选 ' + valid.length + ' 只标的底层前十重仓 0 重叠；唯同处相近市场周期，走势仍有一定联动（最大回撤 ' + mddText + '）',
+      detail: (top1 ? '当前占比最高的底层股票为「' + top1Name + '」（' + fmtYuan(top1Yuan) + '，' + top1Pct.toFixed(1) + '%）。' : '') + '若想进一步缓冲大盘起伏，可搭配跨市场或商品类资产。',
       overlapYuan: 0,
       overlapPct: 0,
       top1Name: top1Name,
@@ -1779,15 +1778,15 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
       ctx.stroke();
     }
 
-    // Bottom-left & bottom-center 3D axis telemetry captions
-    ctx.font = '600 9.5px "JetBrains Mono","SF Mono",monospace';
+    // Bottom-left & bottom-center 3D axis captions (含蓄清晰)
+    ctx.font = '600 9.5px "PingFang SC","SF Pro Text",sans-serif';
     ctx.fillStyle = isLight ? '#2563EB' : '#60A5FA';
     ctx.textAlign = 'left';
-    ctx.fillText('Z-CORRIDOR · 持仓基金三维净值走廊', 14, cssH - 9);
+    ctx.fillText('所持基金与近期走势', 14, cssH - 9);
     if (!isCompactScreen) {
       ctx.textAlign = 'center';
       ctx.fillStyle = isLight ? '#7C3AED' : '#A78BFA';
-      ctx.fillText('3D CRYSTAL PRISMS · 底层十股真实穿透晶柱 (▲ 朱砂四棱锥=多基同源)', cssW * 0.48, cssH - 9);
+      ctx.fillText('穿透后的前十大底层股票（▲ 代表多只基金重复持有）', cssW * 0.48, cssH - 9);
     }
     ctx.restore();
 
@@ -1849,10 +1848,7 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
   }
 
   /**
-   * Hand-Written 3D Risk & Overlap Resonance Terrain Surface (`叠嶂 · 3D RESONANCE SURFACE`)
-   * Direct homage to @ludoonchart's bottom-left `3D SURFACE · LIVE SHARPE` mesh:
-   *  - 15×15 3D bicubic wireframe + shaded surface mesh (Concentration × Overlap/Correlation -> Resonance Height)
-   *  - Live glowing Apex Beacon dot (`●`) marking the active portfolio's exact 3D coordinate on the terrain
+   * Hand-Written 3D Risk & Overlap Resonance Terrain Surface (`叠嶂 · 重仓交集地形`)
    */
   function renderSurface3DCanvas(canvas, pen, corr, curve) {
     if (!canvas) return;
@@ -1898,7 +1894,6 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     var N = 14;
     var span = 176;
     var heightFn = function (u, v) {
-      // Smooth two-peak resonance surface: low valley near (0,0), glowing ridge near (uPort, vPort) & (0.82, 0.82)
       var d1 = Math.pow(u - uPort, 2) + Math.pow(v - vPort, 2);
       var d2 = Math.pow(u - 0.82, 2) + Math.pow(v - 0.78, 2);
       var ridge1 = Math.exp(-d1 * 9.5) * (24 + overlapW * 95 + top1W * 120);
@@ -1991,20 +1986,20 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 24px;f
     ctx.lineWidth = 1.8;
     ctx.stroke();
 
-    // Micro HUD captions inside 3D Surface Canvas
-    ctx.font = '600 9.5px "JetBrains Mono","SF Mono",monospace';
+    // Micro captions inside 3D Surface Canvas (含蓄清楚)
+    ctx.font = '600 9.5px "PingFang SC","SF Pro Text",sans-serif';
     ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
     ctx.textAlign = 'left';
-    ctx.fillText('3D SURFACE · 同源共振地形', 8, 14);
+    ctx.fillText('集中度 × 重合度地形', 8, 14);
     ctx.fillStyle = beaconCol;
     ctx.textAlign = 'right';
-    ctx.fillText('● 当前坐标 (' + (uPort * 100).toFixed(0) + ',' + (vPort * 100).toFixed(0) + ')', cssW - 8, 14);
+    ctx.fillText('● 当前位置', cssW - 8, 14);
 
-    ctx.fillStyle = isLight ? 'rgba(0,0,0,0.52)' : 'rgba(255,255,255,0.58)';
+    ctx.fillStyle = isLight ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.52)';
     ctx.textAlign = 'left';
-    ctx.fillText('X:集中度 × Z:同源相关', 8, cssH - 6);
+    ctx.fillText('越低缓越分散', 8, cssH - 6);
     ctx.textAlign = 'right';
-    ctx.fillText(overlapW >= 0.15 ? '峰值: 高危同源峰' : '峰值: 平缓绿洲', cssW - 8, cssH - 6);
+    ctx.fillText(overlapW >= 0.15 ? '当前：重仓偏集中' : '当前：分布较舒展', cssW - 8, cssH - 6);
 
     ctx.restore();
   }
@@ -2815,7 +2810,7 @@ function updatePositionWeightsInPlace(){
     var pw=(total>0&&p)?(Number(p.amount)||0)/total*100:0;
     sp.textContent=fmt(pw,1)+'%';
   });
-  $('cover-note').textContent=S.positions.length+' 席 · '+fmtMoney(total);
+  $('cover-note').textContent=S.positions.length+' 只 · '+fmtMoney(total);
 }
 
 function renderPositions(){
@@ -2829,11 +2824,11 @@ function renderPositions(){
       +'<div class="nm-wrap">'
       +'<span class="nm" title="'+esc(p.code)+' '+esc(a.name||'')+'">'+esc(a.name||p.code)+'</span>'
       +'<div class="pos-sub"><span class="pos-px mono">'+formatAssetPriceHtml(p.code)+'</span>'
-      +(a.type==='ETF'?'<button type="button" class="peek-btn'+(isPeek?' on':'')+'" data-peek="'+esc(p.code)+'">十股</button>':'')
+      +(a.type==='ETF'?'<button type="button" class="peek-btn'+(isPeek?' on':'')+'" data-peek="'+esc(p.code)+'">看重仓</button>':'')
       +'</div></div>'
       +'<input type="number" min="0" step="1000" value="'+p.amount+'" data-idx="'+i+'" aria-label="金额">'
       +'<span class="pw pos-weight" data-idx="'+i+'">'+fmt(pw,1)+'%</span><button class="del" data-idx="'+i+'" aria-label="删除">×</button></div>';
-  }).join(''):'<div class="note">虚席以待，请点选上方预置方略或遣入标的。</div>';
+  }).join(''):'<div class="note">尚未添加持仓，可点选上方预设组合或手动添加。</div>';
   Array.prototype.forEach.call($('pos-list').querySelectorAll('input[data-idx]'),function(inp){
     inp.oninput=function(){
       var i=+this.getAttribute('data-idx');
@@ -2870,7 +2865,7 @@ function renderPositions(){
       renderPen();
     };
   });
-  $('cover-note').textContent=S.positions.length+' 席 · '+fmtMoney(total);
+  $('cover-note').textContent=S.positions.length+' 只 · '+fmtMoney(total);
   syncCapitalChips(total);
 }
 
@@ -2880,7 +2875,7 @@ function renderDrilldown(penCache){
   var valid=S.positions.filter(function(p){return Number(p.amount)>0&&A[p.code];});
   if(!valid.length){
     $('drill-tabs').innerHTML='';
-    $('etf-drilldown').innerHTML='<div class="note">请先遣入至少 1 席持仓。</div>';
+    $('etf-drilldown').innerHTML='<div class="note">请先添加至少 1 只持仓。</div>';
     return;
   }
   if(!S.activeDrill||!valid.some(function(p){return p.code===S.activeDrill;})){
@@ -2911,17 +2906,17 @@ function renderDrilldown(penCache){
   var posIdx=valid.findIndex(function(p){return p.code===S.activeDrill;});
   var pos=valid[posIdx], asset=A[pos.code], color=COLORS[posIdx%COLORS.length];
   if(asset.type==='STOCK'){
-    $('etf-drilldown').innerHTML='<div class="note"><b>'+esc(asset.name)+' ('+esc(asset.code)+')</b> 为直投个股，麾下 '+fmtMoney(pos.amount)+' 悉数直持该司。</div>';
+    $('etf-drilldown').innerHTML='<div class="note"><b>'+esc(asset.name)+' ('+esc(asset.code)+')</b> 为直投个股，投入的 '+fmtMoney(pos.amount)+' 全部直接持有该公司。</div>';
     return;
   }
   if(asset.holdingsStatus==='NO_EQUITY_HOLDINGS'||!asset.holdings||!asset.holdings.length){
-    $('etf-drilldown').innerHTML='<div class="note"><b>'+esc(asset.name)+' ('+esc(asset.code)+')</b> 属商品/非股票类资产（'+esc(asset.holdingsQuarter||'无股票持仓')+'），穿透时作为独立大类资产保留 '+fmtMoney(pos.amount)+'，不与任何股票同源交叠。</div>';
+    $('etf-drilldown').innerHTML='<div class="note"><b>'+esc(asset.name)+' ('+esc(asset.code)+')</b> 属于商品或非股票资产（'+esc(asset.holdingsQuarter||'无股票持仓')+'），穿透时作为独立资产保留 '+fmtMoney(pos.amount)+'，不与股票重复。</div>';
     return;
   }
   var topSum=asset.holdings.reduce(function(s,h){return s+(Number(h.weight)||0);},0);
   var maxW=Math.max.apply(null,asset.holdings.map(function(h){return Number(h.weight)||0;}))||1;
   var headerNote='<div class="note" style="margin-bottom:5px;font-size:10px">季报：'+esc(asset.holdingsQuarter||'最新季报')
-    +' · 前 '+asset.holdings.length+' 大重仓占该基 <b>'+fmt(topSum,1)+'%</b>（折合真金 <b>'+fmtMoney(pos.amount*(topSum/100))+'</b>）</div>';
+    +' · 前 '+asset.holdings.length+' 大重仓占该基金 <b>'+fmt(topSum,1)+'%</b>（折合资金 <b>'+fmtMoney(pos.amount*(topSum/100))+'</b>）</div>';
   var cards=asset.holdings.map(function(h){
     var w=Number(h.weight)||0;
     var yuan=Number(pos.amount)*(w/100);
@@ -2929,9 +2924,9 @@ function renderDrilldown(penCache){
     var cleanName=String(h.name||'').replace(/\s*\([A-Z0-9:]+\)\s*$/i,'');
     return '<div class="drill-item'+(dupN>=2?' dup':'')+'">'
       +'<div class="di-top"><span>'+esc(cleanName)+'</span>'
-      +(dupN>=2?'<span class="tag-overlap">【'+dupN+'基同源】</span>':'<span class="mono" style="font-size:9px;color:var(--ink-faint)">'+esc(h.code)+'</span>')
+      +(dupN>=2?'<span class="tag-overlap">'+dupN+'基共持</span>':'<span class="mono" style="font-size:9px;color:var(--ink-faint)">'+esc(h.code)+'</span>')
       +'</div>'
-      +'<div class="di-sub"><span style="color:var(--ink);font-weight:600">'+fmtMoney(yuan)+'</span><span>占基 '+fmt(w,2)+'%</span></div>'
+      +'<div class="di-sub"><span style="color:var(--ink);font-weight:600">'+fmtMoney(yuan)+'</span><span>占该基 '+fmt(w,2)+'%</span></div>'
       +'<div class="di-bar"><i style="width:'+(w/maxW*100).toFixed(1)+'%;background:'+color+'"></i></div>'
       +'</div>';
   }).join('');
@@ -2949,10 +2944,10 @@ function renderPen(){
 
   syncCapitalChips(pen.totalAmount);
 
-  // 第一象限（主舞台）左上悬浮篆刻题跋 HUD
+  // 第一象限（主舞台）左上悬浮书卷题跋 HUD
   var plain=AZ.generatePlainSummary(pen,risk4,curve,S.positions,A,corr);
   var presetObj=(DATA.presets||[]).filter(function(x){return x.id===S.preset;})[0];
-  $('hud-portfolio-name').textContent=presetObj?presetObj.name:('自选方略 · '+S.positions.length+' 席');
+  $('hud-portfolio-name').textContent=presetObj?presetObj.name:('自定义组合 · '+S.positions.length+' 只标的');
   $('hud-total-amt').textContent=fmtMoney(pen.totalAmount);
   $('plain-summary-banner').className='stage-hud '+plain.tone;
   $('pb-badge').textContent=plain.badge;
@@ -2963,9 +2958,9 @@ function renderPen(){
   $('flow-reset-btn').style.display=S.flowFocus?'inline-block':'none';
   if(S.flowFocus){
     var fa=A[S.flowFocus];
-    $('flow-hint').textContent='已独锁「'+(fa?fa.name:S.flowFocus)+'」三维激光流向（再次轻点可解封）';
+    $('flow-hint').textContent='当前单看「'+(fa?fa.name:S.flowFocus)+'」的资金连线（再次点击可恢复全部）';
   }else{
-    $('flow-hint').textContent='轻点任意基金走廊或底层晶柱，独锁其三维激光流向';
+    $('flow-hint').textContent='点击图中任意基金或股票，可单独查看它的资金连线';
   }
   if(AZ.mountStage3DCanvas){
     AZ.mountStage3DCanvas($('flow-chart'),S.positions,A,pen,curve,S.flowFocus);
@@ -2973,13 +2968,13 @@ function renderPen(){
     $('flow-chart').innerHTML=AZ.fundStockFlowSVG(S.positions,A,pen,S.flowFocus);
   }
 
-  // 第二象限（左下舱「叠嶂」）：手写 3D 风险与重叠共振地形曲面 Canvas + 单基十股/合并十五股
+  // 第二象限（左下舱「叠嶂」）：手写 3D 风险与重叠共振地形曲面 Canvas + 单只基金前10/合并前15
   if(AZ.renderSurface3DCanvas){
     AZ.renderSurface3DCanvas($('surface-3d-canvas'),pen,corr,curve);
   }
   renderDrilldown(pen);
 
-  // 左下舱视图 B：合并十五股分色堆叠排行
+  // 左下舱视图 B：合并前15分色堆叠排行
   var validPos=S.positions.filter(function(p){return Number(p.amount)>0&&A[p.code];});
   var colorBySrc={};
   validPos.forEach(function(p,idx){colorBySrc[p.code]=COLORS[idx%COLORS.length];});
@@ -2995,19 +2990,19 @@ function renderPen(){
       return esc(c.sourceName)+' '+fmtMoney(pen.totalAmount*c.contribution)+'('+fmt(c.contribution*100,1)+'%)';
     }).join(' + ');
     return '<div class="exp-row"><span class="nm" title="'+esc(e.name)+' '+esc(e.code)+'"><span class="nm-txt">'+esc(e.name)+' <span class="mono">'+esc(e.code)+'</span></span>'
-      +(dup?'<span class="tag-overlap">【同源】</span>':'')+'</span>'
+      +(dup?'<span class="tag-overlap">共持</span>':'')+'</span>'
       +'<span class="track">'+segs+'</span>'
       +'<span class="val-col"><b>'+fmtMoney(pen.totalAmount*e.totalWeight)+'</b><span>'+fmt(e.totalWeight*100,2)+'%</span></span>'
       +'<span class="contrib" title="'+esc(src)+'">'+src+'</span></div>';
   }).join(''):'<div class="note">无有效持仓</div>';
 
-  // 第三象限（右下舱「定盘」）：3 个大字读数 + 光谱段位尺 + 四维篆刻铭牌
+  // 第三象限（右下舱「定盘」）：3 个核心读数 + 光谱段位尺 + 四维体检卡片
   $('diag-window-tag').textContent=S.window==='250'?'近 1 年 (250日)':'近 3 年 (全量)';
   var ovCnt=pen.overlaps.length;
   var ovEl=$('lm-overlap-cnt');
   ovEl.textContent=ovCnt+' 只';
   ovEl.className='lm-v '+(ovCnt>=4?'rose':(ovCnt===0?'emerald':'amber'));
-  $('lm-overlap-yuan').textContent='合流 '+fmtMoney(plain.overlapYuan)+' ('+fmt(plain.overlapPct,1)+'%)';
+  $('lm-overlap-yuan').textContent='重叠 '+fmtMoney(plain.overlapYuan)+' ('+fmt(plain.overlapPct,1)+'%)';
   $('lm-top1-yuan').textContent=fmtMoney(plain.top1Yuan);
   $('lm-top1-name').textContent=plain.top1Name+' ('+fmt(plain.top1Pct,1)+'%)';
   var mddEl=$('lm-mdd-val');
@@ -3016,12 +3011,12 @@ function renderPen(){
   $('lm-vol-val').textContent='年化波动 '+(curve?fmt(curve.annualizedVol*100,1)+'%':'--');
   $('sp-marker').style.left=(plain.spectrumScore||20)+'%';
 
-  // 四维独立衡鉴
+  // 四维独立风险体检（文字明白自然）
   var dims=[
-    ['concentration','单股押注度',risk4.concentration],
-    ['overlap','同源交叠度',risk4.overlap],
-    ['correlation','潮汐共鸣度',risk4.correlation],
-    ['drawdownVol','历史抗跌度',risk4.drawdownVol]
+    ['concentration','单股占比',risk4.concentration],
+    ['overlap','基金重合',risk4.overlap],
+    ['correlation','走势联动',risk4.correlation],
+    ['drawdownVol','历史回撤',risk4.drawdownVol]
   ];
   $('risk-dims').innerHTML=dims.map(function(d){
     var key=d[0],title=d[1],info=d[2];
@@ -3031,11 +3026,11 @@ function renderPen(){
       +'<div class="rc-detail">'+esc(info.detail)+'</div></div>';
   }).join('');
 
-  // 底栏 6 项遥测基线
+  // 底栏 6 项核心指标
   $('kpis').innerHTML=[
     ['总本金',fmtMoney(pen.totalAmount)],
-    ['穿透覆盖',fmt(pen.coveredRatio*100,1)+'%'],
-    ['同源股',pen.overlaps.length+' 只'],
+    ['重仓覆盖率',fmt(pen.coveredRatio*100,1)+'%'],
+    ['重复股票',pen.overlaps.length+' 只'],
     ['加权费率',hasFee?fmt(pen.weightedFee,2)+'%':'--'],
     ['最大回撤',curve?fmt(curve.maxDrawdown*100,2)+'%':'--'],
     ['年化波动',curve?fmt(curve.annualizedVol*100,1)+'%':'--']

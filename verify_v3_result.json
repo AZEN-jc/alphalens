@@ -41,45 +41,45 @@
       "risk1y": {
         "concentration": {
           "level": "LOW",
-          "label": "众星拱月",
-          "detail": "魁首「招商银行」¥6,924 (6.9%)"
+          "label": "分布均匀",
+          "detail": "最大单股 招商银行 ¥6,924 (6.9%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "同源重聚",
-          "detail": "8 股交叠 · 共 ¥26,243 (26.2%)"
+          "label": "重叠偏多",
+          "detail": "8 只重复 · 共 ¥26,243 (26.2%)"
         },
         "correlation": {
           "level": "LOW",
-          "label": "东西互补",
-          "detail": "相关系数仅 0.28"
+          "label": "彼此互补",
+          "detail": "走势相关性 0.28"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "静水深流",
-          "detail": "最大回撤 -8.5%"
+          "label": "走势平缓",
+          "detail": "历史最大回撤 -8.5%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "LOW",
-          "label": "众星拱月",
-          "detail": "魁首「招商银行」¥6,924 (6.9%)"
+          "label": "分布均匀",
+          "detail": "最大单股 招商银行 ¥6,924 (6.9%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "同源重聚",
-          "detail": "8 股交叠 · 共 ¥26,243 (26.2%)"
+          "label": "重叠偏多",
+          "detail": "8 只重复 · 共 ¥26,243 (26.2%)"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "温婉和鸣",
-          "detail": "相关系数 0.57"
+          "label": "大体同向",
+          "detail": "走势相关性 0.57"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "静水深流",
-          "detail": "最大回撤 -10.4%"
+          "label": "走势平缓",
+          "detail": "历史最大回撤 -10.4%"
         }
       },
       "hasNaN": false
@@ -109,45 +109,45 @@
       "risk1y": {
         "concentration": {
           "level": "HIGH",
-          "label": "孤峰独耸",
-          "detail": "魁首「长江电力」¥30,000 (30.0%)"
+          "label": "单股偏重",
+          "detail": "最大单股 长江电力 ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "泾渭分明",
-          "detail": "0 股交叠"
+          "label": "互不重叠",
+          "detail": "0 只重复"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "温婉和鸣",
-          "detail": "相关系数 0.51"
+          "label": "大体同向",
+          "detail": "走势相关性 0.51"
         },
         "drawdownVol": {
           "level": "MEDIUM",
-          "label": "中流微澜",
-          "detail": "最大回撤 -13.4%"
+          "label": "波动适中",
+          "detail": "历史最大回撤 -13.4%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "HIGH",
-          "label": "孤峰独耸",
-          "detail": "魁首「长江电力」¥30,000 (30.0%)"
+          "label": "单股偏重",
+          "detail": "最大单股 长江电力 ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "泾渭分明",
-          "detail": "0 股交叠"
+          "label": "互不重叠",
+          "detail": "0 只重复"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "温婉和鸣",
-          "detail": "相关系数 0.54"
+          "label": "大体同向",
+          "detail": "走势相关性 0.54"
         },
         "drawdownVol": {
           "level": "MEDIUM",
-          "label": "中流微澜",
-          "detail": "最大回撤 -14.0%"
+          "label": "波动适中",
+          "detail": "历史最大回撤 -14.0%"
         }
       },
       "hasNaN": false
@@ -177,45 +177,45 @@
       "risk1y": {
         "concentration": {
           "level": "HIGH",
-          "label": "孤峰独耸",
-          "detail": "魁首「黄金ETF」¥30,000 (30.0%)"
+          "label": "单股偏重",
+          "detail": "最大单股 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "泾渭分明",
-          "detail": "0 股交叠"
+          "label": "互不重叠",
+          "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "东西互补",
-          "detail": "相关系数仅 0.14"
+          "label": "彼此互补",
+          "detail": "走势相关性 0.14"
         },
         "drawdownVol": {
           "level": "MEDIUM",
-          "label": "中流微澜",
-          "detail": "最大回撤 -21.2%"
+          "label": "波动适中",
+          "detail": "历史最大回撤 -21.2%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "HIGH",
-          "label": "孤峰独耸",
-          "detail": "魁首「黄金ETF」¥30,000 (30.0%)"
+          "label": "单股偏重",
+          "detail": "最大单股 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "泾渭分明",
-          "detail": "0 股交叠"
+          "label": "互不重叠",
+          "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "东西互补",
-          "detail": "相关系数仅 0.18"
+          "label": "彼此互补",
+          "detail": "走势相关性 0.18"
         },
         "drawdownVol": {
           "level": "MEDIUM",
-          "label": "中流微澜",
-          "detail": "最大回撤 -24.1%"
+          "label": "波动适中",
+          "detail": "历史最大回撤 -24.1%"
         }
       },
       "hasNaN": false
@@ -256,45 +256,45 @@
       "risk1y": {
         "concentration": {
           "level": "MEDIUM",
-          "label": "主次有别",
-          "detail": "魁首「英伟达」¥9,266 (9.3%)"
+          "label": "轻重有致",
+          "detail": "最大单股 英伟达 ¥9,266 (9.3%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "同源重聚",
-          "detail": "10 股交叠 · 共 ¥49,621 (49.6%)"
+          "label": "重叠偏多",
+          "detail": "10 只重复 · 共 ¥49,621 (49.6%)"
         },
         "correlation": {
           "level": "HIGH",
-          "label": "同起同落",
-          "detail": "相关系数 0.84"
+          "label": "同涨同跌",
+          "detail": "走势相关性 0.84"
         },
         "drawdownVol": {
           "level": "HIGH",
-          "label": "惊涛拍岸",
-          "detail": "最大回撤 -15.6%"
+          "label": "起伏较大",
+          "detail": "历史最大回撤 -15.6%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "MEDIUM",
-          "label": "主次有别",
-          "detail": "魁首「英伟达」¥9,266 (9.3%)"
+          "label": "轻重有致",
+          "detail": "最大单股 英伟达 ¥9,266 (9.3%)"
         },
         "overlap": {
           "level": "HIGH",
-          "label": "同源重聚",
-          "detail": "10 股交叠 · 共 ¥49,621 (49.6%)"
+          "label": "重叠偏多",
+          "detail": "10 只重复 · 共 ¥49,621 (49.6%)"
         },
         "correlation": {
           "level": "HIGH",
-          "label": "同起同落",
-          "detail": "相关系数 0.85"
+          "label": "同涨同跌",
+          "detail": "走势相关性 0.85"
         },
         "drawdownVol": {
           "level": "HIGH",
-          "label": "惊涛拍岸",
-          "detail": "最大回撤 -24.5%"
+          "label": "起伏较大",
+          "detail": "历史最大回撤 -24.5%"
         }
       },
       "hasNaN": false
@@ -324,45 +324,45 @@
       "risk1y": {
         "concentration": {
           "level": "HIGH",
-          "label": "孤峰独耸",
-          "detail": "魁首「黄金ETF」¥30,000 (30.0%)"
+          "label": "单股偏重",
+          "detail": "最大单股 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "泾渭分明",
-          "detail": "0 股交叠"
+          "label": "互不重叠",
+          "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "东西互补",
-          "detail": "相关系数仅 0.24"
+          "label": "彼此互补",
+          "detail": "走势相关性 0.24"
         },
         "drawdownVol": {
           "level": "MEDIUM",
-          "label": "中流微澜",
-          "detail": "最大回撤 -11.9%"
+          "label": "波动适中",
+          "detail": "历史最大回撤 -11.9%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "HIGH",
-          "label": "孤峰独耸",
-          "detail": "魁首「黄金ETF」¥30,000 (30.0%)"
+          "label": "单股偏重",
+          "detail": "最大单股 黄金ETF ¥30,000 (30.0%)"
         },
         "overlap": {
           "level": "LOW",
-          "label": "泾渭分明",
-          "detail": "0 股交叠"
+          "label": "互不重叠",
+          "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "东西互补",
-          "detail": "相关系数仅 0.16"
+          "label": "彼此互补",
+          "detail": "走势相关性 0.16"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "静水深流",
-          "detail": "最大回撤 -14.1%"
+          "label": "走势平缓",
+          "detail": "历史最大回撤 -14.1%"
         }
       },
       "hasNaN": false
@@ -379,7 +379,7 @@
   "exposureRows": 15,
   "hasV3Api": true,
   "md": {
-    "len": 1874,
+    "len": 1877,
     "total": true,
     "mdd": true,
     "risk4": true,
