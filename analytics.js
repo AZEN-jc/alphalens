@@ -1415,10 +1415,10 @@
   }
 
   /**
-   * Interactive 3D Coordinate Risk Surface Model
-   * Axes: X = Single-stock concentration (0~35%), Y = Overlap weight (0~50%), Z = Composite risk score (0~100).
+   * Solid 3D Geological Relief Diorama Model (实体地质沙盘块 + 陡峭立体山峰)
+   * Axes: X = Single-stock concentration (0~35%), Y = Overlap weight (0~50%), Z = Risk elevation (0~100).
    */
-  var SURFACE_DEFAULT = { yaw: -0.64, pitch: 0.42, zoom: 1.0 };
+  var SURFACE_DEFAULT = { yaw: -0.68, pitch: 0.36, zoom: 1.0 };
   var SURFACE_STATE = {
     yaw: SURFACE_DEFAULT.yaw,
     pitch: SURFACE_DEFAULT.pitch,
@@ -1431,25 +1431,31 @@
 
   function computeSurfaceMetrics(pen, corr, curve) {
     var top1W = (pen && pen.exposures && pen.exposures[0]) ? pen.exposures[0].totalWeight : 0;
-    var overlapW = (pen && pen.overlaps)
-      ? pen.overlaps.reduce(function (s, x) { return s + x.totalWeight; }, 0)
-      : 0;
+    var top1Name = (pen && pen.exposures && pen.exposures[0]) ? cleanStockLabel(pen.exposures[0].name, 6) : '--';
+    var overlaps = (pen && pen.overlaps) ? pen.overlaps : [];
+    var overlapCount = overlaps.length;
+    var overlapW = overlaps.reduce(function (s, x) { return s + x.totalWeight; }, 0);
     var avgCorr = (corr && corr.avgOffDiagonal != null) ? Math.max(0, corr.avgOffDiagonal) : 0;
     var mddAbs = (curve && curve.maxDrawdown != null) ? Math.abs(curve.maxDrawdown) : 0;
     var top1Pct = top1W * 100;
     var overlapPct = overlapW * 100;
-    var uPort = Math.max(0.02, Math.min(0.98, top1Pct / 35));
-    var vPort = Math.max(0.02, Math.min(0.98, overlapPct / 50));
+    var uPort = Math.max(0.06, Math.min(0.94, top1Pct / 35));
+    var vPort = Math.max(0.06, Math.min(0.94, overlapPct / 50));
     var corrBias = Math.min(16, avgCorr * 20);
     var rawScore = Math.min(62, overlapW * 135) + Math.min(22, top1W * 55) + corrBias;
     var riskScore = Math.max(6, Math.min(95, Math.round(rawScore)));
-    var idealU = 5 / 35;
-    var idealV = 0.03;
-    var idealScore = Math.max(6, Math.min(95, Math.round(Math.min(22, 0.05 * 55) + 4)));
+    var idealU = 0.13;
+    var idealV = 0.09;
+    var idealScore = 8;
     var distIdeal = Math.round(Math.hypot((uPort - idealU) * 100, (vPort - idealV) * 100));
-    var statusLabel = riskScore >= 60 ? '风险偏高' : (riskScore >= 32 ? '轻重适中' : '多元分散');
+    var statusLabel = riskScore >= 60 ? '高危陡峰' : (riskScore >= 32 ? '山腰预警' : '安全洼地');
+    var peakCause = overlapCount >= 3
+      ? (overlapCount + '股重叠峰')
+      : (top1Pct >= 15 ? (top1Name + '集中峰') : '高危警示峰');
     return {
       top1Pct: top1Pct,
+      top1Name: top1Name,
+      overlapCount: overlapCount,
       overlapPct: overlapPct,
       avgCorr: avgCorr,
       mddPct: mddAbs * 100,
@@ -1461,7 +1467,8 @@
       idealV: idealV,
       idealScore: idealScore,
       distIdeal: distIdeal,
-      statusLabel: statusLabel
+      statusLabel: statusLabel,
+      peakCause: peakCause
     };
   }
 
@@ -1477,6 +1484,13 @@
     SURFACE_STATE.yaw = SURFACE_DEFAULT.yaw;
     SURFACE_STATE.pitch = SURFACE_DEFAULT.pitch;
     SURFACE_STATE.zoom = SURFACE_DEFAULT.zoom;
+    redrawAllSurfaceViews();
+  }
+
+  function setSurface3DView(yaw, pitch, zoom) {
+    if (yaw != null && isFinite(yaw)) SURFACE_STATE.yaw = Number(yaw);
+    if (pitch != null && isFinite(pitch)) SURFACE_STATE.pitch = Math.max(0.16, Math.min(1.12, Number(pitch)));
+    if (zoom != null && isFinite(zoom)) SURFACE_STATE.zoom = Math.max(0.75, Math.min(1.55, Number(zoom)));
     redrawAllSurfaceViews();
   }
 
@@ -1504,7 +1518,7 @@
       SURFACE_STATE.lastX = x;
       SURFACE_STATE.lastY = y;
       SURFACE_STATE.yaw += dx * 0.011;
-      SURFACE_STATE.pitch = Math.max(0.20, Math.min(1.08, SURFACE_STATE.pitch + dy * 0.0085));
+      SURFACE_STATE.pitch = Math.max(0.16, Math.min(1.12, SURFACE_STATE.pitch + dy * 0.0085));
       redrawAllSurfaceViews();
     };
     var onEnd = function () {
@@ -1529,25 +1543,29 @@
     canvas.addEventListener('dblclick', resetSurface3DView);
   }
 
-  function sampleRiskColormap(t, isLight) {
-    var clamped = Math.max(0, Math.min(1, t));
+  function sampleHypsometricColor(score, isLight) {
+    var t = Math.max(0, Math.min(1, score / 100));
     var stops = isLight
       ? [
-          [0.00, [7, 148, 85]],
-          [0.36, [37, 99, 235]],
-          [0.66, [124, 58, 237]],
-          [1.00, [220, 38, 38]]
+          [0.00, [16, 168, 118]],   // Safe Emerald Valley
+          [0.20, [34, 152, 168]],   // Teal Foothills
+          [0.42, [59, 114, 228]],   // Alpine Cobalt Slope
+          [0.64, [132, 74, 226]],   // Mid-High Indigo Ridge
+          [0.82, [224, 78, 52]],    // Steep Vermilion Cliff
+          [1.00, [214, 34, 52]]     // High-Alert Crimson Summit
         ]
       : [
           [0.00, [16, 185, 129]],
-          [0.36, [96, 165, 250]],
-          [0.66, [167, 139, 250]],
+          [0.20, [45, 190, 198]],
+          [0.42, [96, 156, 250]],
+          [0.64, [164, 122, 250]],
+          [0.82, [242, 108, 72]],
           [1.00, [244, 63, 94]]
         ];
     for (var i = 0; i < stops.length - 1; i++) {
       var a = stops[i], b = stops[i + 1];
-      if (clamped >= a[0] && clamped <= b[0]) {
-        var f = (clamped - a[0]) / (b[0] - a[0] || 1);
+      if (t >= a[0] && t <= b[0]) {
+        var f = (t - a[0]) / (b[0] - a[0] || 1);
         return [
           a[1][0] + (b[1][0] - a[1][0]) * f,
           a[1][1] + (b[1][1] - a[1][1]) * f,
@@ -1565,13 +1583,13 @@
 
     var cosY = Math.cos(cam.yaw), sinY = Math.sin(cam.yaw);
     var x1 = dx * cosY - dz * sinY;
-    var z1 = dx * sinY + dz * cosY; // Positive z1 = closer to camera (front/lower on screen)
+    var z1 = dx * sinY + dz * cosY;
 
     var cosP = Math.cos(cam.pitch), sinP = Math.sin(cam.pitch);
-    var y2 = dy * cosP - z1 * sinP; // Closer floor points project lower on screen
-    var zCam = dy * sinP + z1 * cosP; // Larger zCam = closer to camera
+    var y2 = dy * cosP - z1 * sinP;
+    var zCam = dy * sinP + z1 * cosP;
 
-    var depth = cam.dist - zCam; // Smaller depth = closer, larger depth = farther
+    var depth = cam.dist - zCam;
     if (depth < 45) depth = 45;
     var scale = cam.fov / depth;
     return {
@@ -1582,43 +1600,57 @@
     };
   }
 
-  function drawSurfaceFloorContours(ctx, levels, gridScores, N, half, cam, isLight) {
-    var colors = isLight
-      ? ['rgba(7,148,85,0.52)', 'rgba(124,58,237,0.48)', 'rgba(220,38,38,0.54)']
-      : ['rgba(16,185,129,0.56)', 'rgba(167,139,250,0.52)', 'rgba(244,63,94,0.58)'];
-    for (var li = 0; li < levels.length; li++) {
-      var lv = levels[li];
-      ctx.beginPath();
-      for (var i = 0; i < N; i++) {
-        for (var j = 0; j < N; j++) {
-          var s00 = gridScores[i][j];
-          var s10 = gridScores[i + 1][j];
-          var s11 = gridScores[i + 1][j + 1];
-          var s01 = gridScores[i][j + 1];
-          var u0 = i / N, u1 = (i + 1) / N, v0 = j / N, v1 = (j + 1) / N;
-          var segs = [];
-          var interp = function (va, vb, p1, p2) {
-            if ((va < lv && vb >= lv) || (va >= lv && vb < lv)) {
-              var t = (lv - va) / (vb - va || 1e-6);
-              segs.push([p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t]);
-            }
-          };
-          interp(s00, s10, [u0, v0], [u1, v0]);
-          interp(s10, s11, [u1, v0], [u1, v1]);
-          interp(s11, s01, [u1, v1], [u0, v1]);
-          interp(s01, s00, [u0, v1], [u0, v0]);
-          if (segs.length >= 2) {
-            var pa = projectSurface3D((segs[0][0] - 0.5) * half * 2, 0.5, (segs[0][1] - 0.5) * half * 2, cam);
-            var pb = projectSurface3D((segs[1][0] - 0.5) * half * 2, 0.5, (segs[1][1] - 0.5) * half * 2, cam);
-            ctx.moveTo(pa.x, pa.y);
-            ctx.lineTo(pb.x, pb.y);
-          }
-        }
-      }
-      ctx.strokeStyle = colors[li % colors.length];
-      ctx.lineWidth = 1.1;
-      ctx.stroke();
-    }
+  function buildReliefField(m) {
+    var gauss = function (u, v, cu, cv, su, sv, amp) {
+      var du = (u - cu) / su;
+      var dv = (v - cv) / sv;
+      return amp * Math.exp(-0.5 * (du * du + dv * dv));
+    };
+    var smoothstep = function (e0, e1, x) {
+      var t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0 || 1)));
+      return t * t * (3 - 2 * t);
+    };
+
+    // Sculpt distinct 3D mountains + genuinely flat green safe basin (zero flat slanted ramp!)
+    var peak1U = 0.80, peak1V = 0.82;
+    var peak1Amp = 76;
+
+    // Secondary data-driven mountain peak reflecting the portfolio's primary risk driver
+    var hasHeavyOverlap = m.overlapCount >= 2 || m.overlapPct >= 12;
+    var hasHeavySingle = m.top1Pct >= 15;
+    var peak2U = hasHeavyOverlap
+      ? Math.max(0.26, Math.min(0.68, m.uPort + 0.14))
+      : (hasHeavySingle ? Math.max(0.66, Math.min(0.88, m.uPort)) : 0.68);
+    var peak2V = hasHeavyOverlap
+      ? Math.max(0.46, Math.min(0.84, m.vPort + 0.14))
+      : (hasHeavySingle ? Math.max(0.18, Math.min(0.36, m.vPort + 0.08)) : 0.64);
+    var peak2Amp = hasHeavyOverlap
+      ? Math.min(68, 34 + m.overlapPct * 1.05)
+      : (hasHeavySingle ? Math.min(62, 26 + m.top1Pct * 1.15) : 28);
+
+    // Subtle ridge peak in opposite high corner to form an unmistakable mountain range silhouette
+    var peak3U = 0.84, peak3V = 0.30, peak3Amp = hasHeavySingle ? 30 : 38;
+    var peak4U = 0.30, peak4V = 0.84, peak4Amp = hasHeavyOverlap ? 42 : 34;
+
+    var baseFn = function (u, v) {
+      // Keep front-left safe valley (u<0.3, v<0.3) genuinely flat & low (~6..11)
+      var valleyFloor = 6.0 + smoothstep(0.55, 1.55, u + v) * 14.0;
+      var p1 = gauss(u, v, peak1U, peak1V, 0.17, 0.17, peak1Amp);
+      var p2 = gauss(u, v, peak2U, peak2V, 0.145, 0.145, peak2Amp);
+      var p3 = gauss(u, v, peak3U, peak3V, 0.15, 0.16, peak3Amp);
+      var p4 = gauss(u, v, peak4U, peak4V, 0.16, 0.15, peak4Amp);
+      // Carve a calm shallow depression right around the ideal diversified zone
+      var basinCarve = gauss(u, v, m.idealU, m.idealV, 0.16, 0.16, 4.5);
+      return Math.max(4.5, Math.min(96, valleyFloor + p1 + p2 + p3 + p4 - basinCarve));
+    };
+
+    // Sculpt a clean local peak/hillock around (uPort, vPort) so the portfolio lands EXACTLY at m.riskScore
+    var rawAtPort = baseFn(m.uPort, m.vPort);
+    var deltaPort = m.riskScore - rawAtPort;
+    return function (u, v) {
+      var local = gauss(u, v, m.uPort, m.vPort, 0.125, 0.125, deltaPort);
+      return Math.max(4.5, Math.min(98, baseFn(u, v) + local));
+    };
   }
 
   function renderSurface3DCanvas(canvas, pen, corr, curve, opts) {
@@ -1659,21 +1691,22 @@
     var m = computeSurfaceMetrics(pen, corr, curve);
     var half = 76;
     var span = half * 2;
-    var boxH = 112;
+    var boxH = 124;
+    var plinthY = -11;
 
     var cam = {
       cx: cssW * 0.52,
-      cy: cssH * (expanded ? 0.46 : 0.44),
-      fov: expanded ? Math.min(cssW * 1.10, cssH * 1.42) : Math.min(cssW * 0.96, cssH * 1.08),
-      dist: 350 / SURFACE_STATE.zoom,
+      cy: cssH * (expanded ? 0.48 : 0.46),
+      fov: expanded ? Math.min(cssW * 1.12, cssH * 1.44) : Math.min(cssW * 0.96, cssH * 1.09),
+      dist: 356 / SURFACE_STATE.zoom,
       yaw: SURFACE_STATE.yaw,
       pitch: SURFACE_STATE.pitch,
       targetX: 0,
-      targetY: boxH * 0.44,
+      targetY: boxH * 0.36,
       targetZ: 0
     };
 
-    // Dynamically pick the two farthest back-facing vertical walls (largest depth)
+    // Dynamically pick back-facing vertical coordinate walls (largest camera depth)
     var dNegX = projectSurface3D(-half, boxH * 0.5, 0, cam).depth;
     var dPosX = projectSurface3D(half, boxH * 0.5, 0, cam).depth;
     var backX = dNegX >= dPosX ? -half : half;
@@ -1684,21 +1717,7 @@
     var backZ = dNegZ >= dPosZ ? -half : half;
     var frontZ = -backZ;
 
-    var scoreFn = function (u, v) {
-      var overlapPart = Math.min(62, (v * 0.50) * 135);
-      var concPart = Math.min(22, (u * 0.35) * 55);
-      var curvature = (u * u * 5.5) + (v * v * 7.0) + (u * v * 11.0);
-      var val = overlapPart + concPart + m.corrBias + curvature * 0.42;
-      return Math.max(4, Math.min(98, val));
-    };
-    var rawAtPort = scoreFn(m.uPort, m.vPort);
-    var calibratedScoreFn = function (u, v) {
-      var d2 = Math.pow(u - m.uPort, 2) + Math.pow(v - m.vPort, 2);
-      var blend = Math.exp(-d2 * 6.5) * (m.riskScore - rawAtPort);
-      return Math.max(4, Math.min(98, scoreFn(u, v) + blend));
-    };
-
-    var drawQuad = function (pts, fill, stroke, lw) {
+    var drawPoly = function (pts, fill, stroke, lw) {
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for (var k = 1; k < pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
@@ -1707,46 +1726,41 @@
       if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
     };
 
-    // 1. Draw the 3 back coordinate walls (XY Floor + Back-X Wall + Back-Z Wall)
-    var wallFillFloor = isLight ? 'rgba(15,23,42,0.036)' : 'rgba(255,255,255,0.035)';
-    var wallFillSide = isLight ? 'rgba(15,23,42,0.020)' : 'rgba(255,255,255,0.020)';
-    var gridLineCol = isLight ? 'rgba(15,23,42,0.090)' : 'rgba(255,255,255,0.095)';
-    var cageEdgeCol = isLight ? 'rgba(15,23,42,0.22)' : 'rgba(255,255,255,0.22)';
+    // 0. Soft Cast Shadow directly under the solid diorama plinth block
+    drawPoly([
+      projectSurface3D(-half + 5, plinthY - 3, -half + 5, cam),
+      projectSurface3D(half + 6, plinthY - 3, -half + 5, cam),
+      projectSurface3D(half + 6, plinthY - 3, half + 6, cam),
+      projectSurface3D(-half + 5, plinthY - 3, half + 6, cam)
+    ], isLight ? 'rgba(15,23,42,0.09)' : 'rgba(0,0,0,0.42)', null, 0);
 
-    drawQuad([
-      projectSurface3D(-half, 0, -half, cam),
-      projectSurface3D(half, 0, -half, cam),
-      projectSurface3D(half, 0, half, cam),
-      projectSurface3D(-half, 0, half, cam)
-    ], wallFillFloor, cageEdgeCol, 1.0);
+    // 1. Back 2 Vertical Coordinate Reference Walls (clean grid behind the mountain range)
+    var wallFillSide = isLight ? 'rgba(15,23,42,0.020)' : 'rgba(255,255,255,0.022)';
+    var gridLineCol = isLight ? 'rgba(15,23,42,0.085)' : 'rgba(255,255,255,0.090)';
+    var cageEdgeCol = isLight ? 'rgba(15,23,42,0.20)' : 'rgba(255,255,255,0.20)';
 
-    drawQuad([
+    drawPoly([
       projectSurface3D(backX, 0, -half, cam),
       projectSurface3D(backX, 0, half, cam),
       projectSurface3D(backX, boxH, half, cam),
       projectSurface3D(backX, boxH, -half, cam)
     ], wallFillSide, cageEdgeCol, 0.9);
 
-    drawQuad([
+    drawPoly([
       projectSurface3D(-half, 0, backZ, cam),
       projectSurface3D(half, 0, backZ, cam),
       projectSurface3D(half, boxH, backZ, cam),
       projectSurface3D(-half, boxH, backZ, cam)
     ], wallFillSide, cageEdgeCol, 0.9);
 
-    // Coordinate wall grid lines (4 divisions per axis)
     ctx.strokeStyle = gridLineCol;
     ctx.lineWidth = 0.75;
-    for (var g = 1; g <= 3; g++) {
-      var frac = g / 4;
+    for (var g = 1; g <= 4; g++) {
+      var frac = g / 5;
       var gx = -half + frac * span;
       var gz = -half + frac * span;
       var gy = frac * boxH;
       var p1, p2;
-      p1 = projectSurface3D(gx, 0, -half, cam); p2 = projectSurface3D(gx, 0, half, cam);
-      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-      p1 = projectSurface3D(-half, 0, gz, cam); p2 = projectSurface3D(half, 0, gz, cam);
-      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
       p1 = projectSurface3D(backX, gy, -half, cam); p2 = projectSurface3D(backX, gy, half, cam);
       ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
       p1 = projectSurface3D(backX, 0, gz, cam); p2 = projectSurface3D(backX, boxH, gz, cam);
@@ -1757,11 +1771,14 @@
       ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
     }
 
-    // 2. Build 16x16 world mesh + XY Floor Iso-Risk Contours (Z = 25, 50, 75)
-    var N = 16;
+    // 2. Sample 24x24 Sculpted Relief Heightfield & Track Highest Summit
+    var reliefFn = buildReliefField(m);
+    var N = 24;
     var worldPts = [];
     var projPts = [];
     var gridScores = [];
+    var peakInfo = { u: 0.8, v: 0.8, sc: 0, wx: 0, wy: 0, wz: 0 };
+
     for (var i = 0; i <= N; i++) {
       var wRow = [], pRow = [], sRow = [];
       var u = i / N;
@@ -1769,53 +1786,106 @@
       for (var j = 0; j <= N; j++) {
         var v = j / N;
         var wz = -half + v * span;
-        var sc = calibratedScoreFn(u, v);
+        var sc = reliefFn(u, v);
         var wy = (sc / 100) * boxH;
         wRow.push({ x: wx, y: wy, z: wz });
         var pp = projectSurface3D(wx, wy, wz, cam);
         pp.sc = sc;
         pRow.push(pp);
         sRow.push(sc);
+        if (sc > peakInfo.sc) {
+          peakInfo = { u: u, v: v, sc: sc, wx: wx, wy: wy, wz: wz };
+        }
       }
       worldPts.push(wRow);
       projPts.push(pRow);
       gridScores.push(sRow);
     }
 
-    drawSurfaceFloorContours(ctx, [25, 50, 75], gridScores, N, half, cam, isLight);
-
-    // Ideal diversified zone target ring on the XY floor
-    var ix = -half + m.idealU * span;
-    var iz = -half + m.idealV * span;
-    var iy = (calibratedScoreFn(m.idealU, m.idealV) / 100) * boxH;
-    var idealCol = isLight ? '#047857' : '#10B981';
-    ctx.beginPath();
-    for (var a = 0; a <= 18; a++) {
-      var ang = (a / 18) * Math.PI * 2;
-      var rp = projectSurface3D(
-        Math.max(-half + 2, Math.min(half - 2, ix + Math.cos(ang) * 15)),
-        0.8,
-        Math.max(-half + 2, Math.min(half - 2, iz + Math.sin(ang) * 15)),
-        cam
-      );
-      if (a === 0) ctx.moveTo(rp.x, rp.y); else ctx.lineTo(rp.x, rp.y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = isLight ? 'rgba(7,148,85,0.16)' : 'rgba(16,185,129,0.20)';
-    ctx.fill();
-    ctx.strokeStyle = hexToRgba(idealCol, 0.78);
-    ctx.lineWidth = 1.1;
-    ctx.stroke();
-
-    // 3. Lambert Normal-Shaded 3D Risk Surface (Painter's depth sort: farthest first)
-    var lightDir = [0.42, 0.84, 0.34];
+    // 3. Build Unified Painter-Sorted Solid 3D Faces:
+    //    (a) 4 Thick Architectural Base Plinth Sides (y: plinthY -> 0)
+    //    (b) 4xN Watertight Geological Cutaway Skirt Walls (y: 0 -> terrain(x,z))
+    //    (c) NxN Sculpted Lambert-Shaded Mountain Surface Quads with attached 3D Contour Rings
+    var lightDir = [-0.56, 0.76, 0.34];
     var lightLen = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
     lightDir = [lightDir[0] / lightLen, lightDir[1] / lightLen, lightDir[2] / lightLen];
 
-    var quads = [];
+    var faces = [];
+    var contourLevels = [20, 40, 60, 80];
+
+    // (a) 4 Solid Pedestal Plinth Faces
+    var plinthSides = [
+      { pts3: [[-half, 0, -half], [half, 0, -half], [half, plinthY, -half], [-half, plinthY, -half]], n: [0, 0, -1] },
+      { pts3: [[-half, 0, half], [half, 0, half], [half, plinthY, half], [-half, plinthY, half]], n: [0, 0, 1] },
+      { pts3: [[-half, 0, -half], [-half, 0, half], [-half, plinthY, half], [-half, plinthY, -half]], n: [-1, 0, 0] },
+      { pts3: [[half, 0, -half], [half, 0, half], [half, plinthY, half], [half, plinthY, -half]], n: [1, 0, 0] }
+    ];
+    for (var pi = 0; pi < plinthSides.length; pi++) {
+      var ps = plinthSides[pi];
+      var pProj = ps.pts3.map(function (c3) { return projectSurface3D(c3[0], c3[1], c3[2], cam); });
+      var pDot = ps.n[0] * lightDir[0] + ps.n[2] * lightDir[2];
+      var pShade = Math.max(0.55, Math.min(1.12, 0.82 + 0.30 * pDot));
+      var baseTone = isLight ? [52, 56, 66] : [38, 42, 52];
+      faces.push({
+        kind: 'plinth',
+        pts: pProj,
+        dAvg: (pProj[0].depth + pProj[1].depth + pProj[2].depth + pProj[3].depth) * 0.25 + 2.0,
+        fill: 'rgb(' + Math.round(baseTone[0] * pShade) + ',' + Math.round(baseTone[1] * pShade) + ',' + Math.round(baseTone[2] * pShade) + ')',
+        stroke: isLight ? 'rgba(15,23,42,0.35)' : 'rgba(255,255,255,0.16)',
+        lw: 0.8
+      });
+    }
+
+    // (b) 4xN Solid Geological Cutaway Skirt Walls (connecting terrain perimeter down to y = 0)
+    var addSkirtEdge = function (w0, w1, outNx, outNz) {
+      var pTop0 = projectSurface3D(w0.x, w0.y, w0.z, cam);
+      var pTop1 = projectSurface3D(w1.x, w1.y, w1.z, cam);
+      var pBot1 = projectSurface3D(w1.x, 0, w1.z, cam);
+      var pBot0 = projectSurface3D(w0.x, 0, w0.z, cam);
+      var nd = outNx * lightDir[0] + outNz * lightDir[2];
+      var sideShade = Math.max(0.58, Math.min(1.08, 0.82 + 0.26 * nd));
+      var cutRgb = isLight ? [220, 217, 208] : [44, 48, 60];
+      // Horizontal elevation strata lines clipped to this vertical cutaway strip
+      var strata = [];
+      var maxY = Math.max(w0.y, w1.y);
+      for (var si = 0; si < contourLevels.length; si++) {
+        var sy = (contourLevels[si] / 100) * boxH;
+        if (sy > 2 && sy < maxY - 1) {
+          var t0 = w0.y >= sy, t1 = w1.y >= sy;
+          if (t0 && t1) {
+            strata.push([projectSurface3D(w0.x, sy, w0.z, cam), projectSurface3D(w1.x, sy, w1.z, cam)]);
+          } else if (t0 !== t1) {
+            var fracS = (sy - w0.y) / (w1.y - w0.y || 1e-6);
+            var mx = w0.x + (w1.x - w0.x) * fracS;
+            var mz = w0.z + (w1.z - w0.z) * fracS;
+            var pMid = projectSurface3D(mx, sy, mz, cam);
+            var pSide = t0 ? projectSurface3D(w0.x, sy, w0.z, cam) : projectSurface3D(w1.x, sy, w1.z, cam);
+            strata.push([pSide, pMid]);
+          }
+        }
+      }
+      faces.push({
+        kind: 'skirt',
+        pts: [pTop0, pTop1, pBot1, pBot0],
+        dAvg: (pTop0.depth + pTop1.depth + pBot1.depth + pBot0.depth) * 0.25 + 0.4,
+        fill: 'rgb(' + Math.round(cutRgb[0] * sideShade) + ',' + Math.round(cutRgb[1] * sideShade) + ',' + Math.round(cutRgb[2] * sideShade) + ')',
+        stroke: 'rgba(' + Math.round(cutRgb[0] * sideShade * 0.86) + ',' + Math.round(cutRgb[1] * sideShade * 0.86) + ',' + Math.round(cutRgb[2] * sideShade * 0.86) + ',0.35)',
+        lw: 0.4,
+        strata: strata
+      });
+    };
+
+    for (var k = 0; k < N; k++) {
+      addSkirtEdge(worldPts[k][0], worldPts[k + 1][0], 0, -1);
+      addSkirtEdge(worldPts[k][N], worldPts[k + 1][N], 0, 1);
+      addSkirtEdge(worldPts[0][k], worldPts[0][k + 1], -1, 0);
+      addSkirtEdge(worldPts[N][k], worldPts[N][k + 1], 1, 0);
+    }
+
+    // (c) NxN Sculpted Mountain Quads + Per-Quad 3D Marching-Squares Topographic Contours
     for (var r = 0; r < N; r++) {
       for (var c = 0; c < N; c++) {
-        var wp00 = worldPts[r][c], wp10 = worldPts[r + 1][c], wp01 = worldPts[r][c + 1];
+        var wp00 = worldPts[r][c], wp10 = worldPts[r + 1][c], wp11 = worldPts[r + 1][c + 1], wp01 = worldPts[r][c + 1];
         var e1x = wp10.x - wp00.x, e1y = wp10.y - wp00.y, e1z = wp10.z - wp00.z;
         var e2x = wp01.x - wp00.x, e2y = wp01.y - wp00.y, e2z = wp01.z - wp00.z;
         var nx = e2y * e1z - e2z * e1y;
@@ -1824,160 +1894,221 @@
         var nLen = Math.hypot(nx, ny, nz) || 1;
         nx /= nLen; ny /= nLen; nz /= nLen;
         if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+
+        // Strong directional relief lighting + subtle specular crest lift for crisp 3D mountain volume
         var ndotl = Math.max(0, nx * lightDir[0] + ny * lightDir[1] + nz * lightDir[2]);
-        var shade = 0.62 + 0.44 * ndotl;
+        var shade = 0.44 + 0.72 * ndotl;
 
         var pp00 = projPts[r][c], pp10 = projPts[r + 1][c], pp11 = projPts[r + 1][c + 1], pp01 = projPts[r][c + 1];
-        quads.push({
+        var scAvg = (pp00.sc + pp10.sc + pp11.sc + pp01.sc) * 0.25;
+        var baseRgb = sampleHypsometricColor(scAvg, isLight);
+        var sr = Math.min(255, Math.round(baseRgb[0] * shade));
+        var sg = Math.min(255, Math.round(baseRgb[1] * shade));
+        var sb = Math.min(255, Math.round(baseRgb[2] * shade));
+
+        // Compute 3D topographic contour segments directly on this quad (occlusion-exact!)
+        var s00 = gridScores[r][c], s10 = gridScores[r + 1][c], s11 = gridScores[r + 1][c + 1], s01 = gridScores[r][c + 1];
+        var minSc = Math.min(s00, s10, s11, s01);
+        var maxSc = Math.max(s00, s10, s11, s01);
+        var qContours = [];
+        for (var ci = 0; ci < contourLevels.length; ci++) {
+          var lv = contourLevels[ci];
+          if (lv <= minSc || lv >= maxSc) continue;
+          var segs = [];
+          var interpEdge = function (va, vb, wa, wb) {
+            if ((va < lv && vb >= lv) || (va >= lv && vb < lv)) {
+              var f = (lv - va) / (vb - va || 1e-6);
+              segs.push(projectSurface3D(
+                wa.x + (wb.x - wa.x) * f,
+                (lv / 100) * boxH + 0.6,
+                wa.z + (wb.z - wa.z) * f,
+                cam
+              ));
+            }
+          };
+          interpEdge(s00, s10, wp00, wp10);
+          interpEdge(s10, s11, wp10, wp11);
+          interpEdge(s11, s01, wp11, wp01);
+          interpEdge(s01, s00, wp01, wp00);
+          if (segs.length >= 2) qContours.push([segs[0], segs[1]]);
+        }
+
+        faces.push({
+          kind: 'surf',
           pts: [pp00, pp10, pp11, pp01],
           dAvg: (pp00.depth + pp10.depth + pp11.depth + pp01.depth) * 0.25,
-          scAvg: (pp00.sc + pp10.sc + pp11.sc + pp01.sc) * 0.25,
-          shade: shade
+          fill: 'rgb(' + sr + ',' + sg + ',' + sb + ')',
+          stroke: 'rgba(' + Math.round(sr * 0.84) + ',' + Math.round(sg * 0.84) + ',' + Math.round(sb * 0.84) + ',0.22)',
+          lw: 0.45,
+          contours: qContours
         });
       }
     }
-    quads.sort(function (a, b) { return b.dAvg - a.dAvg; });
 
-    for (var qi = 0; qi < quads.length; qi++) {
-      var q = quads[qi];
-      var baseRgb = sampleRiskColormap(q.scAvg / 100, isLight);
-      var sr = Math.min(255, Math.round(baseRgb[0] * q.shade));
-      var sg = Math.min(255, Math.round(baseRgb[1] * q.shade));
-      var sb = Math.min(255, Math.round(baseRgb[2] * q.shade));
-      var fillAlpha = isLight ? 0.72 : 0.76;
-      var lineAlpha = isLight ? 0.34 : 0.42;
-      drawQuad(
-        q.pts,
-        'rgba(' + sr + ',' + sg + ',' + sb + ',' + fillAlpha + ')',
-        'rgba(' + Math.round(sr * 0.80) + ',' + Math.round(sg * 0.80) + ',' + Math.round(sb * 0.80) + ',' + lineAlpha + ')',
-        expanded ? 0.85 : 0.60
-      );
+    faces.sort(function (a, b) { return b.dAvg - a.dAvg; });
+
+    var contourStrokeCol = isLight ? 'rgba(255,255,255,0.68)' : 'rgba(255,255,255,0.44)';
+    var strataStrokeCol = isLight ? 'rgba(15,23,42,0.16)' : 'rgba(255,255,255,0.14)';
+
+    for (var fi = 0; fi < faces.length; fi++) {
+      var fItem = faces[fi];
+      drawPoly(fItem.pts, fItem.fill, fItem.stroke, fItem.lw);
+      if (fItem.contours && fItem.contours.length) {
+        ctx.strokeStyle = contourStrokeCol;
+        ctx.lineWidth = expanded ? 1.15 : 0.85;
+        ctx.beginPath();
+        for (var qci = 0; qci < fItem.contours.length; qci++) {
+          ctx.moveTo(fItem.contours[qci][0].x, fItem.contours[qci][0].y);
+          ctx.lineTo(fItem.contours[qci][1].x, fItem.contours[qci][1].y);
+        }
+        ctx.stroke();
+      }
+      if (fItem.strata && fItem.strata.length) {
+        ctx.strokeStyle = strataStrokeCol;
+        ctx.lineWidth = 0.75;
+        ctx.beginPath();
+        for (var sti = 0; sti < fItem.strata.length; sti++) {
+          ctx.moveTo(fItem.strata[sti][0].x, fItem.strata[sti][0].y);
+          ctx.lineTo(fItem.strata[sti][1].x, fItem.strata[sti][1].y);
+        }
+        ctx.stroke();
+      }
     }
 
-    // 4. Ideal Diversified Reference Marker & Current Portfolio Beacon with 3-Axis Projections
+    // 4. Three Crystal-Clear 3D Vertical Landmark Pins (安全洼地 + 最高险峰 + 当前组合)
+    var drawPinBadge = function (px, py, text, borderCol, textCol, isPrimary) {
+      ctx.font = (isPrimary ? (expanded ? '700 11px' : '700 9px') : (expanded ? '600 10px' : '600 8px'))
+        + ' "PingFang SC","JetBrains Mono",sans-serif';
+      var bw = ctx.measureText(text).width + (isPrimary ? 10 : 8);
+      var bh = isPrimary ? (expanded ? 19 : 15) : (expanded ? 16 : 13);
+      var bx0 = Math.max(6, Math.min(cssW - bw - 6, px - bw * 0.5));
+      var by0 = Math.max(20, py - bh - 5);
+      ctx.fillStyle = isLight ? 'rgba(255,255,255,0.94)' : 'rgba(18,18,22,0.94)';
+      ctx.strokeStyle = borderCol;
+      ctx.lineWidth = isPrimary ? 1.25 : 0.9;
+      ctx.fillRect(bx0, by0, bw, bh);
+      ctx.strokeRect(bx0, by0, bw, bh);
+      ctx.fillStyle = textCol;
+      ctx.textAlign = 'center';
+      ctx.fillText(text, bx0 + bw * 0.5, by0 + bh - (isPrimary ? (expanded ? 5.5 : 4) : (expanded ? 4.5 : 3.5)));
+    };
+
+    var idealCol = isLight ? '#047857' : '#10B981';
+    var dangerCol = isLight ? '#DC2626' : '#F43F5E';
+    var beaconCol = m.riskScore >= 60 ? dangerCol : (m.riskScore >= 32 ? '#D97706' : idealCol);
+
+    // Landmark A: 安全洼地 (Flat Emerald Valley Basin)
+    var ix = -half + m.idealU * span;
+    var iz = -half + m.idealV * span;
+    var iy = (reliefFn(m.idealU, m.idealV) / 100) * boxH;
+    var pIdealBase = projectSurface3D(ix, iy, iz, cam);
+    var pIdealHead = projectSurface3D(ix, iy + (expanded ? 18 : 15), iz, cam);
+    ctx.strokeStyle = idealCol; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(pIdealBase.x, pIdealBase.y); ctx.lineTo(pIdealHead.x, pIdealHead.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(pIdealBase.x, pIdealBase.y, expanded ? 4.0 : 3.0, 0, Math.PI * 2);
+    ctx.fillStyle = hexToRgba(idealCol, 0.30); ctx.fill();
+    ctx.beginPath(); ctx.arc(pIdealHead.x, pIdealHead.y, expanded ? 3.8 : 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.strokeStyle = idealCol; ctx.lineWidth = 1.8; ctx.stroke();
+    drawPinBadge(pIdealHead.x, pIdealHead.y - 2, '安全洼地', hexToRgba(idealCol, 0.8), idealCol, false);
+
+    // Landmark B: 最高风险峰 (Highest Mountain Summit on the Relief Block)
+    var pPeakBase = projectSurface3D(peakInfo.wx, peakInfo.wy, peakInfo.wz, cam);
+    var pPeakHead = projectSurface3D(peakInfo.wx, peakInfo.wy + (expanded ? 18 : 14), peakInfo.wz, cam);
+    ctx.strokeStyle = dangerCol; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(pPeakBase.x, pPeakBase.y); ctx.lineTo(pPeakHead.x, pPeakHead.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(pPeakHead.x, pPeakHead.y, expanded ? 3.8 : 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = dangerCol; ctx.fill();
+    drawPinBadge(
+      pPeakHead.x,
+      pPeakHead.y - 2,
+      expanded ? ('▲ ' + m.peakCause + ' (' + Math.round(peakInfo.sc) + ')') : ('▲ ' + m.peakCause),
+      hexToRgba(dangerCol, 0.82),
+      dangerCol,
+      false
+    );
+
+    // Landmark C: 当前组合立体标杆 + 背板高度投射线
     var bx = -half + m.uPort * span;
     var bz = -half + m.vPort * span;
-    var by = (calibratedScoreFn(m.uPort, m.vPort) / 100) * boxH;
-
-    var pIdealFloor = projectSurface3D(ix, 0, iz, cam);
-    var pIdealTop = projectSurface3D(ix, iy + 2, iz, cam);
-    ctx.strokeStyle = hexToRgba(idealCol, 0.78);
-    ctx.lineWidth = 1.1;
-    ctx.setLineDash([2, 2]);
-    ctx.beginPath(); ctx.moveTo(pIdealFloor.x, pIdealFloor.y); ctx.lineTo(pIdealTop.x, pIdealTop.y); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.beginPath(); ctx.arc(pIdealTop.x, pIdealTop.y, expanded ? 4.8 : 3.4, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF'; ctx.fill();
-    ctx.strokeStyle = idealCol; ctx.lineWidth = 2.0; ctx.stroke();
-
-    // Clean pill badge for 理想分散区 (zero overlap with front axes)
-    var idealTxt = '理想分散区';
-    ctx.font = (expanded ? '600 10.5px' : '600 8.5px') + ' "PingFang SC","SF Pro Text",sans-serif';
-    var idW = ctx.measureText(idealTxt).width + 8;
-    var idX = Math.max(8, Math.min(cssW - idW - 8, pIdealTop.x - idW * 0.5));
-    var idY = Math.max(20, pIdealTop.y - (expanded ? 22 : 17));
-    ctx.fillStyle = isLight ? 'rgba(255,255,255,0.92)' : 'rgba(18,24,22,0.92)';
-    ctx.strokeStyle = hexToRgba(idealCol, 0.72);
-    ctx.lineWidth = 0.9;
-    ctx.fillRect(idX, idY, idW, expanded ? 16 : 13);
-    ctx.strokeRect(idX, idY, idW, expanded ? 16 : 13);
-    ctx.fillStyle = idealCol;
-    ctx.textAlign = 'center';
-    ctx.fillText(idealTxt, idX + idW * 0.5, idY + (expanded ? 11.5 : 9.5));
-
-    // Current Portfolio 3-axis orthogonal projections (XY Floor + Back-X Wall + Back-Z Wall)
-    var beaconCol = m.riskScore >= 60 ? (isLight ? '#DC2626' : '#F43F5E') : (m.riskScore >= 32 ? '#D97706' : idealCol);
-    var pBeacon = projectSurface3D(bx, by + 2.5, bz, cam);
-    var pFloor = projectSurface3D(bx, 0, bz, cam);
+    var by = (reliefFn(m.uPort, m.vPort) / 100) * boxH;
+    var pPortBase = projectSurface3D(bx, by, bz, cam);
+    var pPortHead = projectSurface3D(bx, by + (expanded ? 28 : 24), bz, cam);
     var pWallX = projectSurface3D(backX, by, bz, cam);
     var pWallZ = projectSurface3D(bx, by, backZ, cam);
-    var pAxisX = projectSurface3D(bx, 0, frontZ, cam);
-    var pAxisY = projectSurface3D(frontX, 0, bz, cam);
 
-    ctx.strokeStyle = hexToRgba(beaconCol, 0.85);
-    ctx.lineWidth = expanded ? 1.4 : 1.1;
+    ctx.strokeStyle = hexToRgba(beaconCol, 0.72);
+    ctx.lineWidth = expanded ? 1.25 : 1.0;
     ctx.setLineDash([3, 2.5]);
-    ctx.beginPath(); ctx.moveTo(pBeacon.x, pBeacon.y); ctx.lineTo(pFloor.x, pFloor.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(pBeacon.x, pBeacon.y); ctx.lineTo(pWallX.x, pWallX.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(pBeacon.x, pBeacon.y); ctx.lineTo(pWallZ.x, pWallZ.y); ctx.stroke();
-    ctx.strokeStyle = hexToRgba(beaconCol, 0.55);
-    ctx.lineWidth = 1.0;
-    ctx.beginPath(); ctx.moveTo(pFloor.x, pFloor.y); ctx.lineTo(pAxisX.x, pAxisX.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(pFloor.x, pFloor.y); ctx.lineTo(pAxisY.x, pAxisY.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pPortBase.x, pPortBase.y); ctx.lineTo(pWallX.x, pWallX.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pPortBase.x, pPortBase.y); ctx.lineTo(pWallZ.x, pWallZ.y); ctx.stroke();
     ctx.setLineDash([]);
-
-    [pFloor, pWallX, pWallZ].forEach(function (pt) {
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, expanded ? 3.0 : 2.2, 0, Math.PI * 2);
+    [pWallX, pWallZ].forEach(function (pt) {
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, expanded ? 2.8 : 2.1, 0, Math.PI * 2);
       ctx.fillStyle = beaconCol; ctx.fill();
     });
 
-    ctx.beginPath(); ctx.arc(pBeacon.x, pBeacon.y, expanded ? 10.5 : 7.5, 0, Math.PI * 2);
-    ctx.fillStyle = hexToRgba(beaconCol, 0.24); ctx.fill();
-    ctx.beginPath(); ctx.arc(pBeacon.x, pBeacon.y, expanded ? 5.4 : 3.9, 0, Math.PI * 2);
+    // Solid vertical flagpole & glowing beacon head
+    ctx.strokeStyle = isLight ? '#19191B' : '#FFFFFF';
+    ctx.lineWidth = expanded ? 2.0 : 1.6;
+    ctx.beginPath(); ctx.moveTo(pPortBase.x, pPortBase.y); ctx.lineTo(pPortHead.x, pPortHead.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(pPortBase.x, pPortBase.y, expanded ? 4.2 : 3.2, 0, Math.PI * 2);
+    ctx.fillStyle = beaconCol; ctx.fill();
+    ctx.beginPath(); ctx.arc(pPortHead.x, pPortHead.y, expanded ? 9.5 : 7.0, 0, Math.PI * 2);
+    ctx.fillStyle = hexToRgba(beaconCol, 0.25); ctx.fill();
+    ctx.beginPath(); ctx.arc(pPortHead.x, pPortHead.y, expanded ? 5.0 : 3.7, 0, Math.PI * 2);
     ctx.fillStyle = '#FFFFFF'; ctx.fill();
     ctx.strokeStyle = beaconCol; ctx.lineWidth = expanded ? 2.4 : 2.0; ctx.stroke();
 
-    var orbLabel = expanded
-      ? ('当前组合 · X ' + m.top1Pct.toFixed(1) + '% / Y ' + m.overlapPct.toFixed(1) + '% / 风险 ' + m.riskScore)
-      : ('风险 ' + m.riskScore);
-    ctx.font = (expanded ? '700 11px' : '700 9px') + ' "JetBrains Mono","PingFang SC",monospace';
-    var olW = ctx.measureText(orbLabel).width + 10;
-    var olX = Math.max(8, Math.min(cssW - olW - 8, pBeacon.x - olW * 0.5));
-    var olY = Math.max(22, pBeacon.y - (expanded ? 25 : 19));
-    ctx.fillStyle = isLight ? 'rgba(255,255,255,0.94)' : 'rgba(20,20,24,0.94)';
-    ctx.strokeStyle = beaconCol;
-    ctx.lineWidth = 1.05;
-    ctx.fillRect(olX, olY - 10, olW, expanded ? 18 : 14);
-    ctx.strokeRect(olX, olY - 10, olW, expanded ? 18 : 14);
-    ctx.fillStyle = beaconCol;
-    ctx.textAlign = 'center';
-    ctx.fillText(orbLabel, olX + olW * 0.5, olY + (expanded ? 2.5 : 0.5));
+    var portTag = expanded
+      ? ('当前组合 · 单股 ' + m.top1Pct.toFixed(1) + '% / 重合 ' + m.overlapPct.toFixed(1) + '% / 风险 ' + m.riskScore)
+      : ('当前 · 风险 ' + m.riskScore);
+    drawPinBadge(pPortHead.x, pPortHead.y - 3, portTag, beaconCol, beaconCol, true);
 
-    // 5. Crisp Foreground Outer Coordinate Axes (ALWAYS at bottom front edges, zero surface crossing!)
-    var axisCol = isLight ? 'rgba(11,11,11,0.72)' : 'rgba(242,242,242,0.78)';
+    // 5. Foreground Outer Coordinate Axes along Bottom Plinth Edges (Zero Surface Crossing)
+    var axisCol = isLight ? 'rgba(11,11,11,0.74)' : 'rgba(242,242,242,0.78)';
     var tickCol = isLight ? 'rgba(11,11,11,0.62)' : 'rgba(242,242,242,0.68)';
     var tickFont = (expanded ? '600 10px' : '600 8px') + ' "JetBrains Mono","SF Mono",monospace';
     var axisFont = (expanded ? '700 11px' : '700 8.5px') + ' "PingFang SC","SF Pro Text",sans-serif';
 
-    // X-Axis along frontZ outer bottom edge (单股集中度 0%~35%)
-    var xStart = projectSurface3D(-half, 0, frontZ, cam);
-    var xEnd = projectSurface3D(half, 0, frontZ, cam);
-    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.4;
+    // X-Axis along frontZ bottom edge (单股集中度 0%~35%)
+    var xStart = projectSurface3D(-half, plinthY, frontZ, cam);
+    var xEnd = projectSurface3D(half, plinthY, frontZ, cam);
+    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.3;
     ctx.beginPath(); ctx.moveTo(xStart.x, xStart.y); ctx.lineTo(xEnd.x, xEnd.y); ctx.stroke();
 
     var xTicks = expanded ? [[0, '0%'], [0.428, '15%'], [1, '35%']] : [[0, '0%'], [1, '35%']];
     ctx.font = tickFont; ctx.fillStyle = tickCol; ctx.textAlign = 'center';
     xTicks.forEach(function (tk) {
       var xv = -half + tk[0] * span;
-      var pt = projectSurface3D(xv, 0, frontZ, cam);
-      var out = projectSurface3D(xv, 0, frontZ + (frontZ > 0 ? 7 : -7), cam);
+      var pt = projectSurface3D(xv, plinthY, frontZ, cam);
+      var out = projectSurface3D(xv, plinthY, frontZ + (frontZ > 0 ? 7 : -7), cam);
       ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(out.x, out.y); ctx.stroke();
       var dxCorner = xv === frontX ? (expanded ? 14 : 11) : 0;
       ctx.fillText(tk[1], out.x + dxCorner, out.y + (expanded ? 11 : 9));
     });
-    var xMid = projectSurface3D(0, 0, frontZ + (frontZ > 0 ? (expanded ? 32 : 26) : -(expanded ? 32 : 26)), cam);
+    var xMid = projectSurface3D(0, plinthY, frontZ + (frontZ > 0 ? (expanded ? 30 : 24) : -(expanded ? 30 : 24)), cam);
     ctx.font = axisFont; ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
-    ctx.fillText('X 单股集中度', xMid.x, Math.min(cssH - (expanded ? 10 : 21), xMid.y + (expanded ? 14 : 10)));
+    ctx.fillText('X 单股集中度', xMid.x, Math.min(cssH - (expanded ? 10 : 20), xMid.y + (expanded ? 13 : 10)));
 
-    // Y-Axis along frontX outer bottom edge (重仓重合度 0%~50%)
-    var yStart = projectSurface3D(frontX, 0, -half, cam);
-    var yEnd = projectSurface3D(frontX, 0, half, cam);
-    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.4;
+    // Y-Axis along frontX bottom edge (重仓重合度 0%~50%)
+    var yStart = projectSurface3D(frontX, plinthY, -half, cam);
+    var yEnd = projectSurface3D(frontX, plinthY, half, cam);
+    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.3;
     ctx.beginPath(); ctx.moveTo(yStart.x, yStart.y); ctx.lineTo(yEnd.x, yEnd.y); ctx.stroke();
 
     var yTicks = expanded ? [[0, '0%'], [0.5, '25%'], [1, '50%']] : [[0, '0%'], [1, '50%']];
     ctx.font = tickFont; ctx.fillStyle = tickCol; ctx.textAlign = 'center';
     yTicks.forEach(function (tk) {
       var zv = -half + tk[0] * span;
-      var pt = projectSurface3D(frontX, 0, zv, cam);
-      var out = projectSurface3D(frontX + (frontX > 0 ? 7 : -7), 0, zv, cam);
+      var pt = projectSurface3D(frontX, plinthY, zv, cam);
+      var out = projectSurface3D(frontX + (frontX > 0 ? 7 : -7), plinthY, zv, cam);
       ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(out.x, out.y); ctx.stroke();
       var dxCorner = zv === frontZ ? -(expanded ? 14 : 11) : 0;
       ctx.fillText(tk[1], out.x + dxCorner, out.y + (expanded ? 11 : 9));
     });
-    var yMid = projectSurface3D(frontX + (frontX > 0 ? (expanded ? 34 : 28) : -(expanded ? 34 : 28)), 0, 0, cam);
+    var yMid = projectSurface3D(frontX + (frontX > 0 ? (expanded ? 32 : 26) : -(expanded ? 32 : 26)), plinthY, 0, cam);
     ctx.font = axisFont; ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
-    ctx.fillText('Y 重仓重合度', yMid.x, Math.min(cssH - (expanded ? 10 : 21), yMid.y + (expanded ? 14 : 10)));
+    ctx.fillText('Y 重仓重合度', yMid.x, Math.min(cssH - (expanded ? 10 : 20), yMid.y + (expanded ? 13 : 10)));
 
     // Z-Axis along the leftmost vertical outer edge
     var candA = projectSurface3D(backX, 0, frontZ, cam);
@@ -1986,7 +2117,7 @@
     var zz = candA.x <= candB.x ? frontZ : backZ;
     var zBot = projectSurface3D(zx, 0, zz, cam);
     var zTop = projectSurface3D(zx, boxH, zz, cam);
-    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.4;
+    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.3;
     ctx.beginPath(); ctx.moveTo(zBot.x, zBot.y); ctx.lineTo(zTop.x, zTop.y); ctx.stroke();
 
     ctx.font = tickFont; ctx.fillStyle = tickCol; ctx.textAlign = 'right';
@@ -1997,14 +2128,14 @@
     });
     ctx.font = axisFont; ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
     ctx.textAlign = 'center';
-    ctx.fillText('Z 风险分', Math.max(30, zTop.x - 4), Math.max(24, zTop.y - 8));
+    ctx.fillText('Z 风险高度', Math.max(32, zTop.x - 4), Math.max(24, zTop.y - 8));
 
     // 6. Compact Inline Title & Footer Telemetry
     if (!expanded) {
       ctx.font = '600 9.5px "PingFang SC","SF Pro Text",sans-serif';
       ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
       ctx.textAlign = 'left';
-      ctx.fillText('风险三维坐标系', 8, 15);
+      ctx.fillText('风险三维立体沙盘', 8, 15);
 
       ctx.font = '600 8.5px "JetBrains Mono","PingFang SC",monospace';
       ctx.fillStyle = isLight ? 'rgba(0,0,0,0.56)' : 'rgba(255,255,255,0.62)';
@@ -2165,6 +2296,7 @@
     getStage3DHitBoxes: getStage3DHitBoxes,
     computeSurfaceMetrics: computeSurfaceMetrics,
     renderSurface3DCanvas: renderSurface3DCanvas,
+    setSurface3DView: setSurface3DView,
     zoomSurface3D: zoomSurface3D,
     resetSurface3DView: resetSurface3DView,
     correlationSVG: correlationSVG,

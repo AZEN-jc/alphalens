@@ -818,18 +818,20 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
   </div>
 </div>
 
-<!-- 风险三维坐标系放大检视弹窗 -->
-<div class="surface-modal-backdrop" id="surface-modal-backdrop" role="dialog" aria-modal="true" aria-label="风险三维坐标系放大检视">
+<!-- 风险三维立体沙盘放大检视弹窗 -->
+<div class="surface-modal-backdrop" id="surface-modal-backdrop" role="dialog" aria-modal="true" aria-label="风险三维立体沙盘放大检视">
   <div class="surface-modal">
     <div class="sm-head">
       <div class="sm-title-wrap">
-        <h3>风险三维坐标系 · 立体检视</h3>
-        <small>X 单股集中度(%) × Y 重仓重合度(%) × Z 综合风险分(0~100) · 拖动 360° 旋转 · 滚轮缩放</small>
+        <h3>风险三维立体沙盘 · 地质剖面检视</h3>
+        <small>X 单股集中度(%) × Y 重仓重合度(%) × Z 风险高度(0~100) · 拖动 360° 旋转 · 滚轮缩放</small>
       </div>
       <div class="sm-tools">
+        <button type="button" class="key-btn" id="sm-cam-low" title="低角度仰视峰谷高度">低角看峰</button>
+        <button type="button" class="key-btn" id="sm-cam-top" title="高空俯瞰等高线分布">高空俯瞰</button>
         <button type="button" class="key-btn" id="sm-zoom-out" aria-label="缩小视角">−</button>
         <button type="button" class="key-btn" id="sm-zoom-in" aria-label="放大视角">+</button>
-        <button type="button" class="key-btn" id="sm-reset-btn">复位视角</button>
+        <button type="button" class="key-btn" id="sm-reset-btn">复位</button>
         <button type="button" class="key-btn primary" id="sm-close-btn">完成</button>
       </div>
     </div>
@@ -840,8 +842,9 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
     <div class="sm-foot">
       <div class="sm-presets" id="sm-presets"></div>
       <div class="sm-legend">
-        <span><i style="background:#dc2626"></i>当前组合与三轴投影</span>
-        <span><i style="background:#047857"></i>理想分散区参照</span>
+        <span><i style="background:#d97706"></i>当前组合标杆</span>
+        <span><i style="background:#dc2626"></i>最高险峰</span>
+        <span><i style="background:#047857"></i>安全洼地</span>
       </div>
     </div>
   </div>
@@ -1484,6 +1487,8 @@ function boot(){
   });
   $('surf-reset-btn').onclick=function(){if(AZ.resetSurface3DView)AZ.resetSurface3DView();};
   $('surf-expand-btn').onclick=openSurfaceModal;
+  $('sm-cam-low').onclick=function(){if(AZ.setSurface3DView)AZ.setSurface3DView(-0.78,0.22,1.04);};
+  $('sm-cam-top').onclick=function(){if(AZ.setSurface3DView)AZ.setSurface3DView(-0.62,0.94,0.96);};
   $('sm-zoom-in').onclick=function(){if(AZ.zoomSurface3D)AZ.zoomSurface3D(0.14);};
   $('sm-zoom-out').onclick=function(){if(AZ.zoomSurface3D)AZ.zoomSurface3D(-0.14);};
   $('sm-reset-btn').onclick=function(){if(AZ.resetSurface3DView)AZ.resetSurface3DView();};
