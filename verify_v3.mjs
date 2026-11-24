@@ -280,7 +280,66 @@ var verdictBox=document.getElementById('verdict-card');
 var splitBottomDiff=(drillBox&&verdictBox)?Math.abs(drillBox.getBoundingClientRect().bottom-verdictBox.getBoundingClientRect().bottom):999;
 var pbBadgeTxt=(document.getElementById('pb-badge')||{}).textContent||'';
 var aiLogTxt=(document.getElementById('ai-terminal-log')||{}).textContent||'';
+var bodyTxt=document.body.innerText||'';
 var noEmojiInNarrator=!/[\u{1F300}-\u{1FAFF}\u{26A0}\u{1F4CA}]/u.test(pbBadgeTxt+aiLogTxt);
+var noArchaicCopy=!/观澜|叠嶂|定盘|尺牍|遣入|麾下|璇玑/.test(bodyTxt);
+
+// [26] v4.1 交互工具链与回归实测：3D/2D 切换 + 3D 卡片精准点击 + ⌘K 搜索加仓与关闭失焦 + 删除撤销 Toast + 静谧模式 + 重置解绑
+var btn2d=document.querySelector('#stage-mode-seg button[data-smode="2d"]');
+var btn3d=document.querySelector('#stage-mode-seg button[data-smode="3d"]');
+if(btn2d)btn2d.click();
+var mode2dOk=!!document.querySelector('#flow-chart .flow-2d-svg')&&document.querySelectorAll('#flow-chart .flow-node').length>=5;
+if(btn3d)btn3d.click();
+var mode3dBackOk=!!document.getElementById('stage-3d-canvas');
+
+// 实测 3D 右侧卡片真实坐标点击：必须命中对应股票而非被透明 SVG 劫持，且 #flow-hint 显示中文名
+var cardClickOk=false;
+var overlaySvg=document.querySelector('#flow-chart .stage-3d-overlay');
+var overlayNoPtr=!!(overlaySvg&&getComputedStyle(overlaySvg).pointerEvents==='none');
+var stageWrap=document.getElementById('flow-chart');
+var stageCvs=document.getElementById('stage-3d-canvas');
+var hbs=(window.AlphaLensAnalytics&&window.AlphaLensAnalytics.getStage3DHitBoxes)?window.AlphaLensAnalytics.getStage3DHitBoxes():[];
+var targetCard=hbs.find(function(h){return h.kind==='stock-card'&&h.code==='603259';})||hbs.find(function(h){return h.kind==='stock-card';});
+if(overlayNoPtr&&stageWrap&&stageCvs&&targetCard){
+  var sr=stageWrap.getBoundingClientRect();
+  stageCvs.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:sr.left+targetCard.x+targetCard.w/2,clientY:sr.top+targetCard.y+targetCard.h/2}));
+  var hintAfterClick=(document.getElementById('flow-hint')||{}).textContent||'';
+  cardClickOk=(V.state.flowFocus===targetCard.code)&&hintAfterClick.indexOf(targetCard.title)>=0;
+  var frBtn=document.getElementById('flow-reset-btn');
+  if(frBtn)frBtn.click();
+}
+
+var cmdOpenBtn=document.getElementById('cmd-open-btn');
+if(cmdOpenBtn)cmdOpenBtn.click();
+var cmdBackdrop=document.getElementById('cmd-backdrop');
+var cmdIsOpen=cmdBackdrop.className.indexOf('open')>=0;
+var cmdInp=document.getElementById('cmd-input');
+if(cmdInp){cmdInp.focus();cmdInp.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));}
+var cmdBlurOk=(document.activeElement!==cmdInp)&&(getComputedStyle(cmdBackdrop).visibility==='hidden');
+if(cmdOpenBtn)cmdOpenBtn.click();
+if(cmdInp){cmdInp.value='518880';cmdInp.dispatchEvent(new Event('input',{bubbles:true}));}
+var cmdAddBtn=document.querySelector('#cmd-results button[data-cact="add"]');
+if(cmdAddBtn)cmdAddBtn.click();
+var cmdAddedGold=!!(V&&V.state&&V.state.positions.some(function(p){return p.code==='518880';}));
+
+var cntBeforeDel=V.state.positions.length;
+var delBtns=document.querySelectorAll('#pos-list button.del');
+if(delBtns.length)delBtns[delBtns.length-1].click();
+var cntAfterDel=V.state.positions.length;
+var toastUndo=document.getElementById('toast-act-btn');
+if(toastUndo)toastUndo.click();
+var cntAfterUndo=V.state.positions.length;
+var undoOk=(cntAfterDel===cntBeforeDel-1)&&(cntAfterUndo===cntBeforeDel);
+
+var motBtn=document.getElementById('motion-btn');
+if(motBtn)motBtn.click();
+var quietOn=document.documentElement.getAttribute('data-motion')==='off';
+if(motBtn)motBtn.click();
+
+// 清理回默认组合并校验 reset 清空 stageModePinned
+document.getElementById('reset-btn').click();
+var resetUnpinOk=(V.state.stageModePinned===false);
+
 R.vizV32={
   plainOk:plainOk&&aiLines===3&&hasSpectrum,
   advDefaultClosed:advDefaultClosed,
@@ -294,13 +353,13 @@ R.vizV32={
   stage3dOk:!!(stageCanvas&&stageCanvas.width>=600&&stageCanvas.height>=200),
   surf3dOk:!!(surfCanvas&&surfCanvas.width>=200&&surfCanvas.height>=150),
   zeroVoidEqualHeight:splitBottomDiff<=2,
-  poeticNarratorOk:/【.*】/.test(pbBadgeTxt)&&/壹·观澜/.test(aiLogTxt)&&/贰·听风/.test(aiLogTxt)&&noEmojiInNarrator
+  cleanCopyOk:/总览/.test(aiLogTxt)&&/重合/.test(aiLogTxt)&&/建议/.test(aiLogTxt)&&noEmojiInNarrator&&noArchaicCopy
 };
 
 R.brand=document.body.textContent.indexOf('Zen Ao')>=0&&/v3\.[123]/.test(document.body.textContent);
 R.exportBtns=document.querySelectorAll('.report-btn').length;
 
-// Tab2：15 只高股息股 + 填权样本格式 + 红利税更名与财税101号文 + 税率/基准实时更新
+// Tab2：15 只高股息股 + 填权样本格式 + 红利税更名与财税101号文 + 行业筛选 + 一键加入组合
 var divTab=document.querySelector('.main-tabs button[data-main=div]');
 if(divTab)divTab.click();
 R.divViewOn=document.getElementById('view-div').className.indexOf('on')>=0;
@@ -310,6 +369,36 @@ var divTableText=document.getElementById('div-body').textContent;
 R.fillSampleFmt=/已填\s*\d+\s*\/\s*未填\s*\d+/.test(divTableText);
 var divSectionText=document.getElementById('view-div').textContent;
 R.taxRenameOk=divSectionText.indexOf('历史股息税后收益情景测算')>=0&&divSectionText.indexOf('101 号文')>=0;
+
+var divFirstSelOk=!!document.querySelector('#div-body tr.sel');
+var catBtns=document.querySelectorAll('#div-cat-chips button[data-dcat]');
+var catFiltered=false;
+if(catBtns.length>=2){
+  catBtns[1].click();
+  catFiltered=document.querySelectorAll('#div-body tr').length<15&&document.querySelectorAll('#div-body tr').length>=1&&!!document.querySelector('#div-body tr.sel');
+  catBtns[0].click();
+}
+var divAddBtn=document.getElementById('div-add-port-btn');
+var posBeforeDivAdd=V.state.positions.length;
+if(divAddBtn)divAddBtn.click();
+var divAddOk=V.state.positions.length>=posBeforeDivAdd&&(document.getElementById('app-toast').className.indexOf('show')>=0);
+document.getElementById('reset-btn').click();
+if(divTab)divTab.click();
+
+R.v41Ux={
+  mode2dOk:mode2dOk,
+  mode3dBackOk:mode3dBackOk,
+  cardClickOk:cardClickOk,
+  cmdIsOpen:cmdIsOpen,
+  cmdBlurOk:cmdBlurOk,
+  cmdAddedGold:cmdAddedGold,
+  undoOk:undoOk,
+  quietOn:quietOn,
+  resetUnpinOk:resetUnpinOk,
+  divFirstSelOk:divFirstSelOk,
+  catFiltered:catFiltered,
+  divAddOk:divAddOk
+};
 
 var before=document.getElementById('tax-result').textContent;
 var b2=document.querySelector('#period-seg button[data-period=lt_1m]');if(b2)b2.click();
@@ -449,9 +538,16 @@ rec(23, '流向连线图 + 单只ETF持仓展开 + 三层递进默认收起断�
   vz.flowFocused === true && vz.drillTabs === 3 && vz.drillItems >= 5 && vz.drillHasYuan === true,
   `plain=${vz.plainOk} advClosed=${vz.advDefaultClosed} flow=${vz.flowNodes}n/${vz.flowEdges}e focus=${vz.flowFocused} drill=${vz.drillItems}i`);
 
-rec(25, '双真3D透视Canvas引擎(观澜+叠嶂) + 四象限零空洞等高对齐 + 东方尺牍诗意判词无Emoji断言',
-  vz.stage3dOk === true && vz.surf3dOk === true && vz.zeroVoidEqualHeight === true && vz.poeticNarratorOk === true,
-  `stage3d=${vz.stage3dOk} surf3d=${vz.surf3dOk} equalHeight=${vz.zeroVoidEqualHeight} poeticNoEmoji=${vz.poeticNarratorOk}`);
+rec(25, '双真3D透视Canvas引擎 + 四象限零空洞等高对齐 + 全站极简白话无古风词/无Emoji断言',
+  vz.stage3dOk === true && vz.surf3dOk === true && vz.zeroVoidEqualHeight === true && vz.cleanCopyOk === true,
+  `stage3d=${vz.stage3dOk} surf3d=${vz.surf3dOk} equalHeight=${vz.zeroVoidEqualHeight} cleanCopy=${vz.cleanCopyOk}`);
+
+const ux = R.v41Ux || {};
+rec(26, 'v4.1流畅交互工具链（3D/2D切换 + 3D卡片精准点击 + ⌘K失焦加仓 + 撤销Toast + 静谧模式 + 重置解绑 + 高股息入组）',
+  ux.mode2dOk === true && ux.mode3dBackOk === true && ux.cardClickOk === true && ux.cmdIsOpen === true &&
+  ux.cmdBlurOk === true && ux.cmdAddedGold === true && ux.undoOk === true && ux.quietOn === true &&
+  ux.resetUnpinOk === true && ux.divFirstSelOk === true && ux.catFiltered === true && ux.divAddOk === true,
+  `2d=${ux.mode2dOk} 3d=${ux.mode3dBackOk} cardClick=${ux.cardClickOk} cmd=${ux.cmdIsOpen}/${ux.cmdBlurOk}/${ux.cmdAddedGold} undo=${ux.undoOk} quiet=${ux.quietOn} unpin=${ux.resetUnpinOk} divSel=${ux.divFirstSelOk} divFilter=${ux.catFiltered} divAdd=${ux.divAddOk}`);
 
 // ---- [21] 孤立单文件验收（仅拷贝 index.html 至系统临时目录单独加载）----
 const isoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alphalens_isolated_'));
@@ -496,7 +592,7 @@ const isoOk = (ISO.errs || []).length === 0 && ISO.extScripts === 0 && ISO.hasDa
 rec(21, '孤立单文件验收（拷贝至临时目录零外部文件独立加载）', isoOk,
   `errs=${(ISO.errs || []).length} extSrc=${ISO.extScripts} assets=${ISO.assets} svgs=${ISO.flowSvg}/${ISO.corrSvg}/${ISO.navSvg}/${ISO.divSvg} riskCards=${ISO.riskCards} mdOk=${ISO.mdOk}`);
 
-// ---- [24] 手机端窄屏响应式无横向溢出与横滑胶囊断言 ----
+// ---- [24] 手机端窄屏响应式无横向溢出 + 横滑胶囊 + 底部毛玻璃Dock与上拉抽屉断言 ----
 const mobFile = path.join(HERE, '__v3_mobile.html');
 let MOB = {};
 try {
@@ -510,7 +606,22 @@ window.addEventListener('load',function(){setTimeout(function(){
   var presetClientW=plist?plist.clientWidth:0;
   var flowSvg=document.querySelectorAll('#flow-chart svg').length;
   var p1=document.documentElement.scrollWidth<=window.innerWidth;
-  var divBtn=document.querySelector('.main-tabs button[data-main=div]');
+  var dock=document.getElementById('mobile-dock');
+  var dockVisible=!!(dock&&getComputedStyle(dock).display==='grid');
+  var sheetDockBtn=document.querySelector('#mobile-dock button[data-dock="sheet"]');
+  if(sheetDockBtn)sheetDockBtn.click();
+  var sheetOpened=document.getElementById('mobile-sheet-backdrop').className.indexOf('open')>=0;
+  var sheetRowsBefore=document.querySelectorAll('#sheet-body input[data-sidx]').length;
+  var sheetDelBtn=document.querySelector('#sheet-body button[data-sdel]');
+  if(sheetDelBtn)sheetDelBtn.click();
+  var sheetRowsAfterDel=document.querySelectorAll('#sheet-body input[data-sidx]').length;
+  var toastAct=document.getElementById('toast-act-btn');
+  if(toastAct)toastAct.click();
+  var sheetRowsAfterUndo=document.querySelectorAll('#sheet-body input[data-sidx]').length;
+  var sheetUndoSyncOk=(sheetRowsBefore>=2)&&(sheetRowsAfterDel===sheetRowsBefore-1)&&(sheetRowsAfterUndo===sheetRowsBefore);
+  var sheetClose=document.getElementById('sheet-close-btn');
+  if(sheetClose)sheetClose.click();
+  var divBtn=document.querySelector('#mobile-dock button[data-dock="div"]');
   if(divBtn)divBtn.click();
   var p2=document.documentElement.scrollWidth<=window.innerWidth;
   var R={
@@ -521,7 +632,10 @@ window.addEventListener('load',function(){setTimeout(function(){
     presetFlexDir:presetFlexDir,
     presetScrollW:presetScrollW,
     presetClientW:presetClientW,
-    flowSvg:flowSvg
+    flowSvg:flowSvg,
+    dockVisible:dockVisible,
+    sheetOpened:sheetOpened,
+    sheetUndoSyncOk:sheetUndoSyncOk
   };
   var d=document.createElement('div');d.id='__MOB';d.style.display='none';d.textContent=JSON.stringify(R);document.body.appendChild(d);
 },1800);});
@@ -533,10 +647,12 @@ window.addEventListener('load',function(){setTimeout(function(){
 } finally {
   fs.rmSync(mobFile, { force: true });
 }
-rec(24, '手机端（窄屏）无横向溢出与横滑胶囊断言',
-  MOB.noOverflowPen === true && MOB.noOverflowDiv === true && MOB.presetFlexDir === 'row' && MOB.presetScrollW > MOB.presetClientW && MOB.flowSvg >= 1,
-  `vw=${MOB.vw} overflowPen=${!MOB.noOverflowPen} overflowDiv=${!MOB.noOverflowDiv} presetDir=${MOB.presetFlexDir} scrollW=${MOB.presetScrollW}/${MOB.presetClientW}`);
+rec(24, '手机端（窄屏）零横向溢出 + 横滑胶囊 + 底部Dock与上拉调仓抽屉撤销同步断言',
+  MOB.noOverflowPen === true && MOB.noOverflowDiv === true && MOB.presetFlexDir === 'row' &&
+  MOB.presetScrollW > MOB.presetClientW && MOB.flowSvg >= 1 && MOB.dockVisible === true &&
+  MOB.sheetOpened === true && MOB.sheetUndoSyncOk === true,
+  `vw=${MOB.vw} overflowPen=${!MOB.noOverflowPen} overflowDiv=${!MOB.noOverflowDiv} presetDir=${MOB.presetFlexDir} scrollW=${MOB.presetScrollW}/${MOB.presetClientW} dock=${MOB.dockVisible} sheet=${MOB.sheetOpened} sheetUndo=${MOB.sheetUndoSyncOk}`);
 
 const passed = results.filter(r => r.pass).length;
-console.log(`\n=== VERIFY_V3.2: ${passed}/${results.length} PASS (Chrome: ${CHROME}) ===`);
+console.log(`\n=== VERIFY_V4.1: ${passed}/${results.length} PASS (Chrome: ${CHROME}) ===`);
 if (passed !== results.length) process.exit(1);

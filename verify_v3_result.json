@@ -51,13 +51,13 @@
         },
         "correlation": {
           "level": "LOW",
-          "label": "彼此互补",
+          "label": "走势互补",
           "detail": "走势相关性 0.28"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "走势平缓",
-          "detail": "历史最大回撤 -8.5%"
+          "label": "回撤较小",
+          "detail": "区间最大回撤 -8.5%"
         }
       },
       "risk3y": {
@@ -73,13 +73,13 @@
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "大体同向",
+          "label": "中度同向",
           "detail": "走势相关性 0.57"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "走势平缓",
-          "detail": "历史最大回撤 -10.4%"
+          "label": "回撤较小",
+          "detail": "区间最大回撤 -10.4%"
         }
       },
       "hasNaN": false
@@ -114,18 +114,18 @@
         },
         "overlap": {
           "level": "LOW",
-          "label": "互不重叠",
+          "label": "无重叠",
           "detail": "0 只重复"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "大体同向",
+          "label": "中度同向",
           "detail": "走势相关性 0.51"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "波动适中",
-          "detail": "历史最大回撤 -13.4%"
+          "detail": "区间最大回撤 -13.4%"
         }
       },
       "risk3y": {
@@ -136,18 +136,18 @@
         },
         "overlap": {
           "level": "LOW",
-          "label": "互不重叠",
+          "label": "无重叠",
           "detail": "0 只重复"
         },
         "correlation": {
           "level": "MEDIUM",
-          "label": "大体同向",
+          "label": "中度同向",
           "detail": "走势相关性 0.54"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "波动适中",
-          "detail": "历史最大回撤 -14.0%"
+          "detail": "区间最大回撤 -14.0%"
         }
       },
       "hasNaN": false
@@ -182,18 +182,18 @@
         },
         "overlap": {
           "level": "LOW",
-          "label": "互不重叠",
+          "label": "无重叠",
           "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "彼此互补",
+          "label": "走势互补",
           "detail": "走势相关性 0.14"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "波动适中",
-          "detail": "历史最大回撤 -21.2%"
+          "detail": "区间最大回撤 -21.2%"
         }
       },
       "risk3y": {
@@ -204,18 +204,18 @@
         },
         "overlap": {
           "level": "LOW",
-          "label": "互不重叠",
+          "label": "无重叠",
           "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "彼此互补",
+          "label": "走势互补",
           "detail": "走势相关性 0.18"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "波动适中",
-          "detail": "历史最大回撤 -24.1%"
+          "detail": "区间最大回撤 -24.1%"
         }
       },
       "hasNaN": false
@@ -256,7 +256,7 @@
       "risk1y": {
         "concentration": {
           "level": "MEDIUM",
-          "label": "轻重有致",
+          "label": "中度集中",
           "detail": "最大单股 英伟达 ¥9,266 (9.3%)"
         },
         "overlap": {
@@ -266,19 +266,19 @@
         },
         "correlation": {
           "level": "HIGH",
-          "label": "同涨同跌",
+          "label": "高度同向",
           "detail": "走势相关性 0.84"
         },
         "drawdownVol": {
           "level": "HIGH",
-          "label": "起伏较大",
-          "detail": "历史最大回撤 -15.6%"
+          "label": "波动较大",
+          "detail": "区间最大回撤 -15.6%"
         }
       },
       "risk3y": {
         "concentration": {
           "level": "MEDIUM",
-          "label": "轻重有致",
+          "label": "中度集中",
           "detail": "最大单股 英伟达 ¥9,266 (9.3%)"
         },
         "overlap": {
@@ -288,13 +288,13 @@
         },
         "correlation": {
           "level": "HIGH",
-          "label": "同涨同跌",
+          "label": "高度同向",
           "detail": "走势相关性 0.85"
         },
         "drawdownVol": {
           "level": "HIGH",
-          "label": "起伏较大",
-          "detail": "历史最大回撤 -24.5%"
+          "label": "波动较大",
+          "detail": "区间最大回撤 -24.5%"
         }
       },
       "hasNaN": false
@@ -329,18 +329,18 @@
         },
         "overlap": {
           "level": "LOW",
-          "label": "互不重叠",
+          "label": "无重叠",
           "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "彼此互补",
+          "label": "走势互补",
           "detail": "走势相关性 0.24"
         },
         "drawdownVol": {
           "level": "MEDIUM",
           "label": "波动适中",
-          "detail": "历史最大回撤 -11.9%"
+          "detail": "区间最大回撤 -11.9%"
         }
       },
       "risk3y": {
@@ -351,18 +351,18 @@
         },
         "overlap": {
           "level": "LOW",
-          "label": "互不重叠",
+          "label": "无重叠",
           "detail": "0 只重复"
         },
         "correlation": {
           "level": "LOW",
-          "label": "彼此互补",
+          "label": "走势互补",
           "detail": "走势相关性 0.16"
         },
         "drawdownVol": {
           "level": "LOW",
-          "label": "走势平缓",
-          "detail": "历史最大回撤 -14.1%"
+          "label": "回撤较小",
+          "detail": "区间最大回撤 -14.1%"
         }
       },
       "hasNaN": false
@@ -379,7 +379,7 @@
   "exposureRows": 15,
   "hasV3Api": true,
   "md": {
-    "len": 1877,
+    "len": 1845,
     "total": true,
     "mdd": true,
     "risk4": true,
@@ -418,7 +418,7 @@
     "stage3dOk": true,
     "surf3dOk": true,
     "zeroVoidEqualHeight": true,
-    "poeticNarratorOk": true
+    "cleanCopyOk": true
   },
   "brand": true,
   "exportBtns": 3,
@@ -427,6 +427,20 @@
   "divBadges": 15,
   "fillSampleFmt": true,
   "taxRenameOk": true,
+  "v41Ux": {
+    "mode2dOk": true,
+    "mode3dBackOk": true,
+    "cardClickOk": true,
+    "cmdIsOpen": true,
+    "cmdBlurOk": true,
+    "cmdAddedGold": true,
+    "undoOk": true,
+    "quietOn": true,
+    "resetUnpinOk": true,
+    "divFirstSelOk": true,
+    "catFiltered": true,
+    "divAddOk": true
+  },
   "taxChanges": true,
   "taxHasNaN": false,
   "benchChanges": true
