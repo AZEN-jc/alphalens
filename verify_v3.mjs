@@ -336,6 +336,21 @@ if(motBtn)motBtn.click();
 var quietOn=document.documentElement.getAttribute('data-motion')==='off';
 if(motBtn)motBtn.click();
 
+// 实测风险三维坐标系放大检视弹窗（打开 + 4项实时坐标卡 + 大画布渲染 + 关闭隐藏）
+var surfExpandBtn=document.getElementById('surf-expand-btn');
+var surfModalBg=document.getElementById('surface-modal-backdrop');
+var surfModalOk=false;
+if(surfExpandBtn&&surfModalBg){
+  surfExpandBtn.click();
+  var smOpen=surfModalBg.className.indexOf('open')>=0;
+  var smCvs=document.getElementById('surface-modal-canvas');
+  var smCards=document.querySelectorAll('#sm-metrics .sm-mcard').length;
+  var smClose=document.getElementById('sm-close-btn');
+  if(smClose)smClose.click();
+  var smClosedHidden=getComputedStyle(surfModalBg).visibility==='hidden';
+  surfModalOk=smOpen&&!!(smCvs&&smCvs.width>=500&&smCvs.height>=300)&&smCards===4&&smClosedHidden;
+}
+
 // 清理回默认组合并校验 reset 清空 stageModePinned
 document.getElementById('reset-btn').click();
 var resetUnpinOk=(V.state.stageModePinned===false);
@@ -394,6 +409,7 @@ R.v41Ux={
   cmdAddedGold:cmdAddedGold,
   undoOk:undoOk,
   quietOn:quietOn,
+  surfModalOk:surfModalOk,
   resetUnpinOk:resetUnpinOk,
   divFirstSelOk:divFirstSelOk,
   catFiltered:catFiltered,
@@ -543,11 +559,11 @@ rec(25, '双真3D透视Canvas引擎 + 四象限零空洞等高对齐 + 全站极
   `stage3d=${vz.stage3dOk} surf3d=${vz.surf3dOk} equalHeight=${vz.zeroVoidEqualHeight} cleanCopy=${vz.cleanCopyOk}`);
 
 const ux = R.v41Ux || {};
-rec(26, 'v4.1流畅交互工具链（3D/2D切换 + 3D卡片精准点击 + ⌘K失焦加仓 + 撤销Toast + 静谧模式 + 重置解绑 + 高股息入组）',
-  ux.mode2dOk === true && ux.mode3dBackOk === true && ux.cardClickOk === true && ux.cmdIsOpen === true &&
-  ux.cmdBlurOk === true && ux.cmdAddedGold === true && ux.undoOk === true && ux.quietOn === true &&
-  ux.resetUnpinOk === true && ux.divFirstSelOk === true && ux.catFiltered === true && ux.divAddOk === true,
-  `2d=${ux.mode2dOk} 3d=${ux.mode3dBackOk} cardClick=${ux.cardClickOk} cmd=${ux.cmdIsOpen}/${ux.cmdBlurOk}/${ux.cmdAddedGold} undo=${ux.undoOk} quiet=${ux.quietOn} unpin=${ux.resetUnpinOk} divSel=${ux.divFirstSelOk} divFilter=${ux.catFiltered} divAdd=${ux.divAddOk}`);
+rec(26, 'v4.1流畅交互工具链（3D/2D切换 + 3D卡片精准点击 + 三维坐标系弹窗 + ⌘K失焦加仓 + 撤销Toast + 静谧模式 + 高股息入组）',
+  ux.mode2dOk === true && ux.mode3dBackOk === true && ux.cardClickOk === true && ux.surfModalOk === true &&
+  ux.cmdIsOpen === true && ux.cmdBlurOk === true && ux.cmdAddedGold === true && ux.undoOk === true &&
+  ux.quietOn === true && ux.resetUnpinOk === true && ux.divFirstSelOk === true && ux.catFiltered === true && ux.divAddOk === true,
+  `2d=${ux.mode2dOk} 3d=${ux.mode3dBackOk} cardClick=${ux.cardClickOk} surfModal=${ux.surfModalOk} cmd=${ux.cmdIsOpen}/${ux.cmdBlurOk}/${ux.cmdAddedGold} undo=${ux.undoOk} quiet=${ux.quietOn} unpin=${ux.resetUnpinOk} divSel=${ux.divFirstSelOk} divFilter=${ux.catFiltered} divAdd=${ux.divAddOk}`);
 
 // ---- [21] 孤立单文件验收（仅拷贝 index.html 至系统临时目录单独加载）----
 const isoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alphalens_isolated_'));

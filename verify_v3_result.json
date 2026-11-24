@@ -436,6 +436,7 @@
     "cmdAddedGold": true,
     "undoOk": true,
     "quietOn": true,
+    "surfModalOk": true,
     "resetUnpinOk": true,
     "divFirstSelOk": true,
     "catFiltered": true,

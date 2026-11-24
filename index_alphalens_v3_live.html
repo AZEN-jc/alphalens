@@ -211,10 +211,12 @@ main{max-width:1540px;margin:0 auto;padding:10px 14px 32px;min-width:0}
 .cockpit-split{display:grid;grid-template-columns:1.08fr 0.92fr;gap:9px;align-items:stretch}
 .cockpit-split > .quadrant-box{display:flex;flex-direction:column;justify-content:space-between;min-height:292px}
 
-.left-dual-body{display:grid;grid-template-columns:236px minmax(0,1fr);gap:10px;align-items:stretch;flex:1;min-height:0}
-.surface-3d-box{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;display:flex;flex-direction:column;min-height:224px}
-.surface-3d-box canvas{width:100%;height:100%;min-height:224px;display:block}
-.surf-reset-btn{position:absolute;bottom:6px;right:8px;z-index:3;border:1px solid var(--line2);background:color-mix(in srgb,var(--panel) 90%,transparent);border-radius:999px;padding:1px 7px;font:500 9.5px var(--font);color:var(--ink-soft);opacity:0;transition:opacity .15s}
+.left-dual-body{display:grid;grid-template-columns:288px minmax(0,1fr);gap:10px;align-items:stretch;flex:1;min-height:0}
+.surface-3d-box{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;display:flex;flex-direction:column;min-height:244px}
+.surface-3d-box canvas{width:100%;height:100%;min-height:244px;display:block}
+.surf-expand-btn{position:absolute;top:6px;right:6px;z-index:3;border:1px solid var(--line2);background:color-mix(in srgb,var(--panel) 92%,transparent);border-radius:5px;padding:1px 7px;font:600 9.5px var(--font);color:var(--ink-soft);transition:color .14s,border-color .14s,background-color .14s}
+.surf-expand-btn:hover{color:var(--ink);border-color:var(--ink);background:var(--panel)}
+.surf-reset-btn{position:absolute;bottom:20px;right:6px;z-index:3;border:1px solid var(--line2);background:color-mix(in srgb,var(--panel) 90%,transparent);border-radius:999px;padding:1px 7px;font:500 9.5px var(--font);color:var(--ink-soft);opacity:0;transition:opacity .15s}
 .surface-3d-box:hover .surf-reset-btn,.surf-reset-btn:focus{opacity:1}
 .holdings-col{display:flex;flex-direction:column;min-width:0;min-height:0}
 .sub-pane{display:none;flex:1;overflow-y:auto;max-height:236px;padding-right:2px}.sub-pane.on{display:block}
@@ -381,6 +383,33 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .sheet-head h3{font:700 14px var(--font);color:var(--ink)}
 
+/* Enlarged 3D Coordinate Surface Inspector Modal */
+.surface-modal-backdrop{position:fixed;inset:0;z-index:82;background:rgba(0,0,0,0.46);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease}
+.surface-modal-backdrop.open{opacity:1;visibility:visible;pointer-events:auto}
+.surface-modal{width:min(760px,100%);max-height:90vh;overflow-y:auto;background:var(--bg);border-radius:16px;border:1px solid var(--line2);
+  box-shadow:0 28px 80px -18px rgba(0,0,0,0.52);padding:14px 16px;display:flex;flex-direction:column;gap:10px;
+  transform:translateY(-8px) scale(.98);transition:transform .22s var(--ease-out)}
+.surface-modal-backdrop.open .surface-modal{transform:translateY(0) scale(1)}
+.sm-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.sm-title-wrap{display:flex;flex-direction:column;gap:2px}
+.sm-title-wrap h3{font:700 14px var(--font);color:var(--ink)}
+.sm-title-wrap small{font:11px var(--font);color:var(--ink-faint)}
+.sm-tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.sm-tools button{padding:3px 9px;font:600 11px var(--font);min-height:26px}
+.sm-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.sm-mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:7px 9px}
+.sm-mcard .k{font:10px var(--font);color:var(--ink-faint);margin-bottom:2px}
+.sm-mcard .v{font:700 14px var(--mono);color:var(--ink)}
+.sm-mcard .s{font:9.5px var(--font);color:var(--ink-soft);margin-top:1px}
+.sm-canvas-wrap{position:relative;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);overflow:hidden;height:400px}
+.sm-canvas-wrap canvas{width:100%;height:100%;display:block}
+.sm-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.sm-presets{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.sm-presets button{padding:3px 8px;font:500 10.5px var(--font)}
+.sm-legend{display:flex;align-items:center;gap:10px;font:10.5px var(--font);color:var(--ink-soft)}
+.sm-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+
 /* Responsive Breakpoints (1180px Tablet / 960px Narrow / 768px Mobile 390x844 Zero-Overflow) */
 @media(max-width:1180px){
   .cmd-row-top{grid-template-columns:minmax(0,1fr)}
@@ -395,7 +424,8 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
   .preset-list{display:flex;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:4px;width:100%}
   .preset{flex:0 0 auto;min-width:154px;max-width:196px;scroll-snap-align:start;padding:6px 9px}
   .left-dual-body{grid-template-columns:minmax(0,1fr)}
-  .surface-3d-box{min-height:190px;height:190px}
+  .surface-3d-box{min-height:230px;height:230px}
+  .surface-3d-box canvas{min-height:230px}
   .exp-row{flex-wrap:wrap;gap:4px}
   .exp-row .nm{width:auto;flex:1 1 55%}
   .exp-row .val-col{width:auto;flex:0 0 auto}
@@ -412,6 +442,8 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
   .toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
   main{padding:8px 10px calc(82px + env(safe-area-inset-bottom,0px))}
   footer{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))}
+  .sm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sm-canvas-wrap{height:300px}
 
   /* Compact 390px-safe command deck: zero horizontal overflow guaranteed */
   .command-deck{padding:8px 10px;gap:7px}
@@ -451,7 +483,7 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
   header #cmd-open-btn,header #theme-btn{display:none}
 }
 @media print{
-  header,.report-btn,#reset-btn,.add-row,.pos-list,.preset-list,.window-bar .seg,.ai-export-col,.mobile-dock,.cmd-backdrop,.mobile-sheet-backdrop{display:none!important}
+  header,.report-btn,#reset-btn,.add-row,.pos-list,.preset-list,.window-bar .seg,.ai-export-col,.mobile-dock,.cmd-backdrop,.mobile-sheet-backdrop,.surface-modal-backdrop{display:none!important}
   .cockpit-split,.left-dual-body{grid-template-columns:1fr}
   body{background:#fff;color:#000}
   main{padding:0;max-width:none}
@@ -587,7 +619,8 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
         </div>
 
         <div class="left-dual-body">
-          <div class="surface-3d-box" title="按住鼠标或手指拖动可旋转 3D 地形视角，双击或点按钮复位">
+          <div class="surface-3d-box" title="按住拖动可 360° 旋转三维坐标系，滚轮缩放，双击复位">
+            <button type="button" class="surf-expand-btn" id="surf-expand-btn" title="放大检视完整三维坐标系">⤢ 放大</button>
             <button type="button" class="surf-reset-btn" id="surf-reset-btn">重置视角</button>
             <canvas id="surface-3d-canvas"></canvas>
           </div>
@@ -782,6 +815,35 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
       <button type="button" class="key-btn" id="sheet-close-btn" style="padding:3px 10px;font-size:11px">完成</button>
     </div>
     <div id="sheet-body" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</div>
+
+<!-- 风险三维坐标系放大检视弹窗 -->
+<div class="surface-modal-backdrop" id="surface-modal-backdrop" role="dialog" aria-modal="true" aria-label="风险三维坐标系放大检视">
+  <div class="surface-modal">
+    <div class="sm-head">
+      <div class="sm-title-wrap">
+        <h3>风险三维坐标系 · 立体检视</h3>
+        <small>X 单股集中度(%) × Y 重仓重合度(%) × Z 综合风险分(0~100) · 拖动 360° 旋转 · 滚轮缩放</small>
+      </div>
+      <div class="sm-tools">
+        <button type="button" class="key-btn" id="sm-zoom-out" aria-label="缩小视角">−</button>
+        <button type="button" class="key-btn" id="sm-zoom-in" aria-label="放大视角">+</button>
+        <button type="button" class="key-btn" id="sm-reset-btn">复位视角</button>
+        <button type="button" class="key-btn primary" id="sm-close-btn">完成</button>
+      </div>
+    </div>
+    <div class="sm-metrics" id="sm-metrics"></div>
+    <div class="sm-canvas-wrap">
+      <canvas id="surface-modal-canvas"></canvas>
+    </div>
+    <div class="sm-foot">
+      <div class="sm-presets" id="sm-presets"></div>
+      <div class="sm-legend">
+        <span><i style="background:#dc2626"></i>当前组合与三轴投影</span>
+        <span><i style="background:#047857"></i>理想分散区参照</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2205,34 +2267,79 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
   }
 
   /**
-   * Interactive Drag-to-Orbit 3D Risk & Overlap Distribution Surface
+   * Interactive 3D Coordinate Risk Surface Model
+   * Axes: X = Single-stock concentration (0~35%), Y = Overlap weight (0~50%), Z = Composite risk score (0~100).
    */
+  var SURFACE_DEFAULT = { yaw: -0.64, pitch: 0.42, zoom: 1.0 };
   var SURFACE_STATE = {
-    yaw: -0.62,
-    pitch: 0.48,
+    yaw: SURFACE_DEFAULT.yaw,
+    pitch: SURFACE_DEFAULT.pitch,
+    zoom: SURFACE_DEFAULT.zoom,
     dragging: false,
     lastX: 0,
     lastY: 0,
-    boundCanvas: null,
-    lastArgs: null
+    views: []
   };
 
-  function resetSurface3DView() {
-    SURFACE_STATE.yaw = -0.62;
-    SURFACE_STATE.pitch = 0.48;
-    if (SURFACE_STATE.lastArgs) {
-      renderSurface3DCanvas(
-        SURFACE_STATE.lastArgs.canvas,
-        SURFACE_STATE.lastArgs.pen,
-        SURFACE_STATE.lastArgs.corr,
-        SURFACE_STATE.lastArgs.curve
-      );
+  function computeSurfaceMetrics(pen, corr, curve) {
+    var top1W = (pen && pen.exposures && pen.exposures[0]) ? pen.exposures[0].totalWeight : 0;
+    var overlapW = (pen && pen.overlaps)
+      ? pen.overlaps.reduce(function (s, x) { return s + x.totalWeight; }, 0)
+      : 0;
+    var avgCorr = (corr && corr.avgOffDiagonal != null) ? Math.max(0, corr.avgOffDiagonal) : 0;
+    var mddAbs = (curve && curve.maxDrawdown != null) ? Math.abs(curve.maxDrawdown) : 0;
+    var top1Pct = top1W * 100;
+    var overlapPct = overlapW * 100;
+    var uPort = Math.max(0.02, Math.min(0.98, top1Pct / 35));
+    var vPort = Math.max(0.02, Math.min(0.98, overlapPct / 50));
+    var corrBias = Math.min(16, avgCorr * 20);
+    var rawScore = Math.min(62, overlapW * 135) + Math.min(22, top1W * 55) + corrBias;
+    var riskScore = Math.max(6, Math.min(95, Math.round(rawScore)));
+    var idealU = 5 / 35;
+    var idealV = 0.03;
+    var idealScore = Math.max(6, Math.min(95, Math.round(Math.min(22, 0.05 * 55) + 4)));
+    var distIdeal = Math.round(Math.hypot((uPort - idealU) * 100, (vPort - idealV) * 100));
+    var statusLabel = riskScore >= 60 ? '风险偏高' : (riskScore >= 32 ? '轻重适中' : '多元分散');
+    return {
+      top1Pct: top1Pct,
+      overlapPct: overlapPct,
+      avgCorr: avgCorr,
+      mddPct: mddAbs * 100,
+      uPort: uPort,
+      vPort: vPort,
+      corrBias: corrBias,
+      riskScore: riskScore,
+      idealU: idealU,
+      idealV: idealV,
+      idealScore: idealScore,
+      distIdeal: distIdeal,
+      statusLabel: statusLabel
+    };
+  }
+
+  function redrawAllSurfaceViews() {
+    SURFACE_STATE.views = SURFACE_STATE.views.filter(function (v) { return v.canvas && v.canvas.isConnected; });
+    for (var i = 0; i < SURFACE_STATE.views.length; i++) {
+      var v = SURFACE_STATE.views[i];
+      renderSurface3DCanvas(v.canvas, v.pen, v.corr, v.curve, v.opts);
     }
   }
 
+  function resetSurface3DView() {
+    SURFACE_STATE.yaw = SURFACE_DEFAULT.yaw;
+    SURFACE_STATE.pitch = SURFACE_DEFAULT.pitch;
+    SURFACE_STATE.zoom = SURFACE_DEFAULT.zoom;
+    redrawAllSurfaceViews();
+  }
+
+  function zoomSurface3D(delta) {
+    SURFACE_STATE.zoom = Math.max(0.75, Math.min(1.55, SURFACE_STATE.zoom + (Number(delta) || 0)));
+    redrawAllSurfaceViews();
+  }
+
   function bindSurface3DInteraction(canvas) {
-    if (!canvas || SURFACE_STATE.boundCanvas === canvas) return;
-    SURFACE_STATE.boundCanvas = canvas;
+    if (!canvas || canvas.__surfaceBound) return;
+    canvas.__surfaceBound = true;
     canvas.style.cursor = 'grab';
     canvas.style.touchAction = 'none';
 
@@ -2248,16 +2355,9 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
       var dy = y - SURFACE_STATE.lastY;
       SURFACE_STATE.lastX = x;
       SURFACE_STATE.lastY = y;
-      SURFACE_STATE.yaw += dx * 0.012;
-      SURFACE_STATE.pitch = Math.max(0.18, Math.min(1.05, SURFACE_STATE.pitch + dy * 0.009));
-      if (SURFACE_STATE.lastArgs) {
-        renderSurface3DCanvas(
-          SURFACE_STATE.lastArgs.canvas,
-          SURFACE_STATE.lastArgs.pen,
-          SURFACE_STATE.lastArgs.corr,
-          SURFACE_STATE.lastArgs.curve
-        );
-      }
+      SURFACE_STATE.yaw += dx * 0.011;
+      SURFACE_STATE.pitch = Math.max(0.20, Math.min(1.08, SURFACE_STATE.pitch + dy * 0.0085));
+      redrawAllSurfaceViews();
     };
     var onEnd = function () {
       if (!SURFACE_STATE.dragging) return;
@@ -2274,17 +2374,127 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
     canvas.addEventListener('pointermove', function (e) { onMove(e.clientX, e.clientY); });
     canvas.addEventListener('pointerup', onEnd);
     canvas.addEventListener('pointercancel', onEnd);
+    canvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      zoomSurface3D(e.deltaY < 0 ? 0.09 : -0.09);
+    }, { passive: false });
     canvas.addEventListener('dblclick', resetSurface3DView);
   }
 
-  function renderSurface3DCanvas(canvas, pen, corr, curve) {
+  function sampleRiskColormap(t, isLight) {
+    var clamped = Math.max(0, Math.min(1, t));
+    var stops = isLight
+      ? [
+          [0.00, [7, 148, 85]],
+          [0.36, [37, 99, 235]],
+          [0.66, [124, 58, 237]],
+          [1.00, [220, 38, 38]]
+        ]
+      : [
+          [0.00, [16, 185, 129]],
+          [0.36, [96, 165, 250]],
+          [0.66, [167, 139, 250]],
+          [1.00, [244, 63, 94]]
+        ];
+    for (var i = 0; i < stops.length - 1; i++) {
+      var a = stops[i], b = stops[i + 1];
+      if (clamped >= a[0] && clamped <= b[0]) {
+        var f = (clamped - a[0]) / (b[0] - a[0] || 1);
+        return [
+          a[1][0] + (b[1][0] - a[1][0]) * f,
+          a[1][1] + (b[1][1] - a[1][1]) * f,
+          a[1][2] + (b[1][2] - a[1][2]) * f
+        ];
+      }
+    }
+    return stops[stops.length - 1][1];
+  }
+
+  function projectSurface3D(x, y, z, cam) {
+    var dx = x - (cam.targetX || 0);
+    var dy = y - (cam.targetY || 0);
+    var dz = z - (cam.targetZ || 0);
+
+    var cosY = Math.cos(cam.yaw), sinY = Math.sin(cam.yaw);
+    var x1 = dx * cosY - dz * sinY;
+    var z1 = dx * sinY + dz * cosY; // Positive z1 = closer to camera (front/lower on screen)
+
+    var cosP = Math.cos(cam.pitch), sinP = Math.sin(cam.pitch);
+    var y2 = dy * cosP - z1 * sinP; // Closer floor points project lower on screen
+    var zCam = dy * sinP + z1 * cosP; // Larger zCam = closer to camera
+
+    var depth = cam.dist - zCam; // Smaller depth = closer, larger depth = farther
+    if (depth < 45) depth = 45;
+    var scale = cam.fov / depth;
+    return {
+      x: cam.cx + x1 * scale,
+      y: cam.cy - y2 * scale,
+      depth: depth,
+      scale: scale
+    };
+  }
+
+  function drawSurfaceFloorContours(ctx, levels, gridScores, N, half, cam, isLight) {
+    var colors = isLight
+      ? ['rgba(7,148,85,0.52)', 'rgba(124,58,237,0.48)', 'rgba(220,38,38,0.54)']
+      : ['rgba(16,185,129,0.56)', 'rgba(167,139,250,0.52)', 'rgba(244,63,94,0.58)'];
+    for (var li = 0; li < levels.length; li++) {
+      var lv = levels[li];
+      ctx.beginPath();
+      for (var i = 0; i < N; i++) {
+        for (var j = 0; j < N; j++) {
+          var s00 = gridScores[i][j];
+          var s10 = gridScores[i + 1][j];
+          var s11 = gridScores[i + 1][j + 1];
+          var s01 = gridScores[i][j + 1];
+          var u0 = i / N, u1 = (i + 1) / N, v0 = j / N, v1 = (j + 1) / N;
+          var segs = [];
+          var interp = function (va, vb, p1, p2) {
+            if ((va < lv && vb >= lv) || (va >= lv && vb < lv)) {
+              var t = (lv - va) / (vb - va || 1e-6);
+              segs.push([p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t]);
+            }
+          };
+          interp(s00, s10, [u0, v0], [u1, v0]);
+          interp(s10, s11, [u1, v0], [u1, v1]);
+          interp(s11, s01, [u1, v1], [u0, v1]);
+          interp(s01, s00, [u0, v1], [u0, v0]);
+          if (segs.length >= 2) {
+            var pa = projectSurface3D((segs[0][0] - 0.5) * half * 2, 0.5, (segs[0][1] - 0.5) * half * 2, cam);
+            var pb = projectSurface3D((segs[1][0] - 0.5) * half * 2, 0.5, (segs[1][1] - 0.5) * half * 2, cam);
+            ctx.moveTo(pa.x, pa.y);
+            ctx.lineTo(pb.x, pb.y);
+          }
+        }
+      }
+      ctx.strokeStyle = colors[li % colors.length];
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+    }
+  }
+
+  function renderSurface3DCanvas(canvas, pen, corr, curve, opts) {
     if (!canvas) return;
-    SURFACE_STATE.lastArgs = { canvas: canvas, pen: pen, corr: corr, curve: curve };
+    opts = opts || {};
+    var expanded = Boolean(opts.expanded);
+
+    var found = false;
+    for (var vi = 0; vi < SURFACE_STATE.views.length; vi++) {
+      if (SURFACE_STATE.views[vi].canvas === canvas) {
+        SURFACE_STATE.views[vi].pen = pen;
+        SURFACE_STATE.views[vi].corr = corr;
+        SURFACE_STATE.views[vi].curve = curve;
+        SURFACE_STATE.views[vi].opts = opts;
+        found = true;
+        break;
+      }
+    }
+    if (!found) SURFACE_STATE.views.push({ canvas: canvas, pen: pen, corr: corr, curve: curve, opts: opts });
     bindSurface3DInteraction(canvas);
 
     var rect = canvas.getBoundingClientRect();
-    var cssW = Math.max(220, rect.width || 240);
-    var cssH = Math.max(165, rect.height || 210);
+    var cssW = Math.max(expanded ? 520 : 240, rect.width || (expanded ? 680 : 284));
+    var cssH = Math.max(expanded ? 360 : 200, rect.height || (expanded ? 400 : 246));
     var dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
@@ -2298,128 +2508,364 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
     ctx.fillStyle = isLight ? '#F8F7F2' : '#111114';
     ctx.fillRect(0, 0, cssW, cssH);
 
-    var top1W = (pen && pen.exposures && pen.exposures[0]) ? pen.exposures[0].totalWeight : 0.06;
-    var overlapW = (pen && pen.overlaps)
-      ? pen.overlaps.reduce(function (s, x) { return s + x.totalWeight; }, 0)
-      : 0;
-    var avgCorr = (corr && corr.avgOffDiagonal != null) ? Math.max(0, corr.avgOffDiagonal) : 0.35;
-    var mddAbs = (curve && curve.maxDrawdown != null) ? Math.abs(curve.maxDrawdown) : 0.15;
-
-    var uPort = Math.max(0.12, Math.min(0.88, top1W * 3.6 + mddAbs * 0.7));
-    var vPort = Math.max(0.12, Math.min(0.88, overlapW * 2.1 + avgCorr * 0.45));
+    var m = computeSurfaceMetrics(pen, corr, curve);
+    var half = 76;
+    var span = half * 2;
+    var boxH = 112;
 
     var cam = {
-      cx: cssW * 0.50,
-      cy: cssH * 0.63,
-      fov: Math.min(cssW, 380) * 0.92,
-      dist: 360,
+      cx: cssW * 0.52,
+      cy: cssH * (expanded ? 0.46 : 0.44),
+      fov: expanded ? Math.min(cssW * 1.10, cssH * 1.42) : Math.min(cssW * 0.96, cssH * 1.08),
+      dist: 350 / SURFACE_STATE.zoom,
       yaw: SURFACE_STATE.yaw,
       pitch: SURFACE_STATE.pitch,
       targetX: 0,
-      targetY: 18,
+      targetY: boxH * 0.44,
       targetZ: 0
     };
 
-    var N = 14;
-    var span = 176;
-    var heightFn = function (u, v) {
-      var d1 = Math.pow(u - uPort, 2) + Math.pow(v - vPort, 2);
-      var d2 = Math.pow(u - 0.82, 2) + Math.pow(v - 0.78, 2);
-      var ridge1 = Math.exp(-d1 * 9.5) * (24 + overlapW * 95 + top1W * 120);
-      var ridge2 = Math.exp(-d2 * 7.0) * 38;
-      var wave = Math.sin(u * Math.PI * 1.5) * Math.cos(v * Math.PI * 1.5) * 8;
-      return Math.max(3, 6 + (u * 0.4 + v * 0.6) * 22 + ridge1 + ridge2 + wave);
+    // Dynamically pick the two farthest back-facing vertical walls (largest depth)
+    var dNegX = projectSurface3D(-half, boxH * 0.5, 0, cam).depth;
+    var dPosX = projectSurface3D(half, boxH * 0.5, 0, cam).depth;
+    var backX = dNegX >= dPosX ? -half : half;
+    var frontX = -backX;
+
+    var dNegZ = projectSurface3D(0, boxH * 0.5, -half, cam).depth;
+    var dPosZ = projectSurface3D(0, boxH * 0.5, half, cam).depth;
+    var backZ = dNegZ >= dPosZ ? -half : half;
+    var frontZ = -backZ;
+
+    var scoreFn = function (u, v) {
+      var overlapPart = Math.min(62, (v * 0.50) * 135);
+      var concPart = Math.min(22, (u * 0.35) * 55);
+      var curvature = (u * u * 5.5) + (v * v * 7.0) + (u * v * 11.0);
+      var val = overlapPart + concPart + m.corrBias + curvature * 0.42;
+      return Math.max(4, Math.min(98, val));
+    };
+    var rawAtPort = scoreFn(m.uPort, m.vPort);
+    var calibratedScoreFn = function (u, v) {
+      var d2 = Math.pow(u - m.uPort, 2) + Math.pow(v - m.vPort, 2);
+      var blend = Math.exp(-d2 * 6.5) * (m.riskScore - rawAtPort);
+      return Math.max(4, Math.min(98, scoreFn(u, v) + blend));
     };
 
-    var gridPts = [];
-    for (var i = 0; i <= N; i++) {
-      var row = [];
-      var u = i / N;
-      var x = (u - 0.5) * span;
-      for (var j = 0; j <= N; j++) {
-        var v = j / N;
-        var z = (v - 0.5) * span;
-        var y = heightFn(u, v);
-        var p = projectPoint3D(x, y, z, cam);
-        p.h = y;
-        row.push(p);
-      }
-      gridPts.push(row);
+    var drawQuad = function (pts, fill, stroke, lw) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (var k = 1; k < pts.length; k++) ctx.lineTo(pts[k].x, pts[k].y);
+      ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
+    };
+
+    // 1. Draw the 3 back coordinate walls (XY Floor + Back-X Wall + Back-Z Wall)
+    var wallFillFloor = isLight ? 'rgba(15,23,42,0.036)' : 'rgba(255,255,255,0.035)';
+    var wallFillSide = isLight ? 'rgba(15,23,42,0.020)' : 'rgba(255,255,255,0.020)';
+    var gridLineCol = isLight ? 'rgba(15,23,42,0.090)' : 'rgba(255,255,255,0.095)';
+    var cageEdgeCol = isLight ? 'rgba(15,23,42,0.22)' : 'rgba(255,255,255,0.22)';
+
+    drawQuad([
+      projectSurface3D(-half, 0, -half, cam),
+      projectSurface3D(half, 0, -half, cam),
+      projectSurface3D(half, 0, half, cam),
+      projectSurface3D(-half, 0, half, cam)
+    ], wallFillFloor, cageEdgeCol, 1.0);
+
+    drawQuad([
+      projectSurface3D(backX, 0, -half, cam),
+      projectSurface3D(backX, 0, half, cam),
+      projectSurface3D(backX, boxH, half, cam),
+      projectSurface3D(backX, boxH, -half, cam)
+    ], wallFillSide, cageEdgeCol, 0.9);
+
+    drawQuad([
+      projectSurface3D(-half, 0, backZ, cam),
+      projectSurface3D(half, 0, backZ, cam),
+      projectSurface3D(half, boxH, backZ, cam),
+      projectSurface3D(-half, boxH, backZ, cam)
+    ], wallFillSide, cageEdgeCol, 0.9);
+
+    // Coordinate wall grid lines (4 divisions per axis)
+    ctx.strokeStyle = gridLineCol;
+    ctx.lineWidth = 0.75;
+    for (var g = 1; g <= 3; g++) {
+      var frac = g / 4;
+      var gx = -half + frac * span;
+      var gz = -half + frac * span;
+      var gy = frac * boxH;
+      var p1, p2;
+      p1 = projectSurface3D(gx, 0, -half, cam); p2 = projectSurface3D(gx, 0, half, cam);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      p1 = projectSurface3D(-half, 0, gz, cam); p2 = projectSurface3D(half, 0, gz, cam);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      p1 = projectSurface3D(backX, gy, -half, cam); p2 = projectSurface3D(backX, gy, half, cam);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      p1 = projectSurface3D(backX, 0, gz, cam); p2 = projectSurface3D(backX, boxH, gz, cam);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      p1 = projectSurface3D(-half, gy, backZ, cam); p2 = projectSurface3D(half, gy, backZ, cam);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      p1 = projectSurface3D(gx, 0, backZ, cam); p2 = projectSurface3D(gx, boxH, backZ, cam);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
     }
 
-    // Painter's sort quads by average projected Z for smooth 360° drag rotation
+    // 2. Build 16x16 world mesh + XY Floor Iso-Risk Contours (Z = 25, 50, 75)
+    var N = 16;
+    var worldPts = [];
+    var projPts = [];
+    var gridScores = [];
+    for (var i = 0; i <= N; i++) {
+      var wRow = [], pRow = [], sRow = [];
+      var u = i / N;
+      var wx = -half + u * span;
+      for (var j = 0; j <= N; j++) {
+        var v = j / N;
+        var wz = -half + v * span;
+        var sc = calibratedScoreFn(u, v);
+        var wy = (sc / 100) * boxH;
+        wRow.push({ x: wx, y: wy, z: wz });
+        var pp = projectSurface3D(wx, wy, wz, cam);
+        pp.sc = sc;
+        pRow.push(pp);
+        sRow.push(sc);
+      }
+      worldPts.push(wRow);
+      projPts.push(pRow);
+      gridScores.push(sRow);
+    }
+
+    drawSurfaceFloorContours(ctx, [25, 50, 75], gridScores, N, half, cam, isLight);
+
+    // Ideal diversified zone target ring on the XY floor
+    var ix = -half + m.idealU * span;
+    var iz = -half + m.idealV * span;
+    var iy = (calibratedScoreFn(m.idealU, m.idealV) / 100) * boxH;
+    var idealCol = isLight ? '#047857' : '#10B981';
+    ctx.beginPath();
+    for (var a = 0; a <= 18; a++) {
+      var ang = (a / 18) * Math.PI * 2;
+      var rp = projectSurface3D(
+        Math.max(-half + 2, Math.min(half - 2, ix + Math.cos(ang) * 15)),
+        0.8,
+        Math.max(-half + 2, Math.min(half - 2, iz + Math.sin(ang) * 15)),
+        cam
+      );
+      if (a === 0) ctx.moveTo(rp.x, rp.y); else ctx.lineTo(rp.x, rp.y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = isLight ? 'rgba(7,148,85,0.16)' : 'rgba(16,185,129,0.20)';
+    ctx.fill();
+    ctx.strokeStyle = hexToRgba(idealCol, 0.78);
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+
+    // 3. Lambert Normal-Shaded 3D Risk Surface (Painter's depth sort: farthest first)
+    var lightDir = [0.42, 0.84, 0.34];
+    var lightLen = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
+    lightDir = [lightDir[0] / lightLen, lightDir[1] / lightLen, lightDir[2] / lightLen];
+
     var quads = [];
     for (var r = 0; r < N; r++) {
       for (var c = 0; c < N; c++) {
-        var p00 = gridPts[r][c], p10 = gridPts[r + 1][c], p11 = gridPts[r + 1][c + 1], p01 = gridPts[r][c + 1];
+        var wp00 = worldPts[r][c], wp10 = worldPts[r + 1][c], wp01 = worldPts[r][c + 1];
+        var e1x = wp10.x - wp00.x, e1y = wp10.y - wp00.y, e1z = wp10.z - wp00.z;
+        var e2x = wp01.x - wp00.x, e2y = wp01.y - wp00.y, e2z = wp01.z - wp00.z;
+        var nx = e2y * e1z - e2z * e1y;
+        var ny = e2z * e1x - e2x * e1z;
+        var nz = e2x * e1y - e2y * e1x;
+        var nLen = Math.hypot(nx, ny, nz) || 1;
+        nx /= nLen; ny /= nLen; nz /= nLen;
+        if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+        var ndotl = Math.max(0, nx * lightDir[0] + ny * lightDir[1] + nz * lightDir[2]);
+        var shade = 0.62 + 0.44 * ndotl;
+
+        var pp00 = projPts[r][c], pp10 = projPts[r + 1][c], pp11 = projPts[r + 1][c + 1], pp01 = projPts[r][c + 1];
         quads.push({
-          pts: [p00, p10, p11, p01],
-          zAvg: (p00.z + p10.z + p11.z + p01.z) * 0.25,
-          hAvg: (p00.h + p10.h + p11.h + p01.h) * 0.25
+          pts: [pp00, pp10, pp11, pp01],
+          dAvg: (pp00.depth + pp10.depth + pp11.depth + pp01.depth) * 0.25,
+          scAvg: (pp00.sc + pp10.sc + pp11.sc + pp01.sc) * 0.25,
+          shade: shade
         });
       }
     }
-    quads.sort(function (a, b) { return b.zAvg - a.zAvg; });
+    quads.sort(function (a, b) { return b.dAvg - a.dAvg; });
 
     for (var qi = 0; qi < quads.length; qi++) {
       var q = quads[qi];
-      var hNorm = Math.min(1, Math.max(0, (q.hAvg - 6) / 68));
-      var fillCol, strokeCol;
-      if (hNorm < 0.35) {
-        fillCol = isLight ? 'rgba(13,148,136,0.16)' : 'rgba(45,212,191,0.16)';
-        strokeCol = isLight ? 'rgba(37,99,235,0.45)' : 'rgba(96,165,250,0.45)';
-      } else if (hNorm < 0.68) {
-        fillCol = isLight ? 'rgba(124,58,237,0.20)' : 'rgba(167,139,250,0.22)';
-        strokeCol = isLight ? 'rgba(124,58,237,0.62)' : 'rgba(167,139,250,0.62)';
-      } else {
-        fillCol = isLight ? 'rgba(220,38,38,0.24)' : 'rgba(244,63,94,0.28)';
-        strokeCol = isLight ? 'rgba(220,38,38,0.82)' : 'rgba(244,63,94,0.82)';
-      }
-      ctx.beginPath();
-      ctx.moveTo(q.pts[0].x, q.pts[0].y);
-      ctx.lineTo(q.pts[1].x, q.pts[1].y);
-      ctx.lineTo(q.pts[2].x, q.pts[2].y);
-      ctx.lineTo(q.pts[3].x, q.pts[3].y);
-      ctx.closePath();
-      ctx.fillStyle = fillCol;
-      ctx.fill();
-      ctx.strokeStyle = strokeCol;
-      ctx.lineWidth = 0.75;
-      ctx.stroke();
+      var baseRgb = sampleRiskColormap(q.scAvg / 100, isLight);
+      var sr = Math.min(255, Math.round(baseRgb[0] * q.shade));
+      var sg = Math.min(255, Math.round(baseRgb[1] * q.shade));
+      var sb = Math.min(255, Math.round(baseRgb[2] * q.shade));
+      var fillAlpha = isLight ? 0.72 : 0.76;
+      var lineAlpha = isLight ? 0.34 : 0.42;
+      drawQuad(
+        q.pts,
+        'rgba(' + sr + ',' + sg + ',' + sb + ',' + fillAlpha + ')',
+        'rgba(' + Math.round(sr * 0.80) + ',' + Math.round(sg * 0.80) + ',' + Math.round(sb * 0.80) + ',' + lineAlpha + ')',
+        expanded ? 0.85 : 0.60
+      );
     }
 
-    var bx = (uPort - 0.5) * span;
-    var bz = (vPort - 0.5) * span;
-    var by = heightFn(uPort, vPort);
-    var pBeacon = projectPoint3D(bx, by + 3, bz, cam);
-    var pFloor = projectPoint3D(bx, 0, bz, cam);
+    // 4. Ideal Diversified Reference Marker & Current Portfolio Beacon with 3-Axis Projections
+    var bx = -half + m.uPort * span;
+    var bz = -half + m.vPort * span;
+    var by = (calibratedScoreFn(m.uPort, m.vPort) / 100) * boxH;
 
-    var beaconCol = overlapW >= 0.15 ? (isLight ? '#DC2626' : '#F43F5E') : (overlapW > 0 ? '#D97706' : '#079455');
-    ctx.strokeStyle = beaconCol;
-    ctx.lineWidth = 1.2;
+    var pIdealFloor = projectSurface3D(ix, 0, iz, cam);
+    var pIdealTop = projectSurface3D(ix, iy + 2, iz, cam);
+    ctx.strokeStyle = hexToRgba(idealCol, 0.78);
+    ctx.lineWidth = 1.1;
     ctx.setLineDash([2, 2]);
-    ctx.beginPath(); ctx.moveTo(pFloor.x, pFloor.y); ctx.lineTo(pBeacon.x, pBeacon.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pIdealFloor.x, pIdealFloor.y); ctx.lineTo(pIdealTop.x, pIdealTop.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(pIdealTop.x, pIdealTop.y, expanded ? 4.8 : 3.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    ctx.strokeStyle = idealCol; ctx.lineWidth = 2.0; ctx.stroke();
+
+    // Clean pill badge for 理想分散区 (zero overlap with front axes)
+    var idealTxt = '理想分散区';
+    ctx.font = (expanded ? '600 10.5px' : '600 8.5px') + ' "PingFang SC","SF Pro Text",sans-serif';
+    var idW = ctx.measureText(idealTxt).width + 8;
+    var idX = Math.max(8, Math.min(cssW - idW - 8, pIdealTop.x - idW * 0.5));
+    var idY = Math.max(20, pIdealTop.y - (expanded ? 22 : 17));
+    ctx.fillStyle = isLight ? 'rgba(255,255,255,0.92)' : 'rgba(18,24,22,0.92)';
+    ctx.strokeStyle = hexToRgba(idealCol, 0.72);
+    ctx.lineWidth = 0.9;
+    ctx.fillRect(idX, idY, idW, expanded ? 16 : 13);
+    ctx.strokeRect(idX, idY, idW, expanded ? 16 : 13);
+    ctx.fillStyle = idealCol;
+    ctx.textAlign = 'center';
+    ctx.fillText(idealTxt, idX + idW * 0.5, idY + (expanded ? 11.5 : 9.5));
+
+    // Current Portfolio 3-axis orthogonal projections (XY Floor + Back-X Wall + Back-Z Wall)
+    var beaconCol = m.riskScore >= 60 ? (isLight ? '#DC2626' : '#F43F5E') : (m.riskScore >= 32 ? '#D97706' : idealCol);
+    var pBeacon = projectSurface3D(bx, by + 2.5, bz, cam);
+    var pFloor = projectSurface3D(bx, 0, bz, cam);
+    var pWallX = projectSurface3D(backX, by, bz, cam);
+    var pWallZ = projectSurface3D(bx, by, backZ, cam);
+    var pAxisX = projectSurface3D(bx, 0, frontZ, cam);
+    var pAxisY = projectSurface3D(frontX, 0, bz, cam);
+
+    ctx.strokeStyle = hexToRgba(beaconCol, 0.85);
+    ctx.lineWidth = expanded ? 1.4 : 1.1;
+    ctx.setLineDash([3, 2.5]);
+    ctx.beginPath(); ctx.moveTo(pBeacon.x, pBeacon.y); ctx.lineTo(pFloor.x, pFloor.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pBeacon.x, pBeacon.y); ctx.lineTo(pWallX.x, pWallX.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pBeacon.x, pBeacon.y); ctx.lineTo(pWallZ.x, pWallZ.y); ctx.stroke();
+    ctx.strokeStyle = hexToRgba(beaconCol, 0.55);
+    ctx.lineWidth = 1.0;
+    ctx.beginPath(); ctx.moveTo(pFloor.x, pFloor.y); ctx.lineTo(pAxisX.x, pAxisX.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pFloor.x, pFloor.y); ctx.lineTo(pAxisY.x, pAxisY.y); ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.beginPath(); ctx.arc(pBeacon.x, pBeacon.y, 7.5, 0, Math.PI * 2);
-    ctx.fillStyle = hexToRgba(beaconCol, 0.26); ctx.fill();
-    ctx.beginPath(); ctx.arc(pBeacon.x, pBeacon.y, 3.6, 0, Math.PI * 2);
+    [pFloor, pWallX, pWallZ].forEach(function (pt) {
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, expanded ? 3.0 : 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = beaconCol; ctx.fill();
+    });
+
+    ctx.beginPath(); ctx.arc(pBeacon.x, pBeacon.y, expanded ? 10.5 : 7.5, 0, Math.PI * 2);
+    ctx.fillStyle = hexToRgba(beaconCol, 0.24); ctx.fill();
+    ctx.beginPath(); ctx.arc(pBeacon.x, pBeacon.y, expanded ? 5.4 : 3.9, 0, Math.PI * 2);
     ctx.fillStyle = '#FFFFFF'; ctx.fill();
-    ctx.strokeStyle = beaconCol; ctx.lineWidth = 1.8; ctx.stroke();
+    ctx.strokeStyle = beaconCol; ctx.lineWidth = expanded ? 2.4 : 2.0; ctx.stroke();
 
-    ctx.font = '600 9.5px "PingFang SC","SF Pro Text",sans-serif';
-    ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
-    ctx.textAlign = 'left';
-    ctx.fillText('集中度 × 重合度地形', 8, 14);
+    var orbLabel = expanded
+      ? ('当前组合 · X ' + m.top1Pct.toFixed(1) + '% / Y ' + m.overlapPct.toFixed(1) + '% / 风险 ' + m.riskScore)
+      : ('风险 ' + m.riskScore);
+    ctx.font = (expanded ? '700 11px' : '700 9px') + ' "JetBrains Mono","PingFang SC",monospace';
+    var olW = ctx.measureText(orbLabel).width + 10;
+    var olX = Math.max(8, Math.min(cssW - olW - 8, pBeacon.x - olW * 0.5));
+    var olY = Math.max(22, pBeacon.y - (expanded ? 25 : 19));
+    ctx.fillStyle = isLight ? 'rgba(255,255,255,0.94)' : 'rgba(20,20,24,0.94)';
+    ctx.strokeStyle = beaconCol;
+    ctx.lineWidth = 1.05;
+    ctx.fillRect(olX, olY - 10, olW, expanded ? 18 : 14);
+    ctx.strokeRect(olX, olY - 10, olW, expanded ? 18 : 14);
     ctx.fillStyle = beaconCol;
-    ctx.textAlign = 'right';
-    ctx.fillText('● 当前组合', cssW - 8, 14);
+    ctx.textAlign = 'center';
+    ctx.fillText(orbLabel, olX + olW * 0.5, olY + (expanded ? 2.5 : 0.5));
 
-    ctx.fillStyle = isLight ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.52)';
-    ctx.textAlign = 'left';
-    ctx.fillText('拖动旋转 · 双击复位', 8, cssH - 6);
-    ctx.textAlign = 'right';
-    ctx.fillText(overlapW >= 0.15 ? '偏集中' : '较分散', cssW - 8, cssH - 6);
+    // 5. Crisp Foreground Outer Coordinate Axes (ALWAYS at bottom front edges, zero surface crossing!)
+    var axisCol = isLight ? 'rgba(11,11,11,0.72)' : 'rgba(242,242,242,0.78)';
+    var tickCol = isLight ? 'rgba(11,11,11,0.62)' : 'rgba(242,242,242,0.68)';
+    var tickFont = (expanded ? '600 10px' : '600 8px') + ' "JetBrains Mono","SF Mono",monospace';
+    var axisFont = (expanded ? '700 11px' : '700 8.5px') + ' "PingFang SC","SF Pro Text",sans-serif';
+
+    // X-Axis along frontZ outer bottom edge (单股集中度 0%~35%)
+    var xStart = projectSurface3D(-half, 0, frontZ, cam);
+    var xEnd = projectSurface3D(half, 0, frontZ, cam);
+    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(xStart.x, xStart.y); ctx.lineTo(xEnd.x, xEnd.y); ctx.stroke();
+
+    var xTicks = expanded ? [[0, '0%'], [0.428, '15%'], [1, '35%']] : [[0, '0%'], [1, '35%']];
+    ctx.font = tickFont; ctx.fillStyle = tickCol; ctx.textAlign = 'center';
+    xTicks.forEach(function (tk) {
+      var xv = -half + tk[0] * span;
+      var pt = projectSurface3D(xv, 0, frontZ, cam);
+      var out = projectSurface3D(xv, 0, frontZ + (frontZ > 0 ? 7 : -7), cam);
+      ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(out.x, out.y); ctx.stroke();
+      var dxCorner = xv === frontX ? (expanded ? 14 : 11) : 0;
+      ctx.fillText(tk[1], out.x + dxCorner, out.y + (expanded ? 11 : 9));
+    });
+    var xMid = projectSurface3D(0, 0, frontZ + (frontZ > 0 ? (expanded ? 32 : 26) : -(expanded ? 32 : 26)), cam);
+    ctx.font = axisFont; ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
+    ctx.fillText('X 单股集中度', xMid.x, Math.min(cssH - (expanded ? 10 : 21), xMid.y + (expanded ? 14 : 10)));
+
+    // Y-Axis along frontX outer bottom edge (重仓重合度 0%~50%)
+    var yStart = projectSurface3D(frontX, 0, -half, cam);
+    var yEnd = projectSurface3D(frontX, 0, half, cam);
+    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(yStart.x, yStart.y); ctx.lineTo(yEnd.x, yEnd.y); ctx.stroke();
+
+    var yTicks = expanded ? [[0, '0%'], [0.5, '25%'], [1, '50%']] : [[0, '0%'], [1, '50%']];
+    ctx.font = tickFont; ctx.fillStyle = tickCol; ctx.textAlign = 'center';
+    yTicks.forEach(function (tk) {
+      var zv = -half + tk[0] * span;
+      var pt = projectSurface3D(frontX, 0, zv, cam);
+      var out = projectSurface3D(frontX + (frontX > 0 ? 7 : -7), 0, zv, cam);
+      ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(out.x, out.y); ctx.stroke();
+      var dxCorner = zv === frontZ ? -(expanded ? 14 : 11) : 0;
+      ctx.fillText(tk[1], out.x + dxCorner, out.y + (expanded ? 11 : 9));
+    });
+    var yMid = projectSurface3D(frontX + (frontX > 0 ? (expanded ? 34 : 28) : -(expanded ? 34 : 28)), 0, 0, cam);
+    ctx.font = axisFont; ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
+    ctx.fillText('Y 重仓重合度', yMid.x, Math.min(cssH - (expanded ? 10 : 21), yMid.y + (expanded ? 14 : 10)));
+
+    // Z-Axis along the leftmost vertical outer edge
+    var candA = projectSurface3D(backX, 0, frontZ, cam);
+    var candB = projectSurface3D(frontX, 0, backZ, cam);
+    var zx = candA.x <= candB.x ? backX : frontX;
+    var zz = candA.x <= candB.x ? frontZ : backZ;
+    var zBot = projectSurface3D(zx, 0, zz, cam);
+    var zTop = projectSurface3D(zx, boxH, zz, cam);
+    ctx.strokeStyle = axisCol; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(zBot.x, zBot.y); ctx.lineTo(zTop.x, zTop.y); ctx.stroke();
+
+    ctx.font = tickFont; ctx.fillStyle = tickCol; ctx.textAlign = 'right';
+    [0, 50, 100].forEach(function (sc) {
+      var pt = projectSurface3D(zx, (sc / 100) * boxH, zz, cam);
+      ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(pt.x - 4, pt.y); ctx.stroke();
+      ctx.fillText(String(sc), pt.x - 6, pt.y + 3);
+    });
+    ctx.font = axisFont; ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
+    ctx.textAlign = 'center';
+    ctx.fillText('Z 风险分', Math.max(30, zTop.x - 4), Math.max(24, zTop.y - 8));
+
+    // 6. Compact Inline Title & Footer Telemetry
+    if (!expanded) {
+      ctx.font = '600 9.5px "PingFang SC","SF Pro Text",sans-serif';
+      ctx.fillStyle = isLight ? '#0B0B0B' : '#F2F2F2';
+      ctx.textAlign = 'left';
+      ctx.fillText('风险三维坐标系', 8, 15);
+
+      ctx.font = '600 8.5px "JetBrains Mono","PingFang SC",monospace';
+      ctx.fillStyle = isLight ? 'rgba(0,0,0,0.56)' : 'rgba(255,255,255,0.62)';
+      ctx.textAlign = 'left';
+      ctx.fillText('X ' + m.top1Pct.toFixed(1) + '% · Y ' + m.overlapPct.toFixed(1) + '%', 8, cssH - 6);
+      ctx.fillStyle = beaconCol;
+      ctx.textAlign = 'right';
+      ctx.fillText(m.statusLabel, cssW - 8, cssH - 6);
+    }
 
     ctx.restore();
   }
@@ -2569,7 +3015,9 @@ footer{border-top:1px solid var(--line);margin-top:14px;padding:12px 16px 26px;f
     mountStage3DCanvas: mountStage3DCanvas,
     syncStage3DMotion: syncStage3DMotion,
     getStage3DHitBoxes: getStage3DHitBoxes,
+    computeSurfaceMetrics: computeSurfaceMetrics,
     renderSurface3DCanvas: renderSurface3DCanvas,
+    zoomSurface3D: zoomSurface3D,
     resetSurface3DView: resetSurface3DView,
     correlationSVG: correlationSVG,
     navDrawdownSVG: navDrawdownSVG,
@@ -2799,14 +3247,15 @@ function toast(msg, action){
   TOAST_TIMER=setTimeout(function(){el.className='toast';},action?4200:2400);
 }
 
-/* ---------- Exclusive Overlay State Machine (overlayOpen ∈ {null,'cmd','sheet'}) ---------- */
-var CMD_ITEMS=[],CMD_ACTIVE=0;
+/* ---------- Exclusive Overlay State Machine (overlayOpen ∈ {null,'cmd','sheet','surface'}) ---------- */
+var CMD_ITEMS=[],CMD_ACTIVE=0,LAST_PEN_CACHE=null;
 function closeOverlays(){
   S.overlayOpen=null;
   var ci=$('cmd-input');
   if(ci&&document.activeElement===ci)ci.blur();
   $('cmd-backdrop').className='cmd-backdrop';
   $('mobile-sheet-backdrop').className='mobile-sheet-backdrop';
+  $('surface-modal-backdrop').className='surface-modal-backdrop';
   syncMobileDock();
 }
 function openCmdPalette(){
@@ -2825,6 +3274,36 @@ function openMobileSheet(){
   renderMobileSheetBody();
   $('mobile-sheet-backdrop').className='mobile-sheet-backdrop open';
   syncMobileDock();
+}
+function renderSurfaceModal(){
+  if(!LAST_PEN_CACHE||!AZ.renderSurface3DCanvas)return;
+  var pen=LAST_PEN_CACHE.pen,corr=LAST_PEN_CACHE.corr,curve=LAST_PEN_CACHE.curve;
+  var m=AZ.computeSurfaceMetrics?AZ.computeSurfaceMetrics(pen,corr,curve):null;
+  if(m){
+    var riskCol=m.riskScore>=60?'var(--rose)':(m.riskScore>=32?'var(--amber)':'var(--emerald)');
+    $('sm-metrics').innerHTML=[
+      ['X · 单股集中度',m.top1Pct.toFixed(1)+'%','最大单只底层股占比（0~35%）','var(--ink)'],
+      ['Y · 重仓重合度',m.overlapPct.toFixed(1)+'%','被多基共持资金占比（0~50%）',m.overlapPct>=15?'var(--rose)':'var(--ink)'],
+      ['Z · 综合风险分',m.riskScore+' / 100',m.statusLabel+' · 相关性 '+m.avgCorr.toFixed(2),riskCol],
+      ['距理想分散区',m.distIdeal+' 格','理想参照：单股≤5% · 重合0%','var(--emerald)']
+    ].map(function(x){
+      return '<div class="sm-mcard"><div class="k">'+x[0]+'</div><div class="v" style="color:'+x[3]+'">'+x[1]+'</div><div class="s">'+x[2]+'</div></div>';
+    }).join('');
+  }
+  $('sm-presets').innerHTML=(DATA.presets||[]).map(function(p){
+    return '<button type="button" class="key-btn'+(S.preset===p.id?' primary':'')+'" data-smpreset="'+esc(p.id)+'">'+esc(p.name)+'</button>';
+  }).join('');
+  Array.prototype.forEach.call($('sm-presets').querySelectorAll('[data-smpreset]'),function(b){
+    b.onclick=function(){applyPreset(b.getAttribute('data-smpreset'));};
+  });
+  AZ.renderSurface3DCanvas($('surface-modal-canvas'),pen,corr,curve,{expanded:true});
+}
+function openSurfaceModal(){
+  closeOverlays();
+  S.overlayOpen='surface';
+  $('surface-modal-backdrop').className='surface-modal-backdrop open';
+  renderSurfaceModal();
+  requestAnimationFrame(renderSurfaceModal);
 }
 function syncMobileDock(){
   var btns=document.querySelectorAll('#mobile-dock .dock-btn');
@@ -3329,6 +3808,12 @@ function boot(){
     b.onclick=function(){setHoldingsView(b.getAttribute('data-hview'));};
   });
   $('surf-reset-btn').onclick=function(){if(AZ.resetSurface3DView)AZ.resetSurface3DView();};
+  $('surf-expand-btn').onclick=openSurfaceModal;
+  $('sm-zoom-in').onclick=function(){if(AZ.zoomSurface3D)AZ.zoomSurface3D(0.14);};
+  $('sm-zoom-out').onclick=function(){if(AZ.zoomSurface3D)AZ.zoomSurface3D(-0.14);};
+  $('sm-reset-btn').onclick=function(){if(AZ.resetSurface3DView)AZ.resetSurface3DView();};
+  $('sm-close-btn').onclick=closeOverlays;
+  $('surface-modal-backdrop').onclick=function(e){if(e.target===$('surface-modal-backdrop'))closeOverlays();};
 
   $('flow-chart').onclick=function(e){
     var node=e.target&&e.target.closest?e.target.closest('.flow-node'):null;
@@ -3670,8 +4155,10 @@ function renderPen(){
     flowEl.innerHTML=AZ.fundStockFlowSVG(S.positions,A,pen,S.flowFocus);
   }
 
-  // Interactive 3D Distribution Surface
+  // Interactive 3D Coordinate Surface (inline card + live sync to enlarged modal if open)
+  LAST_PEN_CACHE={pen:pen,corr:corr,curve:curve};
   if(AZ.renderSurface3DCanvas)AZ.renderSurface3DCanvas($('surface-3d-canvas'),pen,corr,curve);
+  if(S.overlayOpen==='surface')renderSurfaceModal();
   renderDrilldown(pen);
 
   // Merged Top 15
