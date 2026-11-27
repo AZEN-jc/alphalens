@@ -379,7 +379,7 @@
   "exposureRows": 15,
   "hasV3Api": true,
   "md": {
-    "len": 1845,
+    "len": 1965,
     "total": true,
     "mdd": true,
     "risk4": true,
@@ -421,7 +421,7 @@
     "cleanCopyOk": true
   },
   "brand": true,
-  "exportBtns": 3,
+  "exportBtns": 6,
   "divViewOn": true,
   "divRows": 15,
   "divBadges": 15,

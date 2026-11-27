@@ -227,6 +227,431 @@
     };
   }
 
+  /** 3b. Align benchmark curve to portfolio curve dates (rebased to 1.0) */
+  function alignBenchmarkSeries(portCurve, benchCurve) {
+    if (!portCurve || !portCurve.curve || !portCurve.curve.length || !benchCurve || !benchCurve.curve || !benchCurve.curve.length) {
+      return null;
+    }
+    var bMap = {};
+    benchCurve.curve.forEach(function (pt) { bMap[pt.t] = pt.nav; });
+    var aligned = [];
+    var baseB = null;
+    for (var i = 0; i < portCurve.curve.length; i++) {
+      var t = portCurve.curve[i].t;
+      var bv = bMap[t];
+      if (bv != null && isFinite(bv) && bv > 0) {
+        if (baseB === null) baseB = bv;
+        aligned.push({ t: t, idx: i, nav: bv / baseB });
+      }
+    }
+    if (aligned.length < 2) return null;
+    return {
+      points: aligned,
+      totalReturn: aligned[aligned.length - 1].nav - 1,
+      startDate: aligned[0].t,
+      endDate: aligned[aligned.length - 1].t
+    };
+  }
+
+  /** 3c. Classical quantitative risk-adjusted metrics (CAGR, Vol, Sharpe, Calmar, HHI, N_eff, Excess) */
+  function computeAdvancedQuantMetrics(pen, corr, curve, benchCurve, rfRate) {
+    var rf = (rfRate != null && isFinite(rfRate)) ? Number(rfRate) : 0.02;
+    var cagr = null, annVol = null, sharpe = null, calmar = null;
+    var mdd = (curve && curve.maxDrawdown != null) ? curve.maxDrawdown : null;
+    if (curve && curve.curve && curve.curve.length >= 2) {
+      var n = curve.curve.length;
+      var startNav = curve.curve[0].nav || 1;
+      var endNav = curve.curve[n - 1].nav || 1;
+      if (startNav > 0 && endNav > 0) {
+        cagr = Math.pow(endNav / startNav, 252 / Math.max(1, n - 1)) - 1;
+      }
+      annVol = (curve.annualizedVol != null && isFinite(curve.annualizedVol)) ? curve.annualizedVol : null;
+      if (cagr !== null && annVol !== null && annVol > 1e-9) {
+        sharpe = (cagr - rf) / annVol;
+      }
+      if (cagr !== null && mdd !== null && Math.abs(mdd) > 1e-9) {
+        calmar = cagr / Math.abs(mdd);
+      }
+    }
+
+    // Herfindahl-Hirschman Index (HHI) and Effective Number of Bets (N_eff = 1 / HHI)
+    var hhi = null, effectiveN = null;
+    var exps = (pen && Array.isArray(pen.exposures)) ? pen.exposures : [];
+    var wSum = exps.reduce(function (s, e) { return s + Math.max(0, Number(e.totalWeight) || 0); }, 0);
+    if (wSum > 0) {
+      var acc = 0;
+      for (var i = 0; i < exps.length; i++) {
+        var wn = Math.max(0, Number(exps[i].totalWeight) || 0) / wSum;
+        acc += wn * wn;
+      }
+      hhi = acc;
+      effectiveN = acc > 1e-9 ? (1 / acc) : 0;
+    }
+
+    var benchAligned = alignBenchmarkSeries(curve, benchCurve);
+    var benchReturn = benchAligned ? benchAligned.totalReturn : null;
+    var excessReturn = (curve && curve.totalReturn != null && benchReturn !== null)
+      ? (curve.totalReturn - benchReturn)
+      : null;
+
+    return {
+      rfRate: rf,
+      cagr: cagr,
+      annualizedVol: annVol,
+      sharpe: sharpe,
+      calmar: calmar,
+      maxDrawdown: mdd,
+      hhi: hhi,
+      effectiveN: effectiveN,
+      benchReturn: benchReturn,
+      excessReturn: excessReturn,
+      benchAligned: benchAligned,
+      avgCorr: (corr && corr.avgOffDiagonal != null) ? corr.avgOffDiagonal : null
+    };
+  }
+
+  /** P1 Extension Registry: custom strategy hooks & state serialization */
+  var STRATEGY_HOOKS = {};
+  function registerStrategyHook(name, fn) {
+    if (!name || typeof fn !== 'function') return false;
+    STRATEGY_HOOKS[String(name)] = fn;
+    return true;
+  }
+  function listStrategyHooks() {
+    return Object.keys(STRATEGY_HOOKS);
+  }
+  function serializePortfolioState(state) {
+    try {
+      var payload = {
+        v: 5,
+        p: (state.positions || []).map(function (x) { return [x.code, Math.round(Number(x.amount) || 0)]; }),
+        w: state.window === 'all' ? 'all' : '250',
+        t: state.theme === 'dark' ? 'dark' : 'light'
+      };
+      var json = JSON.stringify(payload);
+      var b64 = (typeof btoa === 'function')
+        ? btoa(unescape(encodeURIComponent(json)))
+        : Buffer.from(json, 'utf8').toString('base64');
+      return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (_) {
+      return '';
+    }
+  }
+  function deserializePortfolioState(token, assetsMap) {
+    try {
+      if (!token || typeof token !== 'string') return null;
+      var norm = token.replace(/-/g, '+').replace(/_/g, '/');
+      while (norm.length % 4) norm += '=';
+      var json = (typeof atob === 'function')
+        ? decodeURIComponent(escape(atob(norm)))
+        : Buffer.from(norm, 'base64').toString('utf8');
+      var obj = JSON.parse(json);
+      if (!obj || !Array.isArray(obj.p) || !obj.p.length) return null;
+      var positions = [];
+      obj.p.forEach(function (pair) {
+        if (!Array.isArray(pair) || pair.length < 2) return;
+        var c = String(pair[0]), amt = Number(pair[1]);
+        if (amt > 0 && (!assetsMap || assetsMap[c])) positions.push({ code: c, amount: amt });
+      });
+      if (!positions.length) return null;
+      return {
+        positions: positions,
+        backtestWindow: obj.w === 'all' ? 'all' : '250',
+        theme: obj.t === 'dark' ? 'dark' : 'light',
+        preset: null
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /** Helper: compute single-asset annualized volatility from daily closes */
+  function singleAssetVol(code, assetsMap, maxDays) {
+    var c = computePortfolioCurveAndDrawdown([{ code: code, amount: 10000 }], assetsMap, maxDays);
+    return (c && c.annualizedVol != null && isFinite(c.annualizedVol)) ? Math.max(0.06, c.annualizedVol) : 0.20;
+  }
+
+  /** Helper: clamp & normalize weight vector to [minW, maxW] while summing to 1 */
+  function clampNormalizeWeights(rawWeights, minW, maxW) {
+    var n = rawWeights.length;
+    if (!n) return [];
+    if (n === 1) return [1];
+    var lo = Math.min(minW, 1 / n);
+    var hi = Math.max(maxW, 1 / n);
+    var w = rawWeights.slice();
+    var sum = w.reduce(function (a, b) { return a + b; }, 0) || 1;
+    w = w.map(function (x) { return x / sum; });
+    for (var iter = 0; iter < 8; iter++) {
+      var fixedSum = 0, freeIdx = [];
+      for (var i = 0; i < n; i++) {
+        if (w[i] < lo) { w[i] = lo; fixedSum += lo; }
+        else if (w[i] > hi) { w[i] = hi; fixedSum += hi; }
+        else { freeIdx.push(i); }
+      }
+      var rem = 1 - fixedSum;
+      if (!freeIdx.length || Math.abs(rem - freeIdx.reduce(function (s, idx) { return s + w[idx]; }, 0)) < 1e-6) break;
+      var freeSum = freeIdx.reduce(function (s, idx) { return s + w[idx]; }, 0) || 1;
+      for (var k = 0; k < freeIdx.length; k++) {
+        w[freeIdx[k]] = Math.max(lo, Math.min(hi, w[freeIdx[k]] / freeSum * rem));
+      }
+    }
+    var finalSum = w.reduce(function (a, b) { return a + b; }, 0) || 1;
+    return w.map(function (x) { return x / finalSum; });
+  }
+
+  /** Helper: snapshot full portfolio diagnostics for optimizer & A/B comparator */
+  function evaluateSnapshot(positions, assetsMap, maxDays) {
+    var pen = penetratePortfolio(positions, assetsMap);
+    var codes = (positions || []).filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; }).map(function (p) { return p.code; });
+    var corr = computeCorrelationMatrix(codes, assetsMap, maxDays);
+    var curve = computePortfolioCurveAndDrawdown(positions, assetsMap, maxDays);
+    var benchCurve = assetsMap['510300'] ? computePortfolioCurveAndDrawdown([{ code: '510300', amount: 10000 }], assetsMap, maxDays) : null;
+    var risk4 = evaluatePortfolioRisk(pen, corr, curve);
+    var quant = computeAdvancedQuantMetrics(pen, corr, curve, benchCurve);
+    var surface = computeSurfaceMetrics(pen, corr, curve);
+    return {
+      positions: positions.map(function (p) { return { code: p.code, amount: Math.round(Number(p.amount) || 0) }; }),
+      pen: pen,
+      corr: corr,
+      curve: curve,
+      risk4: risk4,
+      quant: quant,
+      riskScore: surface.riskScore,
+      overlapCount: pen.overlaps ? pen.overlaps.length : 0,
+      overlapWeight: (pen.overlaps || []).reduce(function (s, x) { return s + x.totalWeight; }, 0),
+      maxSingle: (pen.exposures && pen.exposures[0]) ? pen.exposures[0].totalWeight : 0
+    };
+  }
+
+  /** 3d. Smart Portfolio Optimizer (weights_only ERC vs diversify_add cross-asset dedup) */
+  function optimizePortfolio(positions, assetsMap, maxDays, mode) {
+    var valid = (positions || []).filter(function (p) { return Number(p.amount) > 0 && assetsMap[p.code]; });
+    var totalAmount = valid.reduce(function (s, p) { return s + Number(p.amount); }, 0);
+    if (!valid.length || totalAmount <= 0) return null;
+
+    var optMode = (mode === 'diversify_add') ? 'diversify_add' : (STRATEGY_HOOKS[mode] ? mode : 'weights_only');
+    var before = evaluateSnapshot(valid, assetsMap, maxDays);
+    var rationale = [];
+
+    if (STRATEGY_HOOKS[optMode]) {
+      var customPos = STRATEGY_HOOKS[optMode](valid, assetsMap, maxDays, before);
+      if (Array.isArray(customPos) && customPos.length) {
+        var customAfter = evaluateSnapshot(customPos, assetsMap, maxDays);
+        return { mode: optMode, before: before, after: customAfter, suggestedPositions: customPos, rationale: ['已执行自定义策略钩子：' + optMode] };
+      }
+    }
+
+    var targetCodes = valid.map(function (p) { return p.code; });
+
+    if (optMode === 'diversify_add') {
+      // Score each holding by its overlap contribution & average correlation to find most redundant
+      var overlapContribByCode = {};
+      (before.pen.overlaps || []).forEach(function (ov) {
+        (ov.contributors || []).forEach(function (c) {
+          overlapContribByCode[c.sourceCode] = (overlapContribByCode[c.sourceCode] || 0) + c.contribution;
+        });
+      });
+      var mat = (before.corr && before.corr.matrix) || [];
+      var avgCorrByIdx = targetCodes.map(function (_, i) {
+        var s = 0, cnt = 0;
+        for (var j = 0; j < targetCodes.length; j++) {
+          if (i !== j && mat[i] && mat[i][j] != null) { s += mat[i][j]; cnt++; }
+        }
+        return cnt ? s / cnt : 0;
+      });
+
+      // Drop up to 1 most-redundant overlapping asset if portfolio has >= 3 assets and meaningful overlap/correlation
+      var droppedName = null;
+      if (targetCodes.length >= 3 && (before.overlapCount >= 2 || (before.corr.avgOffDiagonal || 0) >= 0.55)) {
+        var worstIdx = 0, worstScore = -1;
+        for (var wi = 0; wi < targetCodes.length; wi++) {
+          var sc = (overlapContribByCode[targetCodes[wi]] || 0) * 3 + Math.max(0, avgCorrByIdx[wi]);
+          if (sc > worstScore) { worstScore = sc; worstIdx = wi; }
+        }
+        droppedName = (assetsMap[targetCodes[worstIdx]] && assetsMap[targetCodes[worstIdx]].name) || targetCodes[worstIdx];
+        targetCodes.splice(worstIdx, 1);
+        rationale.push('移除高重叠/高同向冗余标的「' + droppedName + '」，减少底层重仓重复暴露');
+      }
+
+      // Candidate pool: prefer diverse equity & defensive ETFs (cap non-equity/single-stock weight to prevent X-axis concentration spike)
+      var preferredPool = ['512890', '513100', '513500', '510880', '513180', '515180', '518880', '159915'];
+      var candidates = preferredPool.filter(function (c) { return assetsMap[c] && targetCodes.indexOf(c) < 0; });
+      var addedNames = [];
+      var targetAddCount = targetCodes.length <= 2 ? 2 : (before.overlapCount >= 4 || (before.corr.avgOffDiagonal || 0) >= 0.55 ? 2 : 1);
+
+      var buildWeighted = function (codesList) {
+        var cObj = computeCorrelationMatrix(codesList, assetsMap, maxDays);
+        var cM = cObj.matrix || [];
+        var rawS = codesList.map(function (code, i) {
+          var vol = singleAssetVol(code, assetsMap, maxDays);
+          var sumC = 0, cntC = 0;
+          for (var j = 0; j < codesList.length; j++) {
+            if (i !== j && cM[i] && cM[i][j] != null) { sumC += Math.max(0, cM[i][j]); cntC++; }
+          }
+          var avgC = cntC ? (sumC / cntC) : 0.25;
+          var aObj = assetsMap[code];
+          // Cap non-equity/single-stock assets so single-exposure concentration stays below 15%
+          var nonSplitPenalty = (aObj && (aObj.type === 'STOCK' || aObj.holdingsStatus === 'NO_EQUITY_HOLDINGS')) ? 0.35 : 1.0;
+          return (1 / (vol * (1 + avgC))) * nonSplitPenalty;
+        });
+        var wVec = clampNormalizeWeights(rawS, 0.10, 0.45);
+        // Second pass: enforce <= 14% cap on non-equity/single-stock holdings
+        var excess = 0, equityIdx = [];
+        for (var k = 0; k < codesList.length; k++) {
+          var ao = assetsMap[codesList[k]];
+          if (ao && (ao.type === 'STOCK' || ao.holdingsStatus === 'NO_EQUITY_HOLDINGS') && wVec[k] > 0.14) {
+            excess += (wVec[k] - 0.14);
+            wVec[k] = 0.14;
+          } else {
+            equityIdx.push(k);
+          }
+        }
+        if (excess > 0 && equityIdx.length) {
+          var eqSum = equityIdx.reduce(function (s, idx) { return s + wVec[idx]; }, 0) || 1;
+          equityIdx.forEach(function (idx) { wVec[idx] += excess * (wVec[idx] / eqSum); });
+        }
+        var out = [], acc = 0;
+        for (var si = 0; si < codesList.length; si++) {
+          var amt = (si === codesList.length - 1)
+            ? Math.max(1000, Math.round(totalAmount - acc))
+            : Math.max(1000, Math.round(totalAmount * wVec[si] / 100) * 100);
+          acc += amt;
+          out.push({ code: codesList[si], amount: amt });
+        }
+        return out;
+      };
+
+      for (var addStep = 0; addStep < targetAddCount && candidates.length; addStep++) {
+        var bestCand = null, bestObj = Infinity;
+        for (var ci = 0; ci < candidates.length; ci++) {
+          var cand = candidates[ci];
+          var testPos = buildWeighted(targetCodes.concat([cand]));
+          var snap = evaluateSnapshot(testPos, assetsMap, maxDays);
+          var obj = snap.riskScore + snap.overlapCount * 2.5 + snap.overlapWeight * 40;
+          if (obj < bestObj) { bestObj = obj; bestCand = cand; }
+        }
+        if (bestCand) {
+          targetCodes.push(bestCand);
+          addedNames.push((assetsMap[bestCand] && assetsMap[bestCand].name) || bestCand);
+          candidates = candidates.filter(function (c) { return c !== bestCand; });
+        }
+      }
+      if (addedNames.length) {
+        rationale.push('引入低相关性互补资产「' + addedNames.join('、') + '」，同步控制单资产集中度并拉低组合相关系数');
+      }
+    }
+
+    // Risk-parity × inverse-correlation weighting on targetCodes
+    var tCorr = computeCorrelationMatrix(targetCodes, assetsMap, maxDays);
+    var tMat = tCorr.matrix || [];
+    var rawScores = targetCodes.map(function (code, i) {
+      var vol = singleAssetVol(code, assetsMap, maxDays);
+      var sumC = 0, cntC = 0;
+      for (var j = 0; j < targetCodes.length; j++) {
+        if (i !== j && tMat[i] && tMat[i][j] != null) { sumC += Math.max(0, tMat[i][j]); cntC++; }
+      }
+      var avgC = cntC ? (sumC / cntC) : 0.25;
+      var aObj = assetsMap[code];
+      var nonSplitPenalty = (optMode === 'diversify_add' && aObj && (aObj.type === 'STOCK' || aObj.holdingsStatus === 'NO_EQUITY_HOLDINGS')) ? 0.35 : 1.0;
+      return (1 / (vol * (1 + avgC))) * nonSplitPenalty;
+    });
+    var normW = clampNormalizeWeights(rawScores, 0.10, 0.45);
+    if (optMode === 'diversify_add') {
+      var exW = 0, eqI = [];
+      for (var ei = 0; ei < targetCodes.length; ei++) {
+        var ao2 = assetsMap[targetCodes[ei]];
+        if (ao2 && (ao2.type === 'STOCK' || ao2.holdingsStatus === 'NO_EQUITY_HOLDINGS') && normW[ei] > 0.14) {
+          exW += (normW[ei] - 0.14);
+          normW[ei] = 0.14;
+        } else {
+          eqI.push(ei);
+        }
+      }
+      if (exW > 0 && eqI.length) {
+        var eqS = eqI.reduce(function (s, idx) { return s + normW[idx]; }, 0) || 1;
+        eqI.forEach(function (idx) { normW[idx] += exW * (normW[idx] / eqS); });
+      }
+    }
+    var suggested = [];
+    var accAmt = 0;
+    for (var si = 0; si < targetCodes.length; si++) {
+      var amt = (si === targetCodes.length - 1)
+        ? Math.max(1000, Math.round(totalAmount - accAmt))
+        : Math.max(1000, Math.round(totalAmount * normW[si] / 100) * 100);
+      accAmt += amt;
+      suggested.push({ code: targetCodes[si], amount: amt });
+    }
+    if (optMode === 'weights_only') {
+      rationale.push('保持原有标的池不变，按「反波动率 × 反相关性」风险平价模型重算权重（单只上限 45% / 下限 10%）');
+    } else {
+      rationale.push('对优化后标的池执行风险平价配权，平衡各类资产的波动贡献');
+    }
+
+    var after = evaluateSnapshot(suggested, assetsMap, maxDays);
+    var riskDelta = after.riskScore - before.riskScore;
+    if (riskDelta < 0) {
+      rationale.push('综合风险分由 ' + before.riskScore + ' 降至 ' + after.riskScore + '（降幅 ' + Math.abs(riskDelta) + ' 分）');
+    }
+    return {
+      mode: optMode,
+      before: before,
+      after: after,
+      suggestedPositions: suggested,
+      rationale: rationale
+    };
+  }
+
+  /** 3e. Side-by-side A/B Portfolio Comparison Lab */
+  function comparePortfolios(posA, posB, assetsMap, maxDays, labelA, labelB) {
+    var snapA = evaluateSnapshot(posA, assetsMap, maxDays);
+    var snapB = evaluateSnapshot(posB, assetsMap, maxDays);
+
+    // Align A & B NAV series to common dates
+    var mapB = {};
+    if (snapB.curve && snapB.curve.curve) {
+      snapB.curve.curve.forEach(function (pt) { mapB[pt.t] = pt.nav; });
+    }
+    var dates = [], navA = [], navB = [], baseA = null, baseB = null;
+    if (snapA.curve && snapA.curve.curve) {
+      snapA.curve.curve.forEach(function (pt) {
+        if (mapB[pt.t] != null) {
+          if (baseA === null) { baseA = pt.nav || 1; baseB = mapB[pt.t] || 1; }
+          dates.push(pt.t);
+          navA.push(pt.nav / baseA);
+          navB.push(mapB[pt.t] / baseB);
+        }
+      });
+    }
+
+    var win = function (a, b, higherBetter) {
+      if (a == null || b == null || !isFinite(a) || !isFinite(b)) return 'TIE';
+      if (Math.abs(a - b) < 1e-4) return 'TIE';
+      return higherBetter ? (a > b ? 'A' : 'B') : (a < b ? 'A' : 'B');
+    };
+
+    var rows = [
+      { key: 'riskScore', name: '综合风险分 (越低越稳)', a: snapA.riskScore, b: snapB.riskScore, fmt: 'int', winner: win(snapA.riskScore, snapB.riskScore, false) },
+      { key: 'overlapWeight', name: '底层重仓重合度', a: snapA.overlapWeight * 100, b: snapB.overlapWeight * 100, fmt: 'pct1', winner: win(snapA.overlapWeight, snapB.overlapWeight, false) },
+      { key: 'avgCorr', name: '资产平均相关性', a: snapA.quant.avgCorr, b: snapB.quant.avgCorr, fmt: 'num2', winner: win(snapA.quant.avgCorr, snapB.quant.avgCorr, false) },
+      { key: 'effectiveN', name: '有效独立持仓数 (N_eff)', a: snapA.quant.effectiveN, b: snapB.quant.effectiveN, fmt: 'num1', winner: win(snapA.quant.effectiveN, snapB.quant.effectiveN, true) },
+      { key: 'cagr', name: '区间年化收益 (CAGR)', a: snapA.quant.cagr != null ? snapA.quant.cagr * 100 : null, b: snapB.quant.cagr != null ? snapB.quant.cagr * 100 : null, fmt: 'spct1', winner: win(snapA.quant.cagr, snapB.quant.cagr, true) },
+      { key: 'annualizedVol', name: '年化波动率', a: snapA.quant.annualizedVol != null ? snapA.quant.annualizedVol * 100 : null, b: snapB.quant.annualizedVol != null ? snapB.quant.annualizedVol * 100 : null, fmt: 'pct1', winner: win(snapA.quant.annualizedVol, snapB.quant.annualizedVol, false) },
+      { key: 'sharpe', name: '夏普比率 (rf=2.0%)', a: snapA.quant.sharpe, b: snapB.quant.sharpe, fmt: 'num2', winner: win(snapA.quant.sharpe, snapB.quant.sharpe, true) },
+      { key: 'maxDrawdown', name: '历史最大回撤', a: snapA.quant.maxDrawdown != null ? snapA.quant.maxDrawdown * 100 : null, b: snapB.quant.maxDrawdown != null ? snapB.quant.maxDrawdown * 100 : null, fmt: 'pct1', winner: win(snapA.quant.maxDrawdown != null ? Math.abs(snapA.quant.maxDrawdown) : null, snapB.quant.maxDrawdown != null ? Math.abs(snapB.quant.maxDrawdown) : null, false) }
+    ];
+
+    return {
+      labelA: labelA || '组合 A',
+      labelB: labelB || '组合 B',
+      snapA: snapA,
+      snapB: snapB,
+      dates: dates,
+      navA: navA,
+      navB: navB,
+      rows: rows
+    };
+  }
+
   /** 4. Four-dimensional independent portfolio risk diagnosis */
   function evaluatePortfolioRisk(pen, corr, curve) {
     var hasPos = !!(pen && pen.totalAmount > 0);
@@ -2174,16 +2599,16 @@
     return o;
   }
 
-  /** Correlation heatmap SVG; value printed in each cell. */
+  /** Correlation heatmap SVG with interactive row/column metadata. */
   function correlationSVG(corr, labels) {
     var m = corr.matrix || [];
     var n = m.length;
     if (!n) return '<div style="padding:20px;text-align:center;color:#888">相关性数据不足（需≥6个共同交易日）</div>';
     var cell = 48, L = 86, T = 24, W = L + n * cell + 12, H = T + n * cell + 10;
-    var o = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:' + W + 'px">';
+    var o = '<svg class="corr-svg" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:' + W + 'px">';
     labels.forEach(function (lb, j) {
-      o += '<text x="' + (L + j * cell + cell / 2) + '" y="' + (T - 7) + '" font-size="10" fill="var(--ink-soft,#94A3B8)" text-anchor="middle">' + esc(lb) + '</text>';
-      o += '<text x="' + (L - 6) + '" y="' + (T + j * cell + cell / 2 + 3) + '" font-size="10" fill="var(--ink-soft,#94A3B8)" text-anchor="end">' + esc(lb) + '</text>';
+      o += '<text class="corr-lbl" data-cl="' + j + '" x="' + (L + j * cell + cell / 2) + '" y="' + (T - 7) + '" font-size="10" fill="var(--ink-soft,#94A3B8)" text-anchor="middle">' + esc(lb) + '</text>';
+      o += '<text class="corr-lbl" data-rl="' + j + '" x="' + (L - 6) + '" y="' + (T + j * cell + cell / 2 + 3) + '" font-size="10" fill="var(--ink-soft,#94A3B8)" text-anchor="end">' + esc(lb) + '</text>';
     });
     for (var i = 0; i < n; i++) {
       for (var j = 0; j < n; j++) {
@@ -2199,27 +2624,35 @@
         } else if (v !== null && v < 0) {
           fill = 'rgba(13,148,136,' + Math.min(0.32, 0.12 + Math.abs(v) * 0.22).toFixed(3) + ')';
         }
+        o += '<g class="corr-cell" data-r="' + i + '" data-c="' + j + '" data-v="' + (v === null ? '' : v.toFixed(4)) + '" data-rn="' + esc(labels[i] || '') + '" data-cn="' + esc(labels[j] || '') + '" style="cursor:pointer">';
         o += '<rect x="' + x + '" y="' + y + '" width="' + (cell - 3) + '" height="' + (cell - 3) + '" rx="3" fill="' + fill + '" stroke="var(--line,#1b2336)"/>';
         o += '<text x="' + (x + (cell - 3) / 2) + '" y="' + (y + (cell - 3) / 2 + 3.5) + '" font-size="10.5" font-family="monospace" font-weight="600" fill="' + fg + '" text-anchor="middle">' + (v === null ? '--' : v.toFixed(2)) + '</text>';
+        o += '</g>';
       }
     }
     return o + '</svg>';
   }
 
-  /** Glowing Ribbon NAV curve with max-drawdown depth shading & right-edge callout tag. */
-  function navDrawdownSVG(result) {
+  /** Interactive NAV curve with max-drawdown shading, optional CSI 300 benchmark overlay, and crosshair anchors. */
+  function navDrawdownSVG(result, benchAligned, opts) {
     if (!result || !result.curve || result.curve.length < 2) return '<div style="padding:20px;text-align:center;color:#888">净值数据不足</div>';
-    var curve = result.curve, W = 640, H = 236, L = 16, R = 64, T = 20, B = 34;
+    var showBench = !(opts && opts.showBench === false) && !!(benchAligned && benchAligned.points && benchAligned.points.length >= 2);
+    var curve = result.curve, W = 640, H = 244, L = 16, R = 66, T = 22, B = 34;
     var iw = W - L - R, ih = H - T - B;
     var lo = Infinity, hi = -Infinity;
     curve.forEach(function (p) { lo = Math.min(lo, p.nav); hi = Math.max(hi, p.nav); });
+    if (showBench) {
+      benchAligned.points.forEach(function (p) { lo = Math.min(lo, p.nav); hi = Math.max(hi, p.nav); });
+    }
     if (hi === lo) { hi = lo + 1; }
+    var pad = (hi - lo) * 0.06;
+    lo -= pad; hi += pad;
     var X = function (i) { return L + i / (curve.length - 1) * iw; };
     var Y = function (v) { return T + (hi - v) / (hi - lo) * ih; };
     var pts = curve.map(function (p, i) { return X(i).toFixed(1) + ',' + Y(p.nav).toFixed(1); }).join(' ');
     var areaPts = X(0).toFixed(1) + ',' + (T + ih) + ' ' + pts + ' ' + X(curve.length - 1).toFixed(1) + ',' + (T + ih);
 
-    var o = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;display:block">';
+    var o = '<svg class="nav-svg" viewBox="0 0 ' + W + ' ' + H + '" data-w="' + W + '" data-h="' + H + '" data-l="' + L + '" data-r="' + R + '" data-t="' + T + '" data-b="' + B + '" data-lo="' + lo.toFixed(6) + '" data-hi="' + hi.toFixed(6) + '" style="width:100%;display:block;touch-action:pan-y">';
     o += perspectiveFloorSVG(W - R + 10, H, H - 34, H - 4);
 
     [0, 0.25, 0.5, 0.75, 1].forEach(function (k) {
@@ -2233,26 +2666,102 @@
       var i0 = curve.findIndex(function (p) { return p.t >= result.mddRange[0]; });
       var i1 = curve.findIndex(function (p) { return p.t >= result.mddRange[1]; });
       if (i0 >= 0 && i1 > i0) {
-        o += '<rect x="' + X(i0).toFixed(1) + '" y="' + T + '" width="' + (X(i1) - X(i0)).toFixed(1) + '" height="' + ih + '" fill="#F43F5E" opacity="0.13"/>';
+        o += '<rect x="' + X(i0).toFixed(1) + '" y="' + T + '" width="' + (X(i1) - X(i0)).toFixed(1) + '" height="' + ih + '" fill="#F43F5E" opacity="0.12"/>';
         o += '<text x="' + ((X(i0) + X(i1)) / 2).toFixed(1) + '" y="' + (T + 13) + '" font-size="9" font-family="monospace" fill="#FB7185" text-anchor="middle">最大回撤 ' + (result.maxDrawdown * 100).toFixed(1) + '%</text>';
       }
     }
 
-    o += '<polygon points="' + areaPts + '" fill="#A594F9" opacity="0.09"/>';
-    o += '<polyline points="' + pts + '" fill="none" stroke="#A594F9" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>';
-    o += '<polyline points="' + pts + '" fill="none" stroke="#A594F9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>';
+    if (showBench) {
+      var bPts = benchAligned.points.map(function (p) { return X(p.idx).toFixed(1) + ',' + Y(p.nav).toFixed(1); }).join(' ');
+      o += '<polyline points="' + bPts + '" fill="none" stroke="var(--ink-faint,#94A3B8)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.85"/>';
+      var lastB = benchAligned.points[benchAligned.points.length - 1];
+      var bRet = (lastB.nav - 1) * 100;
+      o += '<text x="' + (W - R - 4) + '" y="' + (T + 12) + '" font-size="9" font-family="monospace" fill="var(--ink-faint,#94A3B8)" text-anchor="end">--- 沪深300 (' + (bRet >= 0 ? '+' : '') + bRet.toFixed(1) + '%)</text>';
+    }
+
+    o += '<polygon points="' + areaPts + '" fill="#6366F1" opacity="0.09"/>';
+    o += '<polyline points="' + pts + '" fill="none" stroke="#6366F1" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.18"/>';
+    o += '<polyline points="' + pts + '" fill="none" stroke="#6366F1" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>';
 
     var lastNav = curve[curve.length - 1].nav;
     var lastY = Math.max(T + 10, Math.min(T + ih - 10, Y(lastNav)));
     var retPct = ((lastNav - 1) * 100);
-    var pillCol = retPct >= 0 ? '#2DD4BF' : '#F43F5E';
-    o += '<line x1="' + L + '" y1="' + lastY.toFixed(1) + '" x2="' + (W - R) + '" y2="' + lastY.toFixed(1) + '" stroke="' + pillCol + '" stroke-dasharray="3,3" stroke-opacity="0.6"/>';
-    o += '<rect x="' + (W - R + 3) + '" y="' + (lastY - 9).toFixed(1) + '" width="56" height="18" rx="3" fill="' + pillCol + '"/>';
-    o += '<text x="' + (W - R + 31) + '" y="' + (lastY + 3.5).toFixed(1) + '" font-size="9.5" font-family="monospace" font-weight="700" fill="#041014" text-anchor="middle">'
+    var pillCol = retPct >= 0 ? '#10B981' : '#EF4444';
+    o += '<line x1="' + L + '" y1="' + lastY.toFixed(1) + '" x2="' + (W - R) + '" y2="' + lastY.toFixed(1) + '" stroke="' + pillCol + '" stroke-dasharray="3,3" stroke-opacity="0.55"/>';
+    o += '<rect x="' + (W - R + 3) + '" y="' + (lastY - 9).toFixed(1) + '" width="58" height="18" rx="3" fill="' + pillCol + '"/>';
+    o += '<text x="' + (W - R + 32) + '" y="' + (lastY + 3.5).toFixed(1) + '" font-size="9.5" font-family="monospace" font-weight="700" fill="#ffffff" text-anchor="middle">'
       + (retPct >= 0 ? '+' : '') + retPct.toFixed(1) + '%</text>';
 
     o += '<text x="' + L + '" y="' + (H - 8) + '" font-size="9.5" font-family="monospace" fill="var(--ink-faint,#64748B)">' + esc(curve[0].t) + '</text>';
     o += '<text x="' + (W - R) + '" y="' + (H - 8) + '" font-size="9.5" font-family="monospace" fill="var(--ink-faint,#64748B)" text-anchor="end">' + esc(curve[curve.length - 1].t) + '</text>';
+
+    // Built-in interactive crosshair group + pointer hit layer
+    o += '<g class="nav-xhair" style="display:none;pointer-events:none">';
+    o += '<line class="nx-vline" x1="0" y1="' + T + '" x2="0" y2="' + (T + ih) + '" stroke="var(--ink,#0b0b0b)" stroke-width="1" stroke-dasharray="2,2" opacity="0.55"/>';
+    o += '<circle class="nx-dot-b" cx="0" cy="0" r="3.5" fill="var(--ink-faint,#94A3B8)" stroke="var(--panel,#ffffff)" stroke-width="1.5" style="display:none"/>';
+    o += '<circle class="nx-dot-p" cx="0" cy="0" r="4.5" fill="#6366F1" stroke="var(--panel,#ffffff)" stroke-width="2"/>';
+    o += '</g>';
+    o += '<rect class="nav-hit" x="' + L + '" y="' + T + '" width="' + iw + '" height="' + ih + '" fill="transparent" style="cursor:crosshair"/>';
+    return o + '</svg>';
+  }
+
+  /** Side-by-side overlaid dual NAV curve SVG for A/B Comparison Lab. */
+  function compareNavSVG(cmp) {
+    if (!cmp || !cmp.dates || cmp.dates.length < 2) {
+      return '<div style="padding:20px;text-align:center;color:#888">共同交易日不足，无法绘制对比净值曲线</div>';
+    }
+    var dates = cmp.dates, navA = cmp.navA, navB = cmp.navB;
+    var W = 680, H = 224, L = 18, R = 74, T = 26, B = 32;
+    var iw = W - L - R, ih = H - T - B;
+    var lo = Infinity, hi = -Infinity;
+    for (var i = 0; i < dates.length; i++) {
+      lo = Math.min(lo, navA[i], navB[i]);
+      hi = Math.max(hi, navA[i], navB[i]);
+    }
+    if (hi === lo) hi = lo + 1;
+    var pad = (hi - lo) * 0.08;
+    lo -= pad; hi += pad;
+    var X = function (idx) { return L + idx / (dates.length - 1) * iw; };
+    var Y = function (v) { return T + (hi - v) / (hi - lo) * ih; };
+    var ptsA = navA.map(function (v, idx) { return X(idx).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ');
+    var ptsB = navB.map(function (v, idx) { return X(idx).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ');
+
+    var o = '<svg class="cmp-nav-svg" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;display:block">';
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (k) {
+      var y = T + ih * k, val = hi - (hi - lo) * k;
+      o += '<line x1="' + L + '" y1="' + y.toFixed(1) + '" x2="' + (W - R) + '" y2="' + y.toFixed(1) + '" stroke="var(--line,#e2e8f0)" stroke-dasharray="2,3"/>';
+      o += '<text x="' + (W - R + 6) + '" y="' + (y + 3).toFixed(1) + '" font-size="9.5" font-family="monospace" fill="var(--ink-faint,#64748B)">' + val.toFixed(3) + '</text>';
+    });
+    // Baseline 1.000
+    if (1 >= lo && 1 <= hi) {
+      var y1 = Y(1);
+      o += '<line x1="' + L + '" y1="' + y1.toFixed(1) + '" x2="' + (W - R) + '" y2="' + y1.toFixed(1) + '" stroke="var(--line2,#cbd5e1)" stroke-width="1"/>';
+    }
+    o += '<polyline points="' + ptsA + '" fill="none" stroke="#4F46E5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+    o += '<polyline points="' + ptsB + '" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+
+    var retA = (navA[navA.length - 1] - 1) * 100;
+    var retB = (navB[navB.length - 1] - 1) * 100;
+    var yA = Math.max(T + 10, Math.min(T + ih - 10, Y(navA[navA.length - 1])));
+    var yB = Math.max(T + 10, Math.min(T + ih - 10, Y(navB[navB.length - 1])));
+    if (Math.abs(yA - yB) < 20) {
+      if (yA <= yB) { yA = Math.max(T + 10, yA - 10); yB = Math.min(T + ih - 10, yB + 10); }
+      else { yB = Math.max(T + 10, yB - 10); yA = Math.min(T + ih - 10, yA + 10); }
+    }
+    o += '<rect x="' + (W - R + 4) + '" y="' + (yA - 9).toFixed(1) + '" width="64" height="18" rx="3" fill="#4F46E5"/>';
+    o += '<text x="' + (W - R + 36) + '" y="' + (yA + 3.5).toFixed(1) + '" font-size="9" font-family="monospace" font-weight="700" fill="#ffffff" text-anchor="middle">A ' + (retA >= 0 ? '+' : '') + retA.toFixed(1) + '%</text>';
+    o += '<rect x="' + (W - R + 4) + '" y="' + (yB - 9).toFixed(1) + '" width="64" height="18" rx="3" fill="#059669"/>';
+    o += '<text x="' + (W - R + 36) + '" y="' + (yB + 3.5).toFixed(1) + '" font-size="9" font-family="monospace" font-weight="700" fill="#ffffff" text-anchor="middle">B ' + (retB >= 0 ? '+' : '') + retB.toFixed(1) + '%</text>';
+
+    // Legend top-left
+    o += '<circle cx="' + (L + 6) + '" cy="12" r="4" fill="#4F46E5"/>';
+    o += '<text x="' + (L + 15) + '" y="15" font-size="10" font-weight="600" fill="var(--ink,#0b0b0b)">A: ' + esc(shortLabel(cmp.labelA, 14)) + '</text>';
+    o += '<circle cx="' + (L + 178) + '" cy="12" r="4" fill="#059669"/>';
+    o += '<text x="' + (L + 187) + '" y="15" font-size="10" font-weight="600" fill="var(--ink,#0b0b0b)">B: ' + esc(shortLabel(cmp.labelB, 14)) + '</text>';
+    o += '<text x="' + (W - R) + '" y="15" font-size="9.5" font-family="monospace" fill="var(--ink-faint,#64748B)" text-anchor="end">共 ' + dates.length + ' 交易日 · 起点归一化=1.000</text>';
+
+    o += '<text x="' + L + '" y="' + (H - 8) + '" font-size="9.5" font-family="monospace" fill="var(--ink-faint,#64748B)">' + esc(dates[0]) + '</text>';
+    o += '<text x="' + (W - R) + '" y="' + (H - 8) + '" font-size="9.5" font-family="monospace" fill="var(--ink-faint,#64748B)" text-anchor="end">' + esc(dates[dates.length - 1]) + '</text>';
     return o + '</svg>';
   }
 
@@ -2286,6 +2795,14 @@
     penetratePortfolio: penetratePortfolio,
     computeCorrelationMatrix: computeCorrelationMatrix,
     computePortfolioCurveAndDrawdown: computePortfolioCurveAndDrawdown,
+    alignBenchmarkSeries: alignBenchmarkSeries,
+    computeAdvancedQuantMetrics: computeAdvancedQuantMetrics,
+    optimizePortfolio: optimizePortfolio,
+    comparePortfolios: comparePortfolios,
+    registerStrategyHook: registerStrategyHook,
+    listStrategyHooks: listStrategyHooks,
+    serializePortfolioState: serializePortfolioState,
+    deserializePortfolioState: deserializePortfolioState,
     evaluatePortfolioRisk: evaluatePortfolioRisk,
     generatePlainSummary: generatePlainSummary,
     calcAfterTaxDividend: calcAfterTaxDividend,
@@ -2301,6 +2818,7 @@
     resetSurface3DView: resetSurface3DView,
     correlationSVG: correlationSVG,
     navDrawdownSVG: navDrawdownSVG,
+    compareNavSVG: compareNavSVG,
     dividendTimelineSVG: dividendTimelineSVG
   };
   global.AlphaLensAnalytics = api;

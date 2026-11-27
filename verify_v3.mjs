@@ -101,7 +101,7 @@ rec(12, 'v2旧文件已归档且根目录清爽', archiveOk && rootClean,
 
 const readme = fs.existsSync(README) ? fs.readFileSync(README, 'utf8') : '';
 const lic = fs.existsSync(LICENSE) ? fs.readFileSync(LICENSE, 'utf8') : '';
-const docsOk = /AlphaLens v3\.[123]/.test(readme) && /持仓穿透/.test(readme) && /四维/.test(readme) &&
+const docsOk = /AlphaLens v[345]\./.test(readme) && /持仓穿透/.test(readme) && /四维/.test(readme) &&
   /GitHub Pages/.test(readme) && /archive\/v2/.test(readme) && /MIT License/.test(lic) && /Zen Ao/.test(lic);
 rec(13, 'README 文档与MIT LICENSE齐全', docsOk,
   `readmeLen=${readme.length} licenseOk=${/MIT License/.test(lic)}`);
@@ -669,6 +669,112 @@ rec(24, '手机端（窄屏）零横向溢出 + 横滑胶囊 + 底部Dock与上�
   MOB.sheetOpened === true && MOB.sheetUndoSyncOk === true,
   `vw=${MOB.vw} overflowPen=${!MOB.noOverflowPen} overflowDiv=${!MOB.noOverflowDiv} presetDir=${MOB.presetFlexDir} scrollW=${MOB.presetScrollW}/${MOB.presetClientW} dock=${MOB.dockVisible} sheet=${MOB.sheetOpened} sheetUndo=${MOB.sheetUndoSyncOk}`);
 
+// ---- [27-33] AlphaLens v5.0 毕业设计量化闭环、答辩弹层、交互图表与 P1 接口全量验收 ----
+const v5File = path.join(HERE, '__v5_probe.html');
+let V5 = {};
+try {
+  const v5Probe = String.raw`
+<script>
+window.addEventListener('load',function(){setTimeout(function(){
+  var R={errs:[]};
+  window.addEventListener('error',function(e){R.errs.push(e.message);});
+  try{
+    var AZ=window.AlphaLensAnalytics,DATA=window.ALPHALENS_DATA,V3=window.ALPHALENS_V3;
+    var A=DATA.assets||{};
+    var fakePos=(DATA.presets[0]&&DATA.presets[0].positions)||[];
+    // 27: Advanced quant metrics
+    var pen=AZ.penetratePortfolio(fakePos,A);
+    var corr=AZ.computeCorrelationMatrix(fakePos.map(function(p){return p.code;}),A,250);
+    var curve=AZ.computePortfolioCurveAndDrawdown(fakePos,A,250);
+    var bench=AZ.computePortfolioCurveAndDrawdown([{code:'510300',amount:10000}],A,250);
+    var qm=AZ.computeAdvancedQuantMetrics(pen,corr,curve,bench);
+    R.quantOk=!!(qm&&isFinite(qm.cagr)&&isFinite(qm.sharpe)&&isFinite(qm.calmar)&&qm.hhi>0&&qm.hhi<=1&&qm.effectiveN>=1&&qm.benchAligned&&qm.benchAligned.points.length>10);
+    R.quantChips=document.querySelectorAll('#quant-strip .q-chip').length;
+
+    // 28: Dual-mode optimizer strictly lowers risk & overlap on fake diversification
+    var optW=AZ.optimizePortfolio(fakePos,A,250,'weights_only');
+    var optD=AZ.optimizePortfolio(fakePos,A,250,'diversify_add');
+    R.optWeightsOk=!!(optW&&optW.suggestedPositions.length===fakePos.length&&optW.rationale.length>=1);
+    R.optDivOk=!!(optD&&optD.after.riskScore<optD.before.riskScore&&optD.after.overlapCount<optD.before.overlapCount);
+    R.optRiskBefore=optD?optD.before.riskScore:null;
+    R.optRiskAfter=optD?optD.after.riskScore:null;
+
+    // 29: Optimizer modal open -> Apply -> Undo
+    var posBeforeJson=JSON.stringify(V3.state.positions);
+    document.getElementById('opt-open-btn').click();
+    R.optModalOpen=document.getElementById('opt-modal-backdrop').className.indexOf('open')>=0;
+    R.optCards=document.querySelectorAll('#opt-metrics-grid .opt-mcard').length;
+    document.getElementById('opt-apply-btn').click();
+    var posAfterApply=JSON.stringify(V3.state.positions);
+    var undoBtn=document.getElementById('toast-act-btn');
+    if(undoBtn)undoBtn.click();
+    var posAfterUndo=JSON.stringify(V3.state.positions);
+    R.optApplyUndoOk=(posAfterApply!==posBeforeJson)&&(posAfterUndo===posBeforeJson);
+
+    // 30: A/B Comparison Lab
+    document.getElementById('cmp-open-btn').click();
+    R.cmpModalOpen=document.getElementById('cmp-modal-backdrop').className.indexOf('open')>=0;
+    R.cmpSvgCount=document.querySelectorAll('#cmp-chart-box svg.cmp-nav-svg').length;
+    R.cmpRows=document.querySelectorAll('#cmp-table tbody tr').length;
+    document.getElementById('cmp-close-btn').click();
+
+    // 31: Academic Formula & Methodology modal
+    document.getElementById('method-open-btn').click();
+    R.methodModalOpen=document.getElementById('method-modal-backdrop').className.indexOf('open')>=0;
+    R.methodCards=document.querySelectorAll('#method-modal-backdrop .method-card').length;
+    document.getElementById('method-close-btn').click();
+
+    // 32: Merged filter + interactive NAV crosshair & benchmark toggle
+    V3.setHoldingsView('merged');
+    var allExpCnt=document.querySelectorAll('#exposure-list .exp-row').length;
+    document.getElementById('mf-dup').click();
+    var dupExpCnt=document.querySelectorAll('#exposure-list .exp-row').length;
+    document.getElementById('mf-all').click();
+    R.mergedFilterOk=(allExpCnt>dupExpCnt&&dupExpCnt>0);
+    R.navCrosshairOk=!!(document.querySelector('#nav-chart svg.nav-svg .nav-xhair')&&document.querySelector('#nav-chart svg.nav-svg .nav-hit'));
+    R.corrCells=document.querySelectorAll('#corr-chart svg.corr-svg .corr-cell').length;
+
+    // 33: State serialization round-trip + P1 strategy hook + v5.0 Markdown quant metrics
+    var tok=AZ.serializePortfolioState({positions:fakePos,window:'250',theme:'dark'});
+    var dec=AZ.deserializePortfolioState(tok,A);
+    R.serialOk=!!(tok&&dec&&dec.positions.length===fakePos.length&&dec.theme==='dark');
+    var hookReg=AZ.registerStrategyHook('__test_eq',function(pos){return pos;});
+    R.hookOk=hookReg&&AZ.listStrategyHooks().indexOf('__test_eq')>=0;
+    var md=V3.currentCheckup().md;
+    R.mdV5Ok=/AlphaLens v5\.0/.test(md)&&/夏普比率/.test(md)&&/HHI/.test(md)&&!/undefined|NaN/.test(md);
+  }catch(e){R.fatal=e.message;}
+  var d=document.createElement('div');d.id='__V5';d.style.display='none';d.textContent=JSON.stringify(R);document.body.appendChild(d);
+},1800);});
+</script>`;
+  fs.writeFileSync(v5File, rootText.replace('</body>', v5Probe + '</body>'));
+  const v5dom = chromeDom(v5File, ['--window-size=1440,1040']);
+  const vm = v5dom.match(/<div id="__V5"[^>]*>([\s\S]*?)<\/div>/);
+  try { V5 = decodeHtmlJson(vm ? vm[1] : '{}'); } catch (e) { V5 = { fatal: e.message }; }
+} finally {
+  fs.rmSync(v5File, { force: true });
+}
+rec(27, 'v5.0 经典量化指标引擎（CAGR / Sharpe / Calmar / HHI / N_eff / 沪深300基准对齐）',
+  V5.quantOk === true && V5.quantChips === 5 && (V5.errs || []).length === 0,
+  `quantOk=${V5.quantOk} chips=${V5.quantChips} errs=${(V5.errs || []).length}`);
+rec(28, 'v5.0 智能去重降险优化引擎（双模式均合法，引入低相关资产后风险分与重合数严格下降）',
+  V5.optWeightsOk === true && V5.optDivOk === true,
+  `weightsOk=${V5.optWeightsOk} divOk=${V5.optDivOk} risk=${V5.optRiskBefore}->${V5.optRiskAfter}`);
+rec(29, 'v5.0 智能优化弹窗开关 + 一键应用 + 撤销 Toast 无损回退闭环',
+  V5.optModalOpen === true && V5.optCards === 6 && V5.optApplyUndoOk === true,
+  `open=${V5.optModalOpen} cards=${V5.optCards} applyUndo=${V5.optApplyUndoOk}`);
+rec(30, 'v5.0 组合 A/B 同屏对照实验台（叠加双净值曲线 + 8 项指标对照表）',
+  V5.cmpModalOpen === true && V5.cmpSvgCount === 1 && V5.cmpRows === 8,
+  `open=${V5.cmpModalOpen} svg=${V5.cmpSvgCount} rows=${V5.cmpRows}`);
+rec(31, 'v5.0 算法公式与数据口径学术说明书弹窗（6 大板块完整渲染）',
+  V5.methodModalOpen === true && V5.methodCards === 6,
+  `open=${V5.methodModalOpen} cards=${V5.methodCards}`);
+rec(32, 'v5.0 合并重仓「仅看撞车」过滤 + 净值十字准星 DOM + 相关性交互单元格',
+  V5.mergedFilterOk === true && V5.navCrosshairOk === true && V5.corrCells >= 4,
+  `filter=${V5.mergedFilterOk} xhair=${V5.navCrosshairOk} corrCells=${V5.corrCells}`);
+rec(33, 'v5.0 状态序列化往返 + P1 策略钩子注册 + v5.0 Markdown 量化报告断言',
+  V5.serialOk === true && V5.hookOk === true && V5.mdV5Ok === true,
+  `serial=${V5.serialOk} hook=${V5.hookOk} mdV5=${V5.mdV5Ok}`);
+
 const passed = results.filter(r => r.pass).length;
-console.log(`\n=== VERIFY_V4.1: ${passed}/${results.length} PASS (Chrome: ${CHROME}) ===`);
+console.log(`\n=== VERIFY_V5.0: ${passed}/${results.length} PASS (Chrome: ${CHROME}) ===`);
 if (passed !== results.length) process.exit(1);
